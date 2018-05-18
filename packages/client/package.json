@@ -1,0 +1,47 @@
+{
+  "name": "@karma.run/editor-client",
+  "version": "0.12.0-beta.1",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "license": "MIT",
+  "repository": "github:karmarun/karma.run-editor",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prepare": "tsc",
+    "lint": "tslint src/**/*"
+  },
+  "dependencies": {
+    "axios": "^0.17.0",
+    "babel-polyfill": "^6.26.0",
+    "classnames": "^2.2.5",
+    "csx": "^8.5.0",
+    "draft-js": "^0.10.5",
+    "fuse.js": "^3.2.0",
+    "intersection-observer-polyfill": "^0.1.0",
+    "@karma.run/editor-common": "^0.12.0-beta.3",
+    "mobx": "^3.3.1",
+    "mobx-react": "^4.3.3",
+    "moment": "^2.19.1",
+    "qs": "^6.5.1",
+    "react": "^16.3.0",
+    "react-datetime": "^2.10.3",
+    "react-dom": "^16.0.0",
+    "react-markdown": "^3.1.4",
+    "shortid": "^2.2.8",
+    "typestyle": "^1.4.5",
+    "vis": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.1",
+    "@types/classnames": "^2.2.3",
+    "@types/draft-js": "^0.10.16",
+    "@types/qs": "^6.5.1",
+    "@types/react": "^16.3.14",
+    "@types/react-dom": "^16.0.2",
+    "@types/shortid": "^0.0.29",
+    "@types/vis": "^4.21.0",
+    "tslint": "^5.8.0",
+    "typescript": "^2.8.3"
+  }
+}

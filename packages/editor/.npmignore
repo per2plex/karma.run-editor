@@ -1,0 +1,8 @@
+src/
+.dockerignore
+Dockerfile
+.env.example
+tsconfig.json
+webpack.config.dev.ts
+webpack.config.prod.ts
+webpack.config.ts

@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["./src/server/**/*.ts"],
+  "compilerOptions": {
+    "lib": ["es2017"],
+    "types": ["@types/node"],
+    "outDir": "./dist/server",
+    "declaration": false
+  }
+}

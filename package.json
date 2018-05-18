@@ -1,0 +1,27 @@
+{
+  "private": true,
+  "scripts": {
+    "build:common": "cd packages/common && npm run build",
+    "watch:common": "cd packages/common && npm run watch",
+    "build:worker": "cd packages/worker && npm run build",
+    "watch:worker": "cd packages/worker && npm run watch",
+    "build:client": "cd packages/client && npm run build",
+    "watch:client": "cd packages/client && npm run watch",
+    "build:server": "cd packages/server && npm run build",
+    "watch:server": "cd packages/server && npm run watch",
+    "build:editor:client:dev": "cd packages/editor && npm run build:client:dev",
+    "watch:editor:client:dev": "cd packages/editor && npm run watch:client:dev",
+    "build:editor:client:prod": "cd packages/editor && npm run build:client:prod",
+    "watch:editor:client:prod": "cd packages/editor && npm run watch:client:prod",
+    "build:editor:server": "cd packages/editor && npm run build:server",
+    "watch:editor:server": "cd packages/editor && npm run watch:server",
+    "start:editor": "cd packages/editor && npm run start",
+    "build:dev": "run-s build:common build:worker build:client build:server build:editor:server build:editor:client:dev",
+    "build:prod": "run-s build:common build:worker build:client build:server build:editor:server build:editor:client:prod"
+  },
+  "workspaces": ["packages/*"],
+  "devDependencies": {
+    "npm-run-all": "^4.1.3",
+    "ts-node": "^6.0.3"
+  }
+}

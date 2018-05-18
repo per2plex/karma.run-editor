@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["./src/**/*"],
+  "compilerOptions": {
+    "lib": ["es2017", "dom", "dom.iterable"],
+    "outDir": "./lib",
+    "experimentalDecorators": true
+  }
+}

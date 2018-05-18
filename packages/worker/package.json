@@ -1,0 +1,22 @@
+{
+  "name": "@karma.run/editor-worker",
+  "version": "0.12.0-beta.1",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "license": "MIT",
+  "repository": "github:karmarun/karma.run-editor",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prepare": "tsc",
+    "lint": "tslint src/**/*"
+  },
+  "dependencies": {
+    "@karma.run/editor-common": "^0.12.0-beta.3",
+    "bcryptjs": "^2.4.0",
+    "typescript": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.1"
+  }
+}
