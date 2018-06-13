@@ -1,4 +1,5 @@
-karma.run Editor
-================
+# karma.run Editor
 
-Coming Soon
+## Editor CLI
+
+[Documentation](packages/editor/README.md)

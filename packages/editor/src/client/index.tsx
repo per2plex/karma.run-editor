@@ -1,9 +1,9 @@
 import Raven from 'raven-js'
-import { Editor } from '@karma.run/editor-client'
+import {Editor} from '@karma.run/editor-client'
 
 const editor = new Editor()
 
-editor.on('configLoaded', (config) => {
+editor.on('configLoaded', config => {
   if (config.custom.sentryURL) {
     Raven.config(config.custom.sentryURL, {
       release: process.env.VERSION,

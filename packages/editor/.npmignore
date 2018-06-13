@@ -1,6 +1,7 @@
 src/
 .dockerignore
 Dockerfile
+.env
 .env.example
 tsconfig.json
 webpack.config.dev.ts

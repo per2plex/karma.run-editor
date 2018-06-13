@@ -2,7 +2,13 @@
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
   "editor.rulers": [100],
-  "tslint.autoFixOnSave": true,
+  "editor.formatOnSave": true,
+  "[json]": {
+    "editor.formatOnSave": false
+  },
+  "[jsonc]": {
+    "editor.formatOnSave": false
+  },
   "files.trimTrailingWhitespace": true,
   "files.exclude": {
     "**/.git": true,
@@ -10,5 +16,6 @@
     "**/node_modules": true,
     "**/lib": true,
     "**/dist": true
-  }
+  },
+  "typescript.tsdk": "node_modules\\typescript\\lib"
 }

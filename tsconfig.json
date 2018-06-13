@@ -1,5 +1,4 @@
 {
-  "include": [],
   "compilerOptions": {
     "target": "es2017",
     "module": "commonjs",
@@ -8,7 +7,6 @@
     "types": [],
     "jsx": "react",
 
-    "declaration": true,
     "sourceMap": true,
 
     "strict": true,
@@ -25,6 +23,7 @@
 
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true
   }
 }

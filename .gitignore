@@ -3,6 +3,7 @@
 .idea/
 lib/
 dist/
+packages/**/LICENSE
 node_modules
 npm-debug.log
 yarn-error.log
