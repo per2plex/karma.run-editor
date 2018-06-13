@@ -326,10 +326,10 @@ export class EditorStore {
 
   /** @throws {APIError} */
   @action
-  public async login(endpoint: string, database: string, username: string, password: string) {
+  public async login(endpoint: string, username: string, password: string) {
     this.destroySession()
 
-    const session = await authenticate(endpoint, database, username, password)
+    const session = await authenticate(endpoint, '', username, password)
     await this.loadBaseData(session)
     runInAction('login', () => {
       this.session = session

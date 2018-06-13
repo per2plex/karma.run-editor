@@ -44,6 +44,7 @@ if (
   app.use(
     '/api/media',
     editorMediaMiddleware({
+      karmaURL: process.env.KARMA_API_URL,
       hostname: '/api/media',
       backend: new CloudinaryBackend({
         cloudName: process.env.CLOUDINARY_CLOUD_NAME,

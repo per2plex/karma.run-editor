@@ -2,6 +2,12 @@
 # yarn lockfile v1
 
 
+"@karma.run/sdk@^0.5.0-beta.0":
+  version "0.5.0-beta.0"
+  resolved "https://registry.yarnpkg.com/@karma.run/sdk/-/sdk-0.5.0-beta.0.tgz#def4e1c6a2c1c00b78d432292356c4a3ee6ea807"
+  dependencies:
+    axios "^0.18.0"
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"

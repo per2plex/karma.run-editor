@@ -3,6 +3,7 @@
   "include": ["./src/**/*"],
   "compilerOptions": {
     "lib": ["es2017", "dom", "dom.iterable"],
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "resolveJsonModule": true
   }
 }

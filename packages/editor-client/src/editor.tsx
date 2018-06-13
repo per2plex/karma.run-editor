@@ -6,14 +6,15 @@ import {applicationStore} from './store/applicationStore'
 import {RootView} from './ui/rootView'
 import {ErrorBoundary} from './error/boundary'
 import {Theme, ThemeProvider, defaultTheme} from './context/theme'
-import {Config, ConfigProvider, defaultConfig} from './context/config'
+import {ConfigContext, ConfigProvider, defaultConfig} from './context/config'
 import {deleteNullValues, EventDispatcher} from '@karma.run/editor-common'
 import {Environment} from './util/env'
+import {SessionProvider} from './context/session'
 
 useStrict(true)
 
 export interface EditorOptions {
-  config: Partial<Config>
+  config: Partial<ConfigContext>
   theme: Partial<Theme>
 }
 
@@ -59,9 +60,11 @@ export class EditorComponent extends React.Component<Partial<EditorOptions>> {
     return (
       <ErrorBoundary>
         <ConfigProvider config={config}>
-          <ThemeProvider theme={theme}>
-            <RootView applicationStore={applicationStore} />
-          </ThemeProvider>
+          <SessionProvider>
+            <ThemeProvider theme={theme}>
+              <RootView applicationStore={applicationStore} />
+            </ThemeProvider>
+          </SessionProvider>
         </ConfigProvider>
       </ErrorBoundary>
     )
