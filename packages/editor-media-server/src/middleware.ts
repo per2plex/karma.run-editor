@@ -80,29 +80,34 @@ export function uploadMediaMiddleware(opts: UploadMiddlewareOptions): RequestHan
       limits: {files: 1}
     })
 
-    let uploadFile: UploadFile | undefined
-
     busboy.on('file', (_fieldName, fileStream, filename) => {
-      const id = shortid()
+      // WORKAROUND: We have to include the extension so sharp can detect SVGs.
+      const extension = path.extname(filename)
+      const id = shortid() + extension
 
-      uploadFile = {id, filename, path: getFilePathForID(id, opts.tempDirPath)}
-      fileStream.pipe(fs.createWriteStream(uploadFile.path))
-    })
-
-    busboy.on('finish', async () => {
-      if (!uploadFile) return next(ErrorType.InvalidRequest)
-
-      try {
-        return res.status(200).send(
-          await uploadMedia(uploadFile, {
-            hostname: opts.hostname,
-            tempDirPath: opts.tempDirPath,
-            allowedMediaTypes: opts.allowedMediaTypes
-          })
-        )
-      } catch (err) {
-        return next(err)
+      const uploadFile: UploadFile | undefined = {
+        id,
+        filename,
+        path: getFilePathForID(id, opts.tempDirPath)
       }
+
+      const writeStream = fs.createWriteStream(uploadFile.path)
+
+      writeStream.on('close', async () => {
+        try {
+          return res.status(200).send(
+            await uploadMedia(uploadFile!, {
+              hostname: opts.hostname,
+              tempDirPath: opts.tempDirPath,
+              allowedMediaTypes: opts.allowedMediaTypes
+            })
+          )
+        } catch (err) {
+          return next(err)
+        }
+      })
+
+      fileStream.pipe(writeStream)
     })
 
     req.pipe(busboy)
@@ -117,8 +122,11 @@ export function previewMediaMiddleware(opts: PreviewMiddlewareOptions): RequestH
       const tempFilePath = path.join(opts.tempDirPath, req.params.id)
       const metadata = await getMetadataForID(req.params.id, opts.tempDirPath)
 
+      // Deliver "image/svg" as "image/svg+xml"
+      const mimeType = metadata.mimeType.replace('image/svg;', 'image/svg+xml;')
+
       return res.status(200).sendFile(tempFilePath, {
-        headers: {'Content-Type': metadata.mimeType}
+        headers: {'Content-Type': mimeType}
       })
     } catch (err) {
       return next(ErrorType.NotFound)
@@ -232,6 +240,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
 
     return res.status(statusCode).send({type: err})
   } else {
+    console.error('Error:', err)
     return res.status(500).send({type: ErrorType.Internal})
   }
 }

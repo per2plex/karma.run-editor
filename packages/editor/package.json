@@ -1,6 +1,6 @@
 {
   "name": "@karma.run/editor",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "main": "./dist/server/index.js",
   "description": "Editor CLI for karma.run.",
   "bin": {
@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@karma.run/editor-server": "^0.12.0",
-    "@karma.run/editor-media-server": "^0.12.0",
+    "@karma.run/editor-media-server": "^0.12.1",
     "commander": "^2.15.1",
     "compression": "^1.7.2",
     "dotenv": "^5.0.1",
