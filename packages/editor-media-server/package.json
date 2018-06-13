@@ -1,6 +1,6 @@
 {
   "name": "@karma.run/editor-media-server",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "main": "./lib/cjs/index.js",
   "module": "./lib/es6/index.js",
   "types": "./lib/types/index.d.ts",
