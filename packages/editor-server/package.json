@@ -22,8 +22,8 @@
   "dependencies": {
     "draft-js": "^0.10.5",
     "react": "^16.3.0",
-    "react-dom": "^16.0.0",
-    "react-datetime": "^2.10.3"
+    "react-datetime": "^2.10.3",
+    "react-dom": "^16.0.0"
   },
   "devDependencies": {
     "@types/express": "^4.11.1",

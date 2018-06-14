@@ -6,6 +6,7 @@ import {SpaceKeyCode} from '../../util/keyCodes'
 import {AppLocation, urlPathForLocation} from '../../store/locationStore'
 import {solidBorderWithColor} from '../../util/style'
 import {Icon, IconName} from '../common/icon'
+import {LoadingIndicator} from './loader'
 
 export interface ButtonBaseProps {
   icon?: IconName
@@ -14,6 +15,7 @@ export interface ButtonBaseProps {
   data?: any
   selected?: boolean
   disabled?: boolean
+  loading?: boolean
 }
 
 export const enum ButtonType {
@@ -50,8 +52,14 @@ export class Button extends React.Component<Button.Props> {
         onClick={this.handleClick}
         onMouseDown={this.handleMouseDown}>
         <span className="content">
-          {this.props.icon && <Icon name={this.props.icon} />}
-          {this.props.label && <span className="label">{this.props.label}</span>}
+          {this.props.loading ? (
+            <LoadingIndicator />
+          ) : (
+            <>
+              {this.props.icon && <Icon name={this.props.icon} />}
+              {this.props.label && <span className="label">{this.props.label}</span>}
+            </>
+          )}
         </span>
       </button>
     )

@@ -1,48 +1,50 @@
-// import React from 'react'
-// import {Session, authenticate} from '@karma.run/sdk'
-// import english from './en.json'
+import React from 'react'
+import {Omit} from '@karma.run/editor-common'
 
-// export type MessageKey = keyof typeof english
+export type MessageMap = typeof import('../locale/en.json')
+export type MessageKey = keyof MessageMap
 
-// export function getLocalization(_locale: string) {
-//   return english
-// }
+export interface LocaleProviderProps {
+  initialMessageMap?: MessageMap
+}
 
-// export function _(key: MessageKey, locale: string) {
-//   return getLocalization(locale)[key] || key
-// }
+export interface LocaleContext {
+  messageMap?: MessageMap
+  get(key: MessageKey): string
+}
 
-// export interface LocaleContext {
-//   locale?: string
-//   _(key: MessageKey): string
-// }
+export const LocaleContext = React.createContext<LocaleContext>({
+  get(key: MessageKey): string {
+    return key
+  }
+})
 
-// export const SessionContext = React.createContext<LocaleContext>({})
+export class LocaleProvider extends React.Component<LocaleProviderProps, LocaleContext> {
+  constructor(props: LocaleProviderProps) {
+    super(props)
 
-// export class LocaleProvider extends React.Component<{}, LocaleContext> {
-//   constructor(props: {}) {
-//     super(props)
-//     this.state = {}
-//   }
+    this.state = {
+      messageMap: props.initialMessageMap,
+      get: this.get
+    }
+  }
 
-//   private async authenticate(karmaURL: string, username: string, password: string) {
-//     const session = await authenticate(karmaURL, username, password)
-//     const editorSession = {...session, karmaURL}
+  private get = (key: MessageKey) => {
+    if (!this.state.messageMap) return key
+    return this.state.messageMap[key] || key
+  }
 
-//     this.setState({session: editorSession})
+  public render() {
+    return <LocaleContext.Provider value={this.state}>{this.props.children}</LocaleContext.Provider>
+  }
+}
 
-//     return editorSession
-//   }
-
-//   private async invalidate() {
-//     this.setState({session: undefined})
-//   }
-
-//   private
-
-//   public render() {
-//     return (
-//       <SessionContext.Provider value={this.state}>{this.props.children}</SessionContext.Provider>
-//     )
-//   }
-// }
+export function withLocale<T extends {localeContext: LocaleContext}>(
+  Component: React.ComponentType<T>
+): React.StatelessComponent<Omit<T, 'localeContext'>> {
+  return props => (
+    <LocaleContext.Consumer>
+      {localeContext => <Component {...props} localeContext={localeContext} />}
+    </LocaleContext.Consumer>
+  )
+}

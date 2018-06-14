@@ -5,7 +5,7 @@ import {style} from 'typestyle'
 import {observer} from 'mobx-react'
 
 import {ApplicationStore} from '../store/applicationStore'
-import {LoginPage} from './loginForm'
+import {LoginFormContainer} from './loginForm'
 import {BaseView} from './baseView'
 import {NotificationContainer} from '../ui/common/notification'
 import {CenteredLoadingIndicator} from '../ui/common/loader'
@@ -33,7 +33,7 @@ export class RootView extends React.Component<RootView.Props> {
     let content: React.ReactNode
 
     if (locationStore.location.type === 'login') {
-      content = <LoginPage />
+      content = <LoginFormContainer />
     } else if (locationStore.location.type === 'restoringSession') {
       content = <CenteredLoadingIndicator />
     } else {

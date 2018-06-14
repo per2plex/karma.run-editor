@@ -1,4 +1,5 @@
 import React from 'react'
+import {Omit} from '@karma.run/editor-common'
 
 export interface Colors {
   primary: string
@@ -39,4 +40,12 @@ export class ThemeProvider extends React.Component<{theme: Theme}> {
       <ThemeContext.Provider value={this.props.theme}>{this.props.children}</ThemeContext.Provider>
     )
   }
+}
+
+export function withTheme<T extends {theme: Theme}>(
+  Component: React.ComponentType<T>
+): React.StatelessComponent<Omit<T, 'theme'>> {
+  return props => (
+    <ThemeContext.Consumer>{theme => <Component {...props} theme={theme} />}</ThemeContext.Consumer>
+  )
 }

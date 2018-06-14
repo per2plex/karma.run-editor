@@ -21,14 +21,12 @@ export interface Options {
   title?: string
   karmaURL?: string
   mediaServerURL?: string
-  showDatabaseField?: boolean
   customClientConfig?: {[name: string]: any}
 }
 
 export function editorMiddleware(opts: Options): express.Router {
   const title = opts.title || 'karma.run'
   const basePath = opts.basePath || ''
-  const showDatabaseField = opts.showDatabaseField == undefined ? true : opts.showDatabaseField
   const mediaAPIBasePath = opts.mediaAPIBasePath || ''
   const staticDirs = opts.staticDirs || []
   const customClientConfig = opts.customClientConfig || {}
@@ -74,8 +72,7 @@ export function editorMiddleware(opts: Options): express.Router {
       title,
       basePath,
       mediaAPIBasePath,
-      showDatabaseField,
-      KARMA_API_URL: opts.karmaURL,
+      karmaURL: opts.karmaURL,
       KARMA_MEDIA_SERVER_URL: opts.mediaServerURL
     })
 

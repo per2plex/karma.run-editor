@@ -8,7 +8,6 @@ export interface Environment {
   title: string
   basePath: string
   mediaAPIBasePath: string
-  showDatabaseField: boolean
   KARMA_API_URL?: string
   SENTRY_API_URL?: string
   KARMA_MEDIA_SERVER_URL?: string
@@ -31,7 +30,6 @@ const defaultEnvironment: Environment = serverConfigElement
       title: 'karma.run',
       basePath: '',
       mediaAPIBasePath: '/api/media',
-      showDatabaseField: true,
       KARMA_API_URL: undefined,
       KARMA_MEDIA_SERVER_URL: undefined,
       SENTRY_API_URL: undefined,

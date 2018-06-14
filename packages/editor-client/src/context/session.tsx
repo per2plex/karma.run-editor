@@ -1,5 +1,6 @@
 import React from 'react'
 import {Session, authenticate} from '@karma.run/sdk'
+import {Omit} from '@karma.run/editor-common'
 
 export interface EditorSession extends Session {
   karmaURL: string
@@ -16,6 +17,7 @@ export const SessionContext = React.createContext<SessionContext>({
     console.warn('No SessionProvider found!')
     return {karmaURL: '', username: '', signature: ''}
   },
+
   async invalidate() {
     console.warn('No SessionProvider found!')
   }
@@ -32,7 +34,7 @@ export class SessionProvider extends React.Component<{}, SessionContext> {
     }
   }
 
-  private async authenticate(karmaURL: string, username: string, password: string) {
+  private authenticate = async (karmaURL: string, username: string, password: string) => {
     const session = await authenticate(karmaURL, username, password)
     const editorSession = {...session, karmaURL}
 
@@ -41,7 +43,7 @@ export class SessionProvider extends React.Component<{}, SessionContext> {
     return editorSession
   }
 
-  private async invalidate() {
+  private invalidate = async () => {
     this.setState({session: undefined})
   }
 
@@ -50,4 +52,14 @@ export class SessionProvider extends React.Component<{}, SessionContext> {
       <SessionContext.Provider value={this.state}>{this.props.children}</SessionContext.Provider>
     )
   }
+}
+
+export function withSession<T extends {sessionContext: SessionContext}>(
+  Component: React.ComponentType<T>
+): React.StatelessComponent<Omit<T, 'sessionContext'>> {
+  return props => (
+    <SessionContext.Consumer>
+      {sessionContext => <Component {...props} sessionContext={sessionContext} />}
+    </SessionContext.Consumer>
+  )
 }

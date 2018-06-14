@@ -6,24 +6,22 @@ import {applicationStore} from './store/applicationStore'
 import {RootView} from './ui/rootView'
 import {ErrorBoundary} from './error/boundary'
 import {Theme, ThemeProvider, defaultTheme} from './context/theme'
-import {ConfigContext, ConfigProvider, defaultConfig} from './context/config'
+import {Config, ConfigProvider, defaultConfig} from './context/config'
 import {deleteNullValues, EventDispatcher} from '@karma.run/editor-common'
 import {Environment} from './util/env'
 import {SessionProvider} from './context/session'
+import {LocaleProvider} from './context/locale'
+
+import englishMessageMap from './locale/en.json'
 
 useStrict(true)
 
-export interface EditorOptions {
-  config: Partial<ConfigContext>
-  theme: Partial<Theme>
+export interface EditorProps {
+  config?: Partial<Config>
+  theme?: Partial<Theme>
 }
 
-export const defaultOptions: EditorOptions = {
-  config: defaultConfig,
-  theme: defaultTheme
-}
-
-export class EditorComponent extends React.Component<Partial<EditorOptions>> {
+export class EditorComponent extends React.Component<EditorProps> {
   public async componentDidMount() {
     // Prevent dropping files on window.
     window.addEventListener(
@@ -60,15 +58,21 @@ export class EditorComponent extends React.Component<Partial<EditorOptions>> {
     return (
       <ErrorBoundary>
         <ConfigProvider config={config}>
-          <SessionProvider>
-            <ThemeProvider theme={theme}>
-              <RootView applicationStore={applicationStore} />
-            </ThemeProvider>
-          </SessionProvider>
+          <LocaleProvider initialMessageMap={englishMessageMap}>
+            <SessionProvider>
+              <ThemeProvider theme={theme}>
+                <RootView applicationStore={applicationStore} />
+              </ThemeProvider>
+            </SessionProvider>
+          </LocaleProvider>
         </ConfigProvider>
       </ErrorBoundary>
     )
   }
+}
+
+export interface EditorOptions {
+  theme?: Partial<Theme>
 }
 
 export interface EditorEventMap {
@@ -76,9 +80,9 @@ export interface EditorEventMap {
 }
 
 export class Editor extends EventDispatcher<EditorEventMap> {
-  private opts: Partial<EditorOptions>
+  private opts: EditorOptions
 
-  constructor(opts: Partial<EditorOptions> = {}) {
+  constructor(opts: EditorOptions = {}) {
     super()
     this.opts = opts
   }
@@ -96,6 +100,6 @@ export class Editor extends EventDispatcher<EditorEventMap> {
 
     this.dispatch('configLoaded', serverConfig)
 
-    ReactDOM.render(<EditorComponent {...this.opts} />, element)
+    ReactDOM.render(<EditorComponent {...this.opts} config={serverConfig} />, element)
   }
 }

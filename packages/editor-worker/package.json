@@ -21,11 +21,11 @@
   },
   "dependencies": {
     "@karma.run/editor-common": "^0.12.0",
-    "bcryptjs": "^2.4.0",
-    "typescript": "^2.9.1"
+    "bcryptjs": "^2.4.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.1",
-    "npm-run-all": "^4.1.3"
+    "npm-run-all": "^4.1.3",
+    "typescript": "^2.9.1"
   }
 }

@@ -6,10 +6,12 @@ import {Color, Spacing, FontWeight} from '../ui/style'
 
 import {Button, TextInput} from '../ui/common'
 
-import {Env} from '../util/env'
-import {ThemeContext} from '../context/theme'
-import {SessionContext} from '../context/session'
 import {KarmaError, KarmaErrorType} from '@karma.run/sdk'
+
+import {Theme, withTheme} from '../context/theme'
+import {SessionContext, withSession} from '../context/session'
+import {withConfig, Config} from '../context/config'
+import {withLocale, LocaleContext} from '../context/locale'
 
 export interface LoginFormState {
   karmaURL: string
@@ -20,8 +22,10 @@ export interface LoginFormState {
 }
 
 export interface LoginFormProps {
-  defaultKarmaURL?: string
+  config: Config
+  theme: Theme
   sessionContext: SessionContext
+  localeContext: LocaleContext
 }
 
 export const LoginFormStyle = style({
@@ -112,10 +116,11 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
   constructor(props: LoginFormProps) {
     super(props)
 
+    console.log(this.props.config.karmaURL)
     this.state = {
-      karmaURL: Env.KARMA_API_URL || '',
-      username: Env.DEFAULT_USERNAME || '',
-      password: Env.DEFAULT_PASSWORD || '',
+      karmaURL: '',
+      username: '',
+      password: '',
       isSubmitting: false
     }
   }
@@ -137,7 +142,7 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
 
     try {
       await this.props.sessionContext.authenticate(
-        this.state.karmaURL,
+        this.props.config.karmaURL || this.state.karmaURL,
         this.state.username,
         this.state.password
       )
@@ -157,77 +162,66 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
   }
 
   public render() {
-    let endpointContent: React.ReactNode
-
-    if (!Env.KARMA_API_URL) {
-      endpointContent = (
-        <div className="fieldWrapper">
-          <div className="label">Karma URL</div>
-          <div className="field">
-            <TextInput
-              onChange={this.handleKarmaURLChange}
-              name="Karma URL"
-              placeholder="Karma URL"
-              value={this.state.karmaURL}
-            />
-          </div>
-        </div>
-      )
-    }
-
     return (
-      <ThemeContext.Consumer>
-        {context => (
-          <div className={LoginFormStyle}>
-            <div className="wrapper">
-              <div className="content">
-                <div className="header">
-                  <div className="logo">
-                    <context.logo />
-                  </div>
-                </div>
-                <form className="form">
-                  {endpointContent}
-                  <div className="fieldWrapper">
-                    <div className="label">User</div>
-                    <div className="field">
-                      <TextInput
-                        onChange={this.handleUsernameChange}
-                        name="Username"
-                        placeholder="Username"
-                        value={this.state.username}
-                        type={TextInputType.Lighter}
-                      />
-                    </div>
-                    <div className="field">
-                      <TextInput
-                        onChange={this.handlePasswordChange}
-                        name="Password"
-                        placeholder="Password"
-                        isPassword={true}
-                        value={this.state.password}
-                        type={TextInputType.Lighter}
-                      />
-                    </div>
-                  </div>
-                  <Button
-                    type={ButtonType.Primary}
-                    onTrigger={this.handleSubmitClick}
-                    label="Login"
-                    disabled={this.state.isSubmitting}
-                  />
-                </form>
+      <div className={LoginFormStyle}>
+        <div className="wrapper">
+          <div className="content">
+            <div className="header">
+              <div className="logo">
+                <this.props.theme.logo />
               </div>
             </div>
+            <form className="form">
+              {!this.props.config.karmaURL && (
+                <div className="fieldWrapper">
+                  <div className="label">{this.props.localeContext.get('karmaURL')}</div>
+                  <div className="field">
+                    <TextInput
+                      onChange={this.handleKarmaURLChange}
+                      name="karmaURL"
+                      placeholder={this.props.localeContext.get('karmaURL')}
+                      value={this.state.karmaURL}
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="fieldWrapper">
+                <div className="label">{this.props.localeContext.get('user')}</div>
+                <div className="field">
+                  <TextInput
+                    onChange={this.handleUsernameChange}
+                    name="username"
+                    placeholder={this.props.localeContext.get('username')}
+                    value={this.state.username}
+                    type={TextInputType.Lighter}
+                  />
+                </div>
+                <div className="field">
+                  <TextInput
+                    onChange={this.handlePasswordChange}
+                    name="password"
+                    placeholder={this.props.localeContext.get('password')}
+                    isPassword={true}
+                    value={this.state.password}
+                    type={TextInputType.Lighter}
+                  />
+                </div>
+              </div>
+              <Button
+                type={ButtonType.Primary}
+                onTrigger={this.handleSubmitClick}
+                label={this.props.localeContext.get('login')}
+                disabled={this.state.isSubmitting}
+                loading={this.state.isSubmitting}
+              />
+              {/* TODO: Wrap in container */}
+              {this.state.error}
+            </form>
           </div>
-        )}
-      </ThemeContext.Consumer>
+        </div>
+      </div>
     )
   }
 }
 
-export const LoginPage: React.StatelessComponent = () => (
-  <SessionContext.Consumer>
-    {sessionContext => <LoginForm sessionContext={sessionContext} />}
-  </SessionContext.Consumer>
-)
+export const LoginFormContainer = withConfig(withSession(withLocale(withTheme(LoginForm))))

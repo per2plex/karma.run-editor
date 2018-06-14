@@ -27,8 +27,8 @@
     "prepare": "run-s clean copy-license build:prod"
   },
   "dependencies": {
-    "@karma.run/editor-server": "^0.12.0",
     "@karma.run/editor-media-server": "^0.12.1",
+    "@karma.run/editor-server": "^0.12.0",
     "commander": "^2.15.1",
     "compression": "^1.7.2",
     "dotenv": "^5.0.1",
