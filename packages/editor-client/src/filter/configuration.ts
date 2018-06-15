@@ -414,66 +414,67 @@ export function filterConfigurationsForField(
       break
     }
 
-    case 'karmaMedia': {
-      const widthPath = [...path, StructPathSegment('width')]
-      conditionGroups.push({
-        id: shortid.generate(),
-        label: 'Width',
-        conditions: [
-          {id: shortid.generate(), type: ConditionType.NumberEqual, path: widthPath},
-          {id: shortid.generate(), type: ConditionType.NumberMax, path: widthPath},
-          {id: shortid.generate(), type: ConditionType.NumberMin, path: widthPath}
-        ]
-      })
+    // TODO: Add filter configuration for media
+    // case 'media': {
+    //   const widthPath = [...path, StructPathSegment('width')]
+    //   conditionGroups.push({
+    //     id: shortid.generate(),
+    //     label: 'Width',
+    //     conditions: [
+    //       {id: shortid.generate(), type: ConditionType.NumberEqual, path: widthPath},
+    //       {id: shortid.generate(), type: ConditionType.NumberMax, path: widthPath},
+    //       {id: shortid.generate(), type: ConditionType.NumberMin, path: widthPath}
+    //     ]
+    //   })
 
-      const heightPath = [...path, StructPathSegment('height')]
-      conditionGroups.push({
-        id: shortid.generate(),
-        label: 'Height',
-        conditions: [
-          {id: shortid.generate(), type: ConditionType.NumberEqual, path: heightPath},
-          {id: shortid.generate(), type: ConditionType.NumberMax, path: heightPath},
-          {id: shortid.generate(), type: ConditionType.NumberMin, path: heightPath}
-        ]
-      })
+    //   const heightPath = [...path, StructPathSegment('height')]
+    //   conditionGroups.push({
+    //     id: shortid.generate(),
+    //     label: 'Height',
+    //     conditions: [
+    //       {id: shortid.generate(), type: ConditionType.NumberEqual, path: heightPath},
+    //       {id: shortid.generate(), type: ConditionType.NumberMax, path: heightPath},
+    //       {id: shortid.generate(), type: ConditionType.NumberMin, path: heightPath}
+    //     ]
+    //   })
 
-      const bytesPath = [...path, StructPathSegment('bytes')]
-      conditionGroups.push({
-        id: shortid.generate(),
-        label: 'File Size (Bytes)',
-        conditions: [
-          {id: shortid.generate(), type: ConditionType.NumberEqual, path: bytesPath},
-          {id: shortid.generate(), type: ConditionType.NumberMax, path: bytesPath},
-          {id: shortid.generate(), type: ConditionType.NumberMin, path: bytesPath}
-        ]
-      })
+    //   const bytesPath = [...path, StructPathSegment('bytes')]
+    //   conditionGroups.push({
+    //     id: shortid.generate(),
+    //     label: 'File Size (Bytes)',
+    //     conditions: [
+    //       {id: shortid.generate(), type: ConditionType.NumberEqual, path: bytesPath},
+    //       {id: shortid.generate(), type: ConditionType.NumberMax, path: bytesPath},
+    //       {id: shortid.generate(), type: ConditionType.NumberMin, path: bytesPath}
+    //     ]
+    //   })
 
-      const typePath = [...path, StructPathSegment('type')]
-      conditionGroups.push({
-        id: shortid.generate(),
-        label: 'Type',
-        conditions: [
-          {
-            id: shortid.generate(),
-            type: ConditionType.EnumEqual,
-            path: typePath,
-            options: [
-              {key: 'image', label: 'Image'},
-              {key: 'video', label: 'Video'},
-              {key: 'raw', label: 'Raw'}
-            ]
-          }
-        ]
-      })
+    //   const typePath = [...path, StructPathSegment('type')]
+    //   conditionGroups.push({
+    //     id: shortid.generate(),
+    //     label: 'Type',
+    //     conditions: [
+    //       {
+    //         id: shortid.generate(),
+    //         type: ConditionType.EnumEqual,
+    //         path: typePath,
+    //         options: [
+    //           {key: 'image', label: 'Image'},
+    //           {key: 'video', label: 'Video'},
+    //           {key: 'raw', label: 'Raw'}
+    //         ]
+    //       }
+    //     ]
+    //   })
 
-      const formatPath = [...path, StructPathSegment('format')]
-      conditionGroups.push({
-        id: shortid.generate(),
-        label: 'Format',
-        conditions: [{id: shortid.generate(), type: ConditionType.StringEqual, path: formatPath}]
-      })
-      break
-    }
+    //   const formatPath = [...path, StructPathSegment('format')]
+    //   conditionGroups.push({
+    //     id: shortid.generate(),
+    //     label: 'Format',
+    //     conditions: [{id: shortid.generate(), type: ConditionType.StringEqual, path: formatPath}]
+    //   })
+    //   break
+    // }
   }
 
   return [

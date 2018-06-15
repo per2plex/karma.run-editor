@@ -1,8 +1,8 @@
 import * as React from 'react'
 
 import {style} from 'typestyle'
-import {LoginFormContainer} from './loginForm'
-import {BaseView} from './baseView'
+import {LoginContainer} from './login'
+// import {BaseView} from './baseView'
 import {NotificationContainer} from '../ui/common/notification'
 import {CenteredLoadingIndicator} from '../ui/common/loader'
 import {Color} from '../ui/style'
@@ -28,13 +28,13 @@ export function rootViewForLocation(location?: AppLocation) {
 
   switch (location.type) {
     case 'login':
-      return <LoginFormContainer />
+      return <LoginContainer originalLocation={location.originalLocation} />
 
     case 'restoringSession':
       return <CenteredLoadingIndicator />
 
     default:
-      return <BaseView applicationStore={applicationStore} />
+      return <div /> //<BaseView applicationStore={applicationStore} />
   }
 }
 

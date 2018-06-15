@@ -16,8 +16,8 @@ const editorStore = new EditorStore()
 const notificationStore = new NotificationStore()
 const locationStore = new LocationStore(editorStore)
 
-editorStore.restoreSessionFromLocalStorage()
-locationStore.syncLocationFromURL()
+// editorStore.restoreSessionFromLocalStorage()
+// locationStore.syncLocationFromURL()
 
 expose('editorToggleDevelopmentMode', () => {
   editorStore.toggleDeveloperMode()

@@ -27,9 +27,6 @@ import {NumberFieldRenderer} from './numberFieldRenderer'
 import {DateTimeFieldStore} from '../../store/fields/dateTimeFieldStore'
 import {DateTimeFieldRenderer} from './dateTimeFieldRenderer'
 
-import {FileFieldStore} from '../../store/fields/fileFieldStore'
-import {FileFieldRenderer} from './fileFieldRenderer'
-
 import {RichtTextFieldStore} from '../../store/fields/richTextFieldStore'
 import {RichTextFieldRenderer} from './richtTextFieldRenderer'
 
@@ -117,9 +114,6 @@ export function renderValueStore(store: FieldStore, opts: RenderOpts): JSX.Eleme
   } else if (store instanceof SelectFieldStore) {
     // SelectField
     return <SelectFieldRenderer {...opts} store={store} />
-  } else if (store instanceof FileFieldStore) {
-    // FileField
-    return <FileFieldRenderer {...opts} store={store} />
   } else if (store instanceof MediaFieldStore) {
     // MediaField
     return <MediaFieldRenderer {...opts} store={store} />

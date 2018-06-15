@@ -9,7 +9,7 @@ import editorMediaMiddleware, {CloudinaryBackend} from '@karma.run/editor-media-
 import editorMiddleware from '@karma.run/editor-server'
 
 const options = commander
-  .version('0.12.0')
+  .version('0.13.0')
   .name('karma-editor')
   .option('-p --port [port]', 'set port the server runs on. (environment: PORT)', parseInt, 3000)
   .option('-u --karmaURL [url]', 'set karma.run API URL. (environment: KARMA_URL or KARMA_API_URL)')
@@ -70,7 +70,6 @@ app.use(
     workerPath: path.join(__dirname, '../client/worker.js'),
     karmaURL: process.env.KARMA_URL || process.env.KARMA_API_URL || options.karmaURL,
     mediaAPIBasePath: '/api/media',
-    mediaServerURL: process.env.KARMA_MEDIA_SERVER_URL,
     customClientConfig: {
       sentryURL: process.env.SENTRY_API_URL
     }

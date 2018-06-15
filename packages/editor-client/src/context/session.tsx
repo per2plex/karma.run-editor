@@ -1,69 +1,96 @@
 import React from 'react'
-import {Session, authenticate} from '@karma.run/sdk'
+import {Session, authenticate, refreshSession} from '@karma.run/sdk'
 import {Omit} from '@karma.run/editor-common'
 import * as storage from '../util/storage'
 import {SessionStorageKey} from '../store/editorStore'
-
-export interface EditorSession extends Session {
-  karmaURL: string
-}
+import {Config, withConfig} from './config'
 
 export interface SessionContext {
-  session?: EditorSession
-  authenticate(karmaURL: string, username: string, password: string): Promise<EditorSession>
+  session?: Session
+  canRestoreSessionFromStorage: boolean
+  restoreSessionFromLocalStorage(): Promise<Session>
+  restoreSession(session: Session): Promise<Session>
+  authenticate(username: string, password: string): Promise<Session>
   invalidate(): Promise<void>
 }
 
 export const SessionContext = React.createContext<SessionContext>({
+  canRestoreSessionFromStorage: false,
+
+  async restoreSessionFromLocalStorage() {
+    throw new Error('No SessionProvider found!')
+  },
+
+  async restoreSession() {
+    throw new Error('No SessionProvider found!')
+  },
+
   async authenticate() {
-    console.warn('No SessionProvider found!')
-    return {karmaURL: '', username: '', signature: ''}
+    throw new Error('No SessionProvider found!')
   },
 
   async invalidate() {
-    console.warn('No SessionProvider found!')
+    throw new Error('No SessionProvider found!')
   }
 })
 
-export class SessionProvider extends React.Component<{}, SessionContext> {
-  constructor(props: {}) {
+export interface SessionProviderProps {
+  config: Config
+}
+
+export class SessionProvider extends React.Component<SessionProviderProps, SessionContext> {
+  constructor(props: SessionProviderProps) {
     super(props)
 
     this.state = {
+      canRestoreSessionFromStorage: storage.get(SessionStorageKey) != undefined,
+      restoreSessionFromLocalStorage: this.restoreSessionFromLocalStorage,
+      restoreSession: this.restoreSession,
       authenticate: this.authenticate,
       invalidate: this.invalidate
     }
   }
 
-  public componentDidMount() {
-    if (!this.state.session) {
-      this.restoreSessionFromLocalStorage()
-    }
-  }
-
   public restoreSessionFromLocalStorage = async () => {
     const session = storage.get(SessionStorageKey)
-    if (!session) return
+
+    if (!session) {
+      throw new Error('No session to restore!')
+    }
+
     return this.restoreSession(session)
   }
 
-  public restoreSession = async (_session: EditorSession) => {
-    // TODO: Add refreshSession to SDK
+  public restoreSession = async (session: Session) => {
+    try {
+      const newSession = await refreshSession(this.props.config.karmaURL, session)
+
+      this.setState({session: newSession})
+      this.storeSession()
+
+      return newSession
+    } catch (err) {
+      this.invalidate()
+      throw err
+    }
   }
 
-  public authenticate = async (karmaURL: string, username: string, password: string) => {
-    const session = await authenticate(karmaURL, username, password)
-    const editorSession = {...session, karmaURL}
+  public authenticate = async (username: string, password: string) => {
+    const session = await authenticate(this.props.config.karmaURL, username, password)
 
-    this.setState({session: editorSession})
-    storage.set(SessionStorageKey, session)
+    this.setState({session})
+    this.storeSession()
 
-    return editorSession
+    return session
   }
 
   public invalidate = async () => {
     this.setState({session: undefined})
     storage.remove(SessionStorageKey)
+  }
+
+  private storeSession() {
+    storage.set(SessionStorageKey, this.state.session)
   }
 
   public render() {
@@ -82,3 +109,5 @@ export function withSession<T extends {sessionContext: SessionContext}>(
     </SessionContext.Consumer>
   )
 }
+
+export const SessionProviderContainer = withConfig(SessionProvider)

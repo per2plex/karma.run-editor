@@ -72,8 +72,7 @@ export function editorMiddleware(opts: Options): express.Router {
       title,
       basePath,
       mediaAPIBasePath,
-      karmaURL: opts.karmaURL,
-      KARMA_MEDIA_SERVER_URL: opts.mediaServerURL
+      karmaURL: opts.karmaURL
     })
 
     const stream = ReactDOMServer.renderToStaticNodeStream(

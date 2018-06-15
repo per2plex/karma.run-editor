@@ -10,31 +10,31 @@ import {KarmaError, KarmaErrorType} from '@karma.run/sdk'
 
 import {Theme, withTheme} from '../context/theme'
 import {SessionContext, withSession} from '../context/session'
-import {withConfig, Config} from '../context/config'
 import {withLocale, LocaleContext} from '../context/locale'
 import {LocationContext, withLocation} from '../context/location'
-import {DashboardLocation} from '../store/locationStore'
+import {DashboardLocation, AppLocation} from '../store/locationStore'
+import {CenteredLoadingIndicator} from './common/loader'
 
 export interface LoginFormState {
-  karmaURL: string
   username: string
   password: string
   isSubmitting: boolean
+  isRestoringSession: boolean
   error?: string
 }
 
 export interface LoginFormProps {
-  config: Config
   theme: Theme
   sessionContext: SessionContext
   localeContext: LocaleContext
   locationContext: LocationContext
+  originalLocation?: AppLocation
 }
 
 export const LoginFormStyle = style({
   $debugName: 'LoginForm',
 
-  backgroundColor: Color.primary.base,
+  background: `radial-gradient(${Color.primary.light1}, ${Color.primary.base})`,
   width: '100%',
   height: '100%',
 
@@ -51,7 +51,7 @@ export const LoginFormStyle = style({
         '> .content': {
           display: 'flex',
           flexDirection: 'column',
-          width: '35.5rem',
+          width: '30rem',
 
           $nest: {
             '> .header': {
@@ -115,21 +115,16 @@ export const LoginFormStyle = style({
   }
 })
 
-export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
+export class Login extends React.Component<LoginFormProps, LoginFormState> {
   constructor(props: LoginFormProps) {
     super(props)
 
-    console.log(this.props.config.karmaURL)
     this.state = {
-      karmaURL: '',
       username: '',
       password: '',
-      isSubmitting: false
+      isSubmitting: false,
+      isRestoringSession: false
     }
-  }
-
-  private handleKarmaURLChange = (karmaURL: string) => {
-    this.setState({karmaURL})
   }
 
   private handleUsernameChange = (username: string) => {
@@ -144,13 +139,8 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
     this.setState({isSubmitting: true})
 
     try {
-      await this.props.sessionContext.authenticate(
-        this.props.config.karmaURL || this.state.karmaURL,
-        this.state.username,
-        this.state.password
-      )
-
-      this.props.locationContext.pushLocation(DashboardLocation())
+      await this.props.sessionContext.authenticate(this.state.username, this.state.password)
+      this.props.locationContext.pushLocation(this.props.originalLocation || DashboardLocation())
     } catch (err) {
       const karmaError: KarmaError = err
 
@@ -160,10 +150,28 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
           error: 'Invalid login'
         })
       } else {
+        this.setState({
+          isSubmitting: false,
+          error: karmaError.message
+        })
       }
     }
+  }
 
-    this.setState({isSubmitting: false})
+  public async componentDidMount() {
+    if (this.props.sessionContext.canRestoreSessionFromStorage) {
+      this.setState({isRestoringSession: true})
+
+      try {
+        await this.props.sessionContext.restoreSessionFromLocalStorage()
+        this.props.locationContext.pushLocation(this.props.originalLocation || DashboardLocation())
+      } catch (err) {
+        this.setState({
+          isRestoringSession: false,
+          error: 'Session expired'
+        })
+      }
+    }
   }
 
   public render() {
@@ -176,55 +184,44 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
                 <this.props.theme.logo />
               </div>
             </div>
-            <form className="form">
-              {!this.props.config.karmaURL && (
+            {this.state.isRestoringSession ? (
+              <CenteredLoadingIndicator />
+            ) : (
+              <form className="form">
                 <div className="fieldWrapper">
-                  <div className="label">{this.props.localeContext.get('karmaURL')}</div>
                   <div className="field">
                     <TextInput
-                      onChange={this.handleKarmaURLChange}
-                      name="karmaURL"
-                      placeholder={this.props.localeContext.get('karmaURL')}
+                      onChange={this.handleUsernameChange}
+                      name="username"
+                      placeholder={this.props.localeContext.get('username')}
                       disabled={this.state.isSubmitting}
-                      value={this.state.karmaURL}
+                      value={this.state.username}
+                      type={TextInputType.Lighter}
+                    />
+                  </div>
+                  <div className="field">
+                    <TextInput
+                      onChange={this.handlePasswordChange}
+                      name="password"
+                      placeholder={this.props.localeContext.get('password')}
+                      isPassword={true}
+                      disabled={this.state.isSubmitting}
+                      value={this.state.password}
+                      type={TextInputType.Lighter}
                     />
                   </div>
                 </div>
-              )}
-              <div className="fieldWrapper">
-                <div className="label">{this.props.localeContext.get('user')}</div>
-                <div className="field">
-                  <TextInput
-                    onChange={this.handleUsernameChange}
-                    name="username"
-                    placeholder={this.props.localeContext.get('username')}
-                    disabled={this.state.isSubmitting}
-                    value={this.state.username}
-                    type={TextInputType.Lighter}
-                  />
-                </div>
-                <div className="field">
-                  <TextInput
-                    onChange={this.handlePasswordChange}
-                    name="password"
-                    placeholder={this.props.localeContext.get('password')}
-                    isPassword={true}
-                    disabled={this.state.isSubmitting}
-                    value={this.state.password}
-                    type={TextInputType.Lighter}
-                  />
-                </div>
-              </div>
-              <Button
-                type={ButtonType.Primary}
-                onTrigger={this.handleSubmitClick}
-                label={this.props.localeContext.get('login')}
-                disabled={this.state.isSubmitting}
-                loading={this.state.isSubmitting}
-              />
-              {/* TODO: Wrap in container */}
-              {this.state.error}
-            </form>
+                <Button
+                  type={ButtonType.Primary}
+                  onTrigger={this.handleSubmitClick}
+                  label={this.props.localeContext.get('login')}
+                  disabled={this.state.isSubmitting}
+                  loading={this.state.isSubmitting}
+                />
+                {/* TODO: Wrap in container */}
+                {this.state.error}
+              </form>
+            )}
           </div>
         </div>
       </div>
@@ -232,6 +229,4 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
   }
 }
 
-export const LoginFormContainer = withConfig(
-  withLocale(withSession(withLocation(withTheme(LoginForm))))
-)
+export const LoginContainer = withLocale(withSession(withLocation(withTheme(Login))))

@@ -1,6 +1,6 @@
 {
   "name": "@karma.run/editor",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "main": "./dist/server/index.js",
   "description": "Editor CLI for karma.run.",
   "bin": {
@@ -22,8 +22,8 @@
     "watch:client:dev": "npm run build:client:dev -- --watch",
     "build:client:prod": "webpack-cli --config webpack.config.prod.ts --progress",
     "watch:client:prod": "npm run build:client:prod -- --watch",
-    "copy-license": "cp ../../LICENSE ./",
-    "clean": "rm -rf ./LICENSE ./dist",
+    "copy-license": "shx cp ../../LICENSE ./",
+    "clean": "shx rm -rf ./LICENSE ./dist",
     "prepare": "run-s clean copy-license build:prod"
   },
   "dependencies": {
@@ -45,6 +45,7 @@
     "nodemon": "^1.17.4",
     "npm-run-all": "^4.1.3",
     "raven-js": "^3.25.1",
+    "shx": "^0.3.0",
     "ts-loader": "^4.3.0",
     "ts-node": "^6.0.3",
     "tslint": "^5.10.0",

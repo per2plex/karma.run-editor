@@ -19,7 +19,6 @@ import {OptionalFieldStore} from './optionalFieldStore'
 import {ListFieldStore} from './listFieldStore'
 import {MapFieldStore} from './mapFieldStore'
 import {SelectFieldStore} from './selectFieldStore'
-import {FileFieldStore} from './fileFieldStore'
 import {PasswordFieldStore} from './passwordFieldStore'
 import {RichtTextFieldStore} from './richTextFieldStore'
 import {EnumFieldStore} from './enumFieldStore'
@@ -169,27 +168,6 @@ function createBasicFieldStores(
       return new MediaFieldStore({
         ...commonOptions,
         allowedMediaTypes: field.allowedMediaTypes ? new Set(field.allowedMediaTypes) : undefined
-      })
-    }
-
-    case 'karmaMedia': {
-      if (!field.name || !field.apiKey) {
-        return new ErrorFieldStore({
-          ...commonOptions,
-          message: 'Invalid KarmaMediaField.'
-        })
-      }
-
-      return new FileFieldStore({
-        ...commonOptions,
-        format: field.format,
-        fileHost: {
-          type: 'karmaMedia',
-          name: field.name,
-          apiKey: field.apiKey,
-          folder: field.folder,
-          thumbnailTransformName: field.thumbnailTransformName
-        }
       })
     }
 

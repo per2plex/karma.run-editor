@@ -3,8 +3,6 @@ import {Entry, keyPathToString} from '../../api/karma'
 import {ViewContext, findKeyPath} from '../../api/karmafe/viewContext'
 import {CardSection, CardImage, CardDocument} from '../common'
 import {getValueForKeyPath} from '../../util/values'
-import {getThumbnailURL} from '../../api/karmaMedia'
-import {getFileExtension} from '../../util/string'
 import {ObjectMap} from '@karma.run/editor-common'
 import {MediaType, unserializeMedia, thumbnailURL} from '@karma.run/editor-media-client'
 import {Env} from '../../util/env'
@@ -36,42 +34,6 @@ export class DescriptionView extends React.Component<DescriptionView.Props> {
                 return <CardImage key={key} src={thumbnailURL(Env.mediaAPIBasePath, media.id)} />
               } else {
                 return <CardDocument key={key} extension={value.extension} />
-              }
-            }
-
-            case 'karmaMedia': {
-              if (field.format === 'legacy') {
-                if (value.resourceType === 'image') {
-                  let url: string
-
-                  if (value.format === 'pdf') {
-                    url = `${value.secureUrl}.png`
-                  } else {
-                    url = value.secureUrl
-                  }
-
-                  const thumbURL = getThumbnailURL(url, field.thumbnailTransformName)
-                  return <CardImage key={key} src={thumbURL} />
-                } else {
-                  const extension = getFileExtension(value.secureUrl)
-                  return <CardDocument key={key} extension={extension} />
-                }
-              } else {
-                if (value.type.image) {
-                  let url: string
-
-                  if (value.format === 'pdf') {
-                    url = `${value.url}.png`
-                  } else {
-                    url = value.url
-                  }
-
-                  const thumbURL = getThumbnailURL(url, field.thumbnailTransformName)
-                  return <CardImage key={key} src={thumbURL} />
-                } else {
-                  const extension = getFileExtension(value.url)
-                  return <CardDocument key={key} extension={extension} />
-                }
               }
             }
 

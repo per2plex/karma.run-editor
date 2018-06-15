@@ -33,7 +33,7 @@
     "build:libraries": "run-s build:common build:media-common build:media-server build:media-client build:worker build:client build:server",
     "build:dev": "run-s clean build:libraries build:editor:dev",
     "build:prod": "run-s clean build:libraries build:editor:prod",
-    "prettier": "prettier packages/**/*.{ts,tsx} --write",
+    "prettier": "prettier packages/**/*.{ts,tsx,js} --write",
     "prettier-check": "prettier packages/**/*.{ts,tsx,js} --list-different"
   },
   "workspaces": [

@@ -10,7 +10,6 @@ export interface Environment {
   mediaAPIBasePath: string
   KARMA_API_URL?: string
   SENTRY_API_URL?: string
-  KARMA_MEDIA_SERVER_URL?: string
   DEFAULT_DATABASE?: string
   DEFAULT_USERNAME?: string
   DEFAULT_PASSWORD?: string
@@ -31,7 +30,6 @@ const defaultEnvironment: Environment = serverConfigElement
       basePath: '',
       mediaAPIBasePath: '/api/media',
       KARMA_API_URL: undefined,
-      KARMA_MEDIA_SERVER_URL: undefined,
       SENTRY_API_URL: undefined,
       DEFAULT_DATABASE: undefined,
       DEFAULT_USERNAME: undefined,

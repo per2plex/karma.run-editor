@@ -55,14 +55,6 @@ export const IntFieldModel = m.Struct({
   multipleOf: m.Optional(m.Int())
 })
 
-export const KarmaMediaFieldModel = m.Struct({
-  name: m.String(),
-  apiKey: m.String(),
-  folder: m.Optional(m.String()),
-  thumbnailTransformName: m.Optional(m.String()),
-  format: m.Optional(m.Enum(['v1', 'legacy']))
-})
-
 export const MediaFieldModel = m.Struct({
   allowedMediaTypes: m.Optional(
     m.Set(
@@ -173,7 +165,6 @@ export const FieldModel = m.Struct({
       fieldset: FieldsetFieldModel,
       dateTime: DateTimeFieldModel,
       checkbox: CheckboxFieldModel,
-      karmaMedia: KarmaMediaFieldModel,
       media: MediaFieldModel,
       tuple: TupleFieldModel,
       enum: EnumFieldModel,
@@ -220,7 +211,6 @@ export function unserializeField(rawField: any): Field {
     case 'float':
     case 'int':
     case 'media':
-    case 'karmaMedia':
     case 'password':
     case 'ref':
     case 'richText':

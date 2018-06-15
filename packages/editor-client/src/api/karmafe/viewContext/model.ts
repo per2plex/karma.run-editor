@@ -3,7 +3,6 @@ import {KeyPath, Model, isKeyPathEqual, keyPathToString} from '../../karma'
 import {lastItem} from '@karma.run/editor-common'
 import {deleteNullValues} from '@karma.run/editor-common'
 import {convertKeyToLabel, slugify, stringToColor} from '../../../util/string'
-import {FileFormat} from '../../../store/fields/fileFieldStore'
 import {DateFormat} from '../../../store/fields/dateTimeFieldStore'
 import {Layout} from '../../../store/fields/fieldsetStore'
 import {Select, Control, LinkType, StyleGroup, BlockType, CustomElement} from '../../../ui/common'
@@ -213,20 +212,6 @@ export interface IntFieldOptions {
 export interface IntField extends BaseField<'int', IntFieldOptions> {}
 export const IntField = BaseFieldConstructor<'int', IntFieldOptions>('int')
 
-// KarmaMediaField
-export interface KarmaMediaFieldOptions {
-  name?: string
-  apiKey?: string
-  folder?: string
-  thumbnailTransformName?: string
-  format?: FileFormat
-}
-
-export interface KarmaMediaField extends BaseField<'karmaMedia', KarmaMediaFieldOptions> {}
-export const KarmaMediaField = BaseFieldConstructor<'karmaMedia', KarmaMediaFieldOptions>(
-  'karmaMedia'
-)
-
 // MediaField
 export interface MediaFieldOptions {
   allowedMediaTypes: MediaType[]
@@ -307,7 +292,6 @@ export type Field =
   | TupleField
   | OrField
   | IntField
-  | KarmaMediaField
   | MediaField
   | PasswordField
   | RefField
@@ -401,9 +385,6 @@ export function deduceFieldsFromModel(
         }
         break
       }
-
-      case 'karmaMedia':
-        return [KarmaMediaField(defaultOptions)]
     }
   }
 

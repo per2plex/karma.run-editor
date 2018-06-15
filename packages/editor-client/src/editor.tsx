@@ -9,7 +9,7 @@ import {Theme, ThemeProvider, defaultTheme} from './context/theme'
 import {Config, ConfigProvider, defaultConfig} from './context/config'
 import {deleteNullValues, EventDispatcher} from '@karma.run/editor-common'
 import {Environment} from './util/env'
-import {SessionProvider} from './context/session'
+import {SessionProviderContainer} from './context/session'
 import {LocaleProvider} from './context/locale'
 
 import englishMessageMap from './locale/en.json'
@@ -60,13 +60,13 @@ export class EditorComponent extends React.Component<EditorProps> {
       <ErrorBoundary>
         <ConfigProvider config={config}>
           <LocaleProvider initialMessageMap={englishMessageMap}>
-            <SessionProvider>
+            <SessionProviderContainer>
               <LocationProviderContainer>
                 <ThemeProvider theme={theme}>
                   <RootViewContainer />
                 </ThemeProvider>
               </LocationProviderContainer>
-            </SessionProvider>
+            </SessionProviderContainer>
           </LocaleProvider>
         </ConfigProvider>
       </ErrorBoundary>

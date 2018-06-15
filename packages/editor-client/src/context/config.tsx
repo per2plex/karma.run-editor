@@ -2,12 +2,12 @@ import React from 'react'
 import {Omit} from '@karma.run/editor-common'
 
 export interface Config {
-  karmaURL?: string
+  karmaURL: string
   title: string
 }
 
 export const defaultConfig: Config = Object.freeze({
-  karmaURL: undefined,
+  karmaURL: '',
   title: 'karma.run'
 })
 

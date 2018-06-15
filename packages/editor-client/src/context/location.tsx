@@ -14,11 +14,14 @@ import {SessionContext, withSession} from './session'
 
 export interface LocationContext {
   location?: AppLocation
+  hasUnsavedChanges: boolean
   pushLocation(location: AppLocation, onlyUpdateURL?: boolean): void
   replaceLocation(location: AppLocation, onlyUpdateURL?: boolean): void
 }
 
 export const LocationContext = React.createContext<LocationContext>({
+  hasUnsavedChanges: false,
+
   async pushLocation() {
     console.warn('No LocationProvider found!')
   },
@@ -37,22 +40,13 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
     super(props)
 
     this.state = {
+      hasUnsavedChanges: false,
       pushLocation: this.pushLocation,
       replaceLocation: this.replaceLocation
     }
   }
 
   private sessionMiddleware(location: AppLocation): AppLocation {
-    // TODO: Restoring session
-    // if (this.props.sessionContext.isRestoringSession) {
-    //   return RestoringSessionLocation(location)
-    // }
-
-    // if (location.type === 'login' && location.session) {
-    //   this.editorStore.restoreSession(location.session)
-    //   return RestoringSessionLocation(location.originalLocation || DashboardLocation())
-    // }
-
     if (location.type === 'login' && this.props.sessionContext.session) {
       return DashboardLocation()
     }
