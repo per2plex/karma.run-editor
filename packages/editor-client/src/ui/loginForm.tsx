@@ -12,6 +12,8 @@ import {Theme, withTheme} from '../context/theme'
 import {SessionContext, withSession} from '../context/session'
 import {withConfig, Config} from '../context/config'
 import {withLocale, LocaleContext} from '../context/locale'
+import {LocationContext, withLocation} from '../context/location'
+import {DashboardLocation} from '../store/locationStore'
 
 export interface LoginFormState {
   karmaURL: string
@@ -26,6 +28,7 @@ export interface LoginFormProps {
   theme: Theme
   sessionContext: SessionContext
   localeContext: LocaleContext
+  locationContext: LocationContext
 }
 
 export const LoginFormStyle = style({
@@ -146,6 +149,8 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
         this.state.username,
         this.state.password
       )
+
+      this.props.locationContext.pushLocation(DashboardLocation())
     } catch (err) {
       const karmaError: KarmaError = err
 
@@ -180,6 +185,7 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
                       onChange={this.handleKarmaURLChange}
                       name="karmaURL"
                       placeholder={this.props.localeContext.get('karmaURL')}
+                      disabled={this.state.isSubmitting}
                       value={this.state.karmaURL}
                     />
                   </div>
@@ -192,6 +198,7 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
                     onChange={this.handleUsernameChange}
                     name="username"
                     placeholder={this.props.localeContext.get('username')}
+                    disabled={this.state.isSubmitting}
                     value={this.state.username}
                     type={TextInputType.Lighter}
                   />
@@ -202,6 +209,7 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
                     name="password"
                     placeholder={this.props.localeContext.get('password')}
                     isPassword={true}
+                    disabled={this.state.isSubmitting}
                     value={this.state.password}
                     type={TextInputType.Lighter}
                   />
@@ -224,4 +232,6 @@ export class LoginForm extends React.Component<LoginFormProps, LoginFormState> {
   }
 }
 
-export const LoginFormContainer = withConfig(withSession(withLocale(withTheme(LoginForm))))
+export const LoginFormContainer = withConfig(
+  withLocale(withSession(withLocation(withTheme(LoginForm))))
+)

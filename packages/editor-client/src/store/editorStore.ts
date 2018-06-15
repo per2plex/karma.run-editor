@@ -70,8 +70,8 @@ import {ObjectMap} from '@karma.run/editor-common'
 const DeveloperStorageKey = 'developer'
 const ActiveEditorContextStorageKey = 'activeEditorContext_v1'
 
-const SessionStorageKey = 'session_v1'
-const SessionRenewalInterval = 5 * (60 * 1000) // 5min
+export const SessionStorageKey = 'session_v1'
+export const SessionRenewalInterval = 5 * (60 * 1000) // 5min
 
 const DevelopmentEditorContextID = '_dev'
 const DevelopmentModelGroupID = '_dev'

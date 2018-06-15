@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import {useStrict} from 'mobx'
 
 import {applicationStore} from './store/applicationStore'
-import {RootView} from './ui/rootView'
+import {RootViewContainer} from './ui/rootView'
 import {ErrorBoundary} from './error/boundary'
 import {Theme, ThemeProvider, defaultTheme} from './context/theme'
 import {Config, ConfigProvider, defaultConfig} from './context/config'
@@ -13,6 +13,7 @@ import {SessionProvider} from './context/session'
 import {LocaleProvider} from './context/locale'
 
 import englishMessageMap from './locale/en.json'
+import {LocationProviderContainer} from './context/location'
 
 useStrict(true)
 
@@ -60,9 +61,11 @@ export class EditorComponent extends React.Component<EditorProps> {
         <ConfigProvider config={config}>
           <LocaleProvider initialMessageMap={englishMessageMap}>
             <SessionProvider>
-              <ThemeProvider theme={theme}>
-                <RootView applicationStore={applicationStore} />
-              </ThemeProvider>
+              <LocationProviderContainer>
+                <ThemeProvider theme={theme}>
+                  <RootViewContainer />
+                </ThemeProvider>
+              </LocationProviderContainer>
             </SessionProvider>
           </LocaleProvider>
         </ConfigProvider>
