@@ -20,7 +20,7 @@
     "prepare": "run-s clean copy-license build"
   },
   "dependencies": {
-    "axios": "^0.17.0",
+    "axios": "^0.18.0",
     "shortid": "^2.2.8"
   },
   "devDependencies": {

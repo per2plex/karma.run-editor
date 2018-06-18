@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import {style} from 'typestyle'
 import {LoginContainer} from './login'
-// import {BaseView} from './baseView'
+import {BaseView} from './baseView'
 import {NotificationContainer} from '../ui/common/notification'
 import {CenteredLoadingIndicator} from '../ui/common/loader'
 import {Color} from '../ui/style'
@@ -34,7 +34,7 @@ export function rootViewForLocation(location?: AppLocation) {
       return <CenteredLoadingIndicator />
 
     default:
-      return <div /> //<BaseView applicationStore={applicationStore} />
+      return <BaseView applicationStore={applicationStore} />
   }
 }
 

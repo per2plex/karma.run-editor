@@ -34,7 +34,7 @@ export interface LoginFormProps {
 export const LoginFormStyle = style({
   $debugName: 'LoginForm',
 
-  background: `radial-gradient(${Color.primary.light1}, ${Color.primary.base})`,
+  background: `radial-gradient(circle at center, ${Color.primary.light1}, ${Color.primary.base})`,
   width: '100%',
   height: '100%',
 

@@ -23,16 +23,12 @@
     "build:media-client": "cd packages/editor-media-client && npm run build",
     "watch:media-client": "cd packages/editor-media-client && npm run watch",
     "clean:editor": "cd packages/editor && npm run clean",
-    "build:editor:dev": "cd packages/editor && npm run build:dev",
-    "build:editor:prod": "cd packages/editor && npm run build:prod",
-    "watch:editor:dev": "cd packages/editor && npm run watch:dev",
-    "watch:editor:prod": "cd packages/editor && npm run watch:prod",
+    "build:editor": "cd packages/editor && npm run build",
+    "watch:editor": "cd packages/editor && npm run watch",
     "start:editor": "cd packages/editor && npm run start",
     "clean": "run-p clean:*",
-    "build": "run-s build:prod",
     "build:libraries": "run-s build:common build:media-common build:media-server build:media-client build:worker build:client build:server",
-    "build:dev": "run-s clean build:libraries build:editor:dev",
-    "build:prod": "run-s clean build:libraries build:editor:prod",
+    "build": "run-s clean build:libraries build:editor",
     "prettier": "prettier packages/**/*.{ts,tsx,js} --write",
     "prettier-check": "prettier packages/**/*.{ts,tsx,js} --list-different"
   },
@@ -41,7 +37,6 @@
   ],
   "devDependencies": {
     "npm-run-all": "^4.1.3",
-    "prettier": "1.13.4",
-    "ts-node": "^6.0.3"
+    "prettier": "1.13.4"
   }
 }

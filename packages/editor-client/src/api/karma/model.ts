@@ -1,4 +1,3 @@
-// tslint:disable:variable-name
 import * as debug from '../../util/debug'
 import {firstKey, mapObject, ObjectMap} from '@karma.run/editor-common'
 
