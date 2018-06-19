@@ -4,6 +4,6 @@
   "compilerOptions": {
     "lib": ["es2017"],
     "types": ["@types/node"],
-    "outDir": "./dist/server"
+    "outDir": "./dist"
   }
 }

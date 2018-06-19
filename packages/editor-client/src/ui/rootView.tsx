@@ -2,7 +2,6 @@ import * as React from 'react'
 
 import {style} from 'typestyle'
 import {LoginContainer} from './login'
-import {BaseView} from './baseView'
 import {NotificationContainer} from '../ui/common/notification'
 import {CenteredLoadingIndicator} from '../ui/common/loader'
 import {Color} from '../ui/style'
@@ -34,7 +33,7 @@ export function rootViewForLocation(location?: AppLocation) {
       return <CenteredLoadingIndicator />
 
     default:
-      return <BaseView applicationStore={applicationStore} />
+      return <AsyncView />
   }
 }
 
@@ -50,3 +49,22 @@ export class RootView extends React.Component<RootViewProps> {
 }
 
 export const RootViewContainer = withLocation(RootView)
+
+export interface AsyncViewState {
+  component?: React.ComponentType<any>
+}
+
+export class AsyncView extends React.Component<{}, AsyncViewState> {
+  public state: AsyncViewState = {}
+
+  public async componentDidMount() {
+    this.setState({
+      component: (await import('./baseView')).BaseView
+    })
+  }
+
+  public render() {
+    if (!this.state.component) return <CenteredLoadingIndicator />
+    return <this.state.component applicationStore={applicationStore} />
+  }
+}

@@ -15,9 +15,9 @@ const cacheOptions = {maxAge: '1d'}
 export interface Options {
   basePath?: string
   mediaAPIBasePath?: string
-  clientPath: string
-  workerPath: string
-  staticDirs?: string[]
+  staticPath: string
+  clientName?: string
+  workerName?: string
   title?: string
   karmaURL?: string
   mediaServerURL?: string
@@ -28,8 +28,11 @@ export function editorMiddleware(opts: Options): express.Router {
   const title = opts.title || 'karma.run'
   const basePath = opts.basePath || ''
   const mediaAPIBasePath = opts.mediaAPIBasePath || ''
-  const staticDirs = opts.staticDirs || []
   const customClientConfig = opts.customClientConfig || {}
+
+  const staticPath = opts.staticPath
+  const clientName = opts.clientName || 'main.js'
+  const workerName = opts.workerName || 'worker.js'
 
   const router = express.Router()
   const reactDateTimePath = require.resolve('react-datetime')
@@ -37,10 +40,6 @@ export function editorMiddleware(opts: Options): express.Router {
 
   const reactDateTimeCSSPath = path.join(path.dirname(reactDateTimePath), 'css/react-datetime.css')
   const draftJSCSSPath = path.join(path.dirname(draftJSPath), '../dist/Draft.css')
-
-  staticDirs.forEach(staticDir => {
-    router.use(`${basePath}/static`, express.static(staticDir, cacheOptions))
-  })
 
   router.get(`${basePath}/css/react-datetime.css`, (_, res) => {
     res.sendFile(reactDateTimeCSSPath, cacheOptions)
@@ -50,21 +49,12 @@ export function editorMiddleware(opts: Options): express.Router {
     res.sendFile(draftJSCSSPath, cacheOptions)
   })
 
-  router.get(`${basePath}/js/worker.js`, (_, res) => {
-    res.sendFile(opts.workerPath, cacheOptions)
-  })
-
-  router.get(`${basePath}/js/main.js`, (_, res) => {
-    res.sendFile(opts.clientPath, cacheOptions)
-  })
-
-  router.get(`${basePath}/js/worker.js.map`, (_, res) => {
-    res.sendFile(opts.workerPath + '.map', cacheOptions)
-  })
-
-  router.get(`${basePath}/js/main.js.map`, (_, res) => {
-    res.sendFile(opts.clientPath + '.map', cacheOptions)
-  })
+  router.use(
+    `${basePath}/static`,
+    express.static(staticPath, {
+      index: false
+    })
+  )
 
   router.get(`${basePath}(/*)?`, (_, res) => {
     const configJSON = JSON.stringify({
@@ -72,7 +62,8 @@ export function editorMiddleware(opts: Options): express.Router {
       title,
       basePath,
       mediaAPIBasePath,
-      karmaURL: opts.karmaURL
+      karmaURL: opts.karmaURL,
+      workerName
     })
 
     const stream = ReactDOMServer.renderToStaticNodeStream(
@@ -92,7 +83,7 @@ export function editorMiddleware(opts: Options): express.Router {
             type="application/json"
             dangerouslySetInnerHTML={{__html: configJSON}}
           />
-          <script src={`${basePath}/js/main.js`} defer />
+          <script src={`${basePath}/static/${clientName}`} defer />
         </head>
         <body>
           <div id="EditorRoot" />

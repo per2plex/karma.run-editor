@@ -9,7 +9,7 @@
   "scripts": {
     "build": "run-p build:*",
     "build:cjs": "tsc --outDir ./lib/cjs",
-    "build:es6": "tsc --module es6 --outDir ./lib/es6",
+    "build:es6": "tsc  --outDir ./lib/es6",
     "build:types": "tsc --declaration --declarationDir ./lib/types --emitDeclarationOnly",
     "watch": "run-s clean mkdir symlink watch:dev",
     "watch:dev": "tsc --watch --outDir ./lib/cjs --declaration --declarationDir ./lib/types --declarationMap",

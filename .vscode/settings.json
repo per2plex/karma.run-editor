@@ -19,7 +19,6 @@
     "**/.DS_Store": true,
     "**/node_modules": true,
     "**/lib": true,
-    "**/dist": true,
-    "**/.cache": true
+    "**/dist": true
   }
 }

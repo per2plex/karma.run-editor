@@ -66,8 +66,7 @@ app.get('/favicon.ico', (_, res) => {
 
 app.use(
   editorMiddleware({
-    clientPath: path.join(__dirname, '../client/index.js'),
-    workerPath: path.join(__dirname, '../worker/index.js'),
+    staticPath: path.resolve(__dirname, './static'),
     karmaURL: process.env.KARMA_URL || process.env.KARMA_API_URL || options.karmaURL,
     mediaAPIBasePath: '/api/media',
     customClientConfig: {
