@@ -8,12 +8,15 @@ import {observer} from 'mobx-react'
 import {ApplicationStore} from '../store/applicationStore'
 import {SidePanel} from './sidePanel'
 import {FlexList} from '../ui/common'
+
 import {
   PanelManager,
   ListPanelContext,
   EditPanelContext,
   DeletePanelContext
 } from '../ui/panelManager'
+
+import {LocationType} from '../store/locationStore'
 
 export namespace BaseView {
   export interface Props {
@@ -61,7 +64,7 @@ export class BaseView extends React.Component<BaseView.Props> {
 
     let content: React.ReactNode
 
-    if (location.type === 'entryList') {
+    if (location.type === LocationType.EntryList) {
       const selectedViewContext = editorStore.viewContexts.find(viewContext => {
         return viewContext.slug === location.slug || viewContext.model === location.slug
       })!
@@ -71,8 +74,11 @@ export class BaseView extends React.Component<BaseView.Props> {
       content = (
         <PanelManager initialContext={contexts} applicationStore={this.props.applicationStore} />
       )
-    } else if (location.type === 'entryNew' || location.type === 'entryEdit') {
-      const entryID = location.type === 'entryEdit' ? location.id : undefined
+    } else if (
+      location.type === LocationType.EntryNew ||
+      location.type === LocationType.EntryEdit
+    ) {
+      const entryID = location.type === LocationType.EntryEdit ? location.id : undefined
       const selectedViewContext = editorStore.viewContexts.find(viewContext => {
         return viewContext.slug === location.slug || viewContext.model === location.slug
       })
@@ -88,7 +94,7 @@ export class BaseView extends React.Component<BaseView.Props> {
       content = (
         <PanelManager initialContext={contexts} applicationStore={this.props.applicationStore} />
       )
-    } else if (location.type === 'entryDelete') {
+    } else if (location.type === LocationType.EntryDelete) {
       const entryID = location.id
       const selectedViewContext = editorStore.viewContexts.find(viewContext => {
         return viewContext.slug === location.slug
@@ -105,9 +111,9 @@ export class BaseView extends React.Component<BaseView.Props> {
       content = (
         <PanelManager initialContext={contexts} applicationStore={this.props.applicationStore} />
       )
-    } else if (location.type === 'notFound') {
+    } else if (location.type === LocationType.NotFound) {
       content = <div className={`${BaseViewStyle}_error`}>Not Found</div>
-    } else if (location.type === 'noPermission') {
+    } else if (location.type === LocationType.NoPermission) {
       content = <div className={`${BaseViewStyle}_error`}>No Permission</div>
     }
 

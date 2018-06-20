@@ -4,14 +4,20 @@ import {Omit} from '@karma.run/editor-common'
 import * as storage from '../util/storage'
 import {SessionStorageKey} from '../store/editorStore'
 import {Config, withConfig} from './config'
+import {EditorContext} from '../api/karmafe/editorContext'
+import {ModelGroup} from '../api/karmafe/modelGroup'
 
 export interface SessionContext {
   session?: Session
+  editorContexts?: EditorContext[]
+  modelGroups?: ModelGroup[]
   canRestoreSessionFromStorage: boolean
   restoreSessionFromLocalStorage(): Promise<Session>
   restoreSession(session: Session): Promise<Session>
   authenticate(username: string, password: string): Promise<Session>
   invalidate(): Promise<void>
+  getEditorContexts(): Promise<EditorContext[]>
+  getModelGroups(): Promise<EditorContext[]>
 }
 
 export const SessionContext = React.createContext<SessionContext>({
@@ -30,6 +36,14 @@ export const SessionContext = React.createContext<SessionContext>({
   },
 
   async invalidate() {
+    throw new Error('No SessionProvider found!')
+  },
+
+  async getEditorContexts() {
+    throw new Error('No SessionProvider found!')
+  },
+
+  async getModelGroups() {
     throw new Error('No SessionProvider found!')
   }
 })
