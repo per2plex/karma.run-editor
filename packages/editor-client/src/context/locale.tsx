@@ -1,5 +1,5 @@
 import React from 'react'
-import {Omit} from '@karma.run/editor-common'
+import {createContextHOC} from './helper'
 
 export type MessageMap = typeof import('../locale/en.json')
 export type MessageKey = keyof MessageMap
@@ -39,12 +39,4 @@ export class LocaleProvider extends React.Component<LocaleProviderProps, LocaleC
   }
 }
 
-export function withLocale<T extends {localeContext: LocaleContext}>(
-  Component: React.ComponentType<T>
-): React.StatelessComponent<Omit<T, 'localeContext'>> {
-  return props => (
-    <LocaleContext.Consumer>
-      {localeContext => <Component {...props} localeContext={localeContext} />}
-    </LocaleContext.Consumer>
-  )
-}
+export const withLocale = createContextHOC(LocaleContext, 'localeContext', 'withLocale')

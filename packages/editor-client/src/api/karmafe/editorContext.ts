@@ -1,14 +1,15 @@
+import {Ref} from '@karma.run/sdk'
 import {ModelGroupID, ModelID} from '../../api/karmafe/modelGroup'
 import * as models from '../../api/karma/model'
 
 export type Privilege = string
-export type EditorContextID = string
+export type EditorContextID = symbol | Ref
 
 export const EditorContextTagV1 = '_frontend_editor_context_v1'
 export const EditorContextTagV2 = '_frontend_editor_context_v2'
 
 export interface EditorContext {
-  id: string
+  id: EditorContextID
   name: string
   privileges?: Privilege[]
   modelGroups: ModelGroupID[]

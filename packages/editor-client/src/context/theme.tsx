@@ -1,5 +1,5 @@
 import React from 'react'
-import {Omit} from '@karma.run/editor-common'
+import {createContextHOC} from './helper'
 
 export interface Colors {
   primary: string
@@ -42,10 +42,4 @@ export class ThemeProvider extends React.Component<{theme: Theme}> {
   }
 }
 
-export function withTheme<T extends {theme: Theme}>(
-  Component: React.ComponentType<T>
-): React.StatelessComponent<Omit<T, 'theme'>> {
-  return props => (
-    <ThemeContext.Consumer>{theme => <Component {...props} theme={theme} />}</ThemeContext.Consumer>
-  )
-}
+export const withTheme = createContextHOC(ThemeContext, 'theme', 'withTheme')

@@ -49,8 +49,6 @@ import {
 } from '../api/karma'
 
 import {
-  EditorContext,
-  EditorContextID,
   createEditorContextModel,
   unserializeEditorContext,
   EditorContextTagV2,
@@ -58,7 +56,6 @@ import {
 } from '../api/karmafe/editorContext'
 
 import {
-  ModelGroup,
   createModelGroupModel,
   ModelGroupTag,
   unserializeModelGroup
@@ -66,6 +63,19 @@ import {
 
 import {createDefaultViewContextMap} from '../api/karmafe/viewContext/default'
 import {ObjectMap} from '@karma.run/editor-common'
+
+interface ModelGroup {
+  id: string
+  name: string
+  models: string[]
+}
+
+interface EditorContext {
+  id: string
+  name: string
+  privileges?: string[]
+  modelGroups: string[]
+}
 
 const DeveloperStorageKey = 'developer'
 const ActiveEditorContextStorageKey = 'activeEditorContext_v1'
@@ -553,7 +563,9 @@ export class EditorStore {
         let editorContexts: EditorContext[] = []
 
         if (entries) {
-          editorContexts = entries.map(entry => unserializeEditorContext(entry.id, entry.value))
+          editorContexts = entries.map(entry =>
+            unserializeEditorContext(entry.id, entry.value)
+          ) as any
         }
 
         return {editorContexts, isDeveloper: this.isDeveloper}
@@ -601,7 +613,7 @@ export class EditorStore {
         let modelGroups: ModelGroup[] = []
 
         if (entries) {
-          modelGroups = entries.map(entry => unserializeModelGroup(entry.id, entry.value))
+          modelGroups = entries.map(entry => unserializeModelGroup(entry.id, entry.value)) as any
         }
 
         return {modelGroups, modelIDs, developmentContextExists}
@@ -805,7 +817,7 @@ export class EditorStore {
     return this._activeEditorContext.id
   }
 
-  public set activeEditorContextID(editorContextID: EditorContextID) {
+  public set activeEditorContextID(editorContextID: string) {
     const editorContext = this.editorContexts.find(context => context.id === editorContextID)
     if (!editorContext) throw new Error(`No EditorContext found with ID: ${editorContextID}`)
     this.activeEditorContext = editorContext

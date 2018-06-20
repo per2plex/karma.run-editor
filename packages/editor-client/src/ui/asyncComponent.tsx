@@ -19,12 +19,7 @@ export class AsyncComponent extends React.Component<AsyncComponentProps, AsyncCo
   }
 
   public render() {
-    console.log(this.state.component)
-
-    if (this.state.component) {
-      return this.state.component
-    }
-
+    if (this.state.component) return this.state.component
     return <CenteredLoadingIndicator />
   }
 }

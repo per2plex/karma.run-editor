@@ -3,7 +3,7 @@
   "include": ["./**/*"],
   "compilerOptions": {
     "target": "es2017",
-    "module": "es6",
+    "module": "esnext",
     "lib": ["es2017", "webworker"]
   }
 }

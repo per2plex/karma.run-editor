@@ -1,5 +1,5 @@
 import React from 'react'
-import {Omit} from '@karma.run/editor-common'
+import {createContextHOC} from './helper'
 
 export interface Config {
   karmaURL: string
@@ -22,12 +22,4 @@ export class ConfigProvider extends React.Component<{config: Config}> {
   }
 }
 
-export function withConfig<T extends {config: Config}>(
-  Component: React.ComponentType<T>
-): React.StatelessComponent<Omit<T, 'config'>> {
-  return props => (
-    <ConfigContext.Consumer>
-      {config => <Component {...props} config={config} />}
-    </ConfigContext.Consumer>
-  )
-}
+export const withConfig = createContextHOC(ConfigContext, 'config', 'withConfig')

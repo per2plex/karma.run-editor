@@ -1,5 +1,4 @@
 import React from 'react'
-import {Omit} from '@karma.run/editor-common'
 
 import {
   AppLocation,
@@ -11,6 +10,7 @@ import {
 } from '../store/locationStore'
 
 import {SessionContext, withSession} from './session'
+import {createContextHOC} from './helper'
 
 export interface LocationContext {
   location?: AppLocation
@@ -122,14 +122,5 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
   }
 }
 
-export function withLocation<T extends {locationContext: LocationContext}>(
-  Component: React.ComponentType<T>
-): React.StatelessComponent<Omit<T, 'locationContext'>> {
-  return props => (
-    <LocationContext.Consumer>
-      {locationContext => <Component {...props} locationContext={locationContext} />}
-    </LocationContext.Consumer>
-  )
-}
-
+export const withLocation = createContextHOC(LocationContext, 'locationContext', 'withLocale')
 export const LocationProviderContainer = withSession(LocationProvider)

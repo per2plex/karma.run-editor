@@ -37,8 +37,9 @@ export function rootViewForLocation(location?: AppLocation) {
       return (
         <AsyncComponent>
           {async () => {
-            const {BaseView} = await import('./baseView')
-            return <BaseView applicationStore={applicationStore} />
+            // const {BaseView} = await import('./baseView')
+            // return <BaseView applicationStore={applicationStore} />
+            return <div />
           }}
         </AsyncComponent>
       )
