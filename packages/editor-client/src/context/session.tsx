@@ -20,6 +20,8 @@ import {EditorContext} from '../api/karmafe/editorContext'
 import {ModelGroup} from '../api/karmafe/modelGroup'
 import {createContextHOC} from './helper'
 import {ReadonlyRefMap, RefMap} from '../util/ref'
+import {inferViewContextFromModel, ViewContext} from '../api/karmafe/viewContext'
+import {unserializeModel} from '../api/karma'
 
 export const DevelopmentModelGroupID = Symbol('DevelopmentModelGroup')
 export const DevelopmentEditorContextID = Symbol('DevelopmentEditorContext')
@@ -29,8 +31,11 @@ export interface EditorData {
   modelMap: ReadonlyRefMap<any>
   tags: Tag[]
   tagMap: ReadonlyMap<string, Ref>
+  reverseTagMap: ReadonlyRefMap<string>
   editorContexts: EditorContext[]
   modelGroups: ModelGroup[]
+  viewContexts: ViewContext[]
+  viewContextMap: ReadonlyRefMap<ViewContext>
 }
 
 export interface SessionContext extends EditorData {
@@ -44,12 +49,14 @@ export interface SessionContext extends EditorData {
 
 export const SessionContext = React.createContext<SessionContext>({
   models: [],
-  modelMap: new Map(),
+  modelMap: new RefMap(),
   tags: [],
   tagMap: new Map(),
+  reverseTagMap: new RefMap(),
   editorContexts: [],
   modelGroups: [],
-
+  viewContexts: [],
+  viewContextMap: new RefMap(),
   canRestoreSessionFromStorage: false,
 
   async restoreSessionFromLocalStorage() {
@@ -79,11 +86,14 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
     this.state = {
       models: [],
-      modelMap: new Map(),
+      modelMap: new RefMap(),
       tags: [],
       tagMap: new Map(),
+      reverseTagMap: new RefMap(),
       editorContexts: [],
       modelGroups: [],
+      viewContexts: [],
+      viewContextMap: new RefMap(),
 
       canRestoreSessionFromStorage: storage.get(SessionStorageKey) != undefined,
       restoreSessionFromLocalStorage: this.restoreSessionFromLocalStorage,
@@ -140,12 +150,18 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   private async getEditorData(session: Session): Promise<EditorData> {
     const tags = await this.getTags(session)
     const tagMap = new Map(tags.map(tag => [tag.tag, tag.model] as [string, Ref]))
+    const reverseTagMap = new RefMap(tags.map(tag => [tag.model, tag.tag] as [Ref, string]))
 
     const models = await this.getModels(session)
     const modelMap = new RefMap(models.map(model => [model.id, model.value] as [Ref, any]))
 
     const modelGroups: ModelGroup[] = []
     const editorContexts: EditorContext[] = []
+    const viewContexts: ViewContext[] = []
+
+    const inferedViewContexts = models.map(model =>
+      inferViewContextFromModel(model.id[1], unserializeModel(model.value))
+    )
 
     // TODO: Check development mode
     if (true) {
@@ -165,13 +181,21 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       editorContexts.push(developmentEditorContext)
     }
 
+    viewContexts.push(...inferedViewContexts)
+
+    // TODO
+    const viewContextMap = new RefMap<ViewContext>()
+
     return {
       tags,
       tagMap,
+      reverseTagMap,
       models,
       modelMap,
       modelGroups,
-      editorContexts
+      editorContexts,
+      viewContexts,
+      viewContextMap
     }
   }
 

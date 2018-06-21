@@ -305,18 +305,18 @@ export type Field =
 
 export type FieldType = Field['type']
 
-export function deduceViewContextFromModel(id: string, model: Model, tag?: string): ViewContext {
+export function inferViewContextFromModel(id: string, model: Model, tag?: string): ViewContext {
   return {
     model: id,
     color: stringToColor(id),
     name: tag ? convertKeyToLabel(tag) : id,
     slug: slugify(tag || id),
     descriptionKeyPaths: [],
-    fields: deduceFieldsFromModel(model)
+    fields: inferFieldsFromModel(model)
   }
 }
 
-export function deduceFieldsFromModel(
+export function inferFieldsFromModel(
   model: Model,
   keyPath: KeyPath = [],
   modifiers: Modifier[] = [],
@@ -363,7 +363,7 @@ export function deduceFieldsFromModel(
             if (blockDataUnion && blockDataUnion.type === 'union') {
               blockDataFields = Object.entries(blockDataUnion.fields).reduce(
                 (prev, [key, model]) =>
-                  prev.concat(deduceFieldsFromModel(model, [...keyPath, 'blockData', key])),
+                  prev.concat(inferFieldsFromModel(model, [...keyPath, 'blockData', key])),
                 [] as Field[]
               )
             }
@@ -375,7 +375,7 @@ export function deduceFieldsFromModel(
             if (entityDataUnion && entityDataUnion.type === 'union') {
               entityDataFields = Object.entries(entityDataUnion.fields).reduce(
                 (prev, [key, model]) =>
-                  prev.concat(deduceFieldsFromModel(model, [...keyPath, 'entityData', key])),
+                  prev.concat(inferFieldsFromModel(model, [...keyPath, 'entityData', key])),
                 [] as Field[]
               )
             }
@@ -391,22 +391,22 @@ export function deduceFieldsFromModel(
   // Modifiers
   switch (model.type) {
     case 'optional':
-      return deduceFieldsFromModel(model.model, keyPath, [...modifiers, OptionalModifier({})])
+      return inferFieldsFromModel(model.model, keyPath, [...modifiers, OptionalModifier({})])
 
     case 'list':
     case 'set':
-      return deduceFieldsFromModel(model.model, keyPath, [...modifiers, ListModifier({})])
+      return inferFieldsFromModel(model.model, keyPath, [...modifiers, ListModifier({})])
 
     case 'map':
-      return deduceFieldsFromModel(model.model, keyPath, [...modifiers, MapModifier({})])
+      return inferFieldsFromModel(model.model, keyPath, [...modifiers, MapModifier({})])
 
     case 'annotation': {
       const typeHint = model.value.replace('field:', '')
-      return deduceFieldsFromModel(model.model, keyPath, modifiers, typeHint as FieldType)
+      return inferFieldsFromModel(model.model, keyPath, modifiers, typeHint as FieldType)
     }
 
     case 'unique':
-      return deduceFieldsFromModel(model.model, keyPath, modifiers)
+      return inferFieldsFromModel(model.model, keyPath, modifiers)
   }
 
   // Fields
@@ -414,7 +414,7 @@ export function deduceFieldsFromModel(
     case 'union':
     case 'struct': {
       const fields = Object.entries(model.fields).reduce(
-        (prev, [key, model]) => prev.concat(deduceFieldsFromModel(model, [...keyPath, key])),
+        (prev, [key, model]) => prev.concat(inferFieldsFromModel(model, [...keyPath, key])),
         [] as Field[]
       )
 
@@ -427,7 +427,7 @@ export function deduceFieldsFromModel(
     case 'or':
     case 'tuple': {
       const fields = model.fields.reduce(
-        (prev, model, index) => prev.concat(deduceFieldsFromModel(model, [...keyPath, index])),
+        (prev, model, index) => prev.concat(inferFieldsFromModel(model, [...keyPath, index])),
         [] as Field[]
       )
 
@@ -485,7 +485,7 @@ export function deduceFieldsFromModel(
       return [RecursionField({...defaultOptions, recursionLabel: model.label})]
 
     case 'recursion': {
-      const fields = deduceFieldsFromModel(model.model, [...keyPath, model.label])
+      const fields = inferFieldsFromModel(model.model, [...keyPath, model.label])
 
       return [RecursionField({...defaultOptions, recursionLabel: model.label}), ...fields]
     }
@@ -493,7 +493,7 @@ export function deduceFieldsFromModel(
     case 'recursive': {
       const modelEntries = Object.entries(model.models)
       const fields = modelEntries.reduce(
-        (prev, [key, model]) => prev.concat(deduceFieldsFromModel(model, [...keyPath, key])),
+        (prev, [key, model]) => prev.concat(inferFieldsFromModel(model, [...keyPath, key])),
         [] as Field[]
       )
 

@@ -22,7 +22,7 @@ import {
   ViewContextTagV2,
   ViewContext,
   createViewContextModel,
-  deduceViewContextFromModel,
+  inferViewContextFromModel,
   entryToViewContext,
   mergeViewContext
 } from '../api/karmafe/viewContext'
@@ -539,7 +539,7 @@ export class EditorStore {
         this.viewContexts.push(
           ...modelEntries.map(([id, model]) => {
             const tag = reverseTags[id]
-            const deducedViewContext = deduceViewContextFromModel(id, model, tag)
+            const deducedViewContext = inferViewContextFromModel(id, model, tag)
             const matchingViewContexts = viewContexts.filter(
               viewContext => viewContext.model === id
             )

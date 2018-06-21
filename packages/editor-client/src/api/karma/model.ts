@@ -291,14 +291,15 @@ export function unserializeModel(rawModel: any): Model {
       return BaseModelConstructor(type)() as Model
     }
 
+    // TODO: Fix for Karma 0.5
     // RefModel
-    case 'ref': {
-      if (typeof value !== 'string') {
-        throw new Error(`Expected string, got ${typeof value}.`)
-      }
+    // case 'ref': {
+    //   if (typeof value !== 'string') {
+    //     throw new Error(`Expected string, got ${typeof value}.`)
+    //   }
 
-      return RefModelConstructor(type)(value)
-    }
+    //   return RefModelConstructor(type)(value)
+    // }
 
     // EnumModel
     case 'enum': {

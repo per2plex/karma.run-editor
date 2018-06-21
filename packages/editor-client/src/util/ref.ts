@@ -13,15 +13,17 @@ export function stringToRef(refString: RefString): Ref {
 }
 
 export class RefMap<V> extends Map<RefString, V> {
-  public constructor(iterable: Iterable<[Ref | RefString, V]>) {
+  public constructor(iterable?: Iterable<[Ref | RefString, V]>) {
     const mappedEntries: [RefString, V][] = []
 
-    for (const tuple of iterable) {
-      const ref = tuple[0]
-      const stringRef = typeof ref !== 'string' ? refToString(ref) : ref
-      const value = tuple[1]
+    if (iterable) {
+      for (const tuple of iterable) {
+        const ref = tuple[0]
+        const stringRef = typeof ref !== 'string' ? refToString(ref) : ref
+        const value = tuple[1]
 
-      mappedEntries.push([stringRef, value])
+        mappedEntries.push([stringRef, value])
+      }
     }
 
     super(mappedEntries)
