@@ -16,7 +16,7 @@ import {SidePanelContainer} from './sidePanel'
 // import {LocationType} from '../store/locationStore'
 import {withSession, SessionContext} from '../context/session'
 import {withLocation, LocationContext} from '../context/location'
-import {MainPanel} from './mainPanel'
+import {MainPanelContainer} from './mainPanel'
 
 export interface BaseViewProps {
   locationContext: LocationContext
@@ -122,7 +122,7 @@ export class BaseView extends React.Component<BaseViewProps> {
     return (
       <div className={BaseViewStyle}>
         <SidePanelContainer />
-        <MainPanel />
+        <MainPanelContainer />
         {/* <div className={`${BaseViewStyle}_content`}>{content}</div> */}
       </div>
     )

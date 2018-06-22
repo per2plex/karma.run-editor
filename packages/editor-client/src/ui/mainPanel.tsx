@@ -1,5 +1,6 @@
 import React from 'react'
 import {style} from 'typestyle'
+import {withLocation, LocationContext} from '../context/location'
 
 export const MainPanelStyle = style({
   $debugName: 'MainPanel',
@@ -8,8 +9,14 @@ export const MainPanelStyle = style({
   height: '100%'
 })
 
-export class MainPanel extends React.Component {
+export interface MainPanelProps {
+  locationContext: LocationContext
+}
+
+export class MainPanel extends React.Component<MainPanelProps> {
   public render() {
     return <div className={MainPanelStyle} />
   }
 }
+
+export const MainPanelContainer = withLocation(MainPanel)

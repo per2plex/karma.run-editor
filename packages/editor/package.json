@@ -10,7 +10,7 @@
   "repository": "github:karmarun/karma.run-editor",
   "scripts": {
     "start": "node ./dist/index.js",
-    "watch:start": "nodemon --watch ./dist/index.js --exec \"node ./dist/index.js\"",
+    "watch:start": "nodemon --watch ./dist/index.js --exec \"node ./dist/index.js run\"",
     "watch": "run-p watch:server watch:client",
     "build": "run-p build:server build:client",
     "build:server": "tsc",
