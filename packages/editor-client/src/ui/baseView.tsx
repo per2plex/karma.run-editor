@@ -1,27 +1,26 @@
 import * as React from 'react'
-
 import {style} from 'typestyle'
 
 import {Color, FontSize} from '../ui/style'
+import {SidePanelContainer} from './sidePanel'
+// import {FlexList} from '../ui/common'
 
-import {observer} from 'mobx-react'
-import {ApplicationStore} from '../store/applicationStore'
-import {SidePanel} from './sidePanel'
-import {FlexList} from '../ui/common'
+// import {
+//   PanelManager,
+//   ListPanelContext,
+//   EditPanelContext,
+//   DeletePanelContext,
+//   PanelContext
+// } from '../ui/panelManager'
 
-import {
-  PanelManager,
-  ListPanelContext,
-  EditPanelContext,
-  DeletePanelContext
-} from '../ui/panelManager'
+// import {LocationType} from '../store/locationStore'
+import {withSession, SessionContext} from '../context/session'
+import {withLocation, LocationContext} from '../context/location'
+import {MainPanel} from './mainPanel'
 
-import {LocationType} from '../store/locationStore'
-
-export namespace BaseView {
-  export interface Props {
-    applicationStore: ApplicationStore
-  }
+export interface BaseViewProps {
+  locationContext: LocationContext
+  sessionContext: SessionContext
 }
 
 export const BaseViewStyle = style({
@@ -29,7 +28,9 @@ export const BaseViewStyle = style({
 
   backgroundColor: Color.primary.light1,
 
+  display: 'flex',
   flexGrow: 1,
+
   width: '100%',
   height: '100%',
 
@@ -56,77 +57,76 @@ export const BaseViewStyle = style({
   }
 })
 
-@observer
-export class BaseView extends React.Component<BaseView.Props> {
+export class BaseView extends React.Component<BaseViewProps> {
   public render() {
-    const location = this.props.applicationStore.locationStore.location
-    const editorStore = this.props.applicationStore.editorStore
+    // const sessionContext = this.props.sessionContext
 
-    let content: React.ReactNode
+    // const location = this.props.locationContext.location!
+    // const editorStore = this.props.applicationStore.editorStore
 
-    if (location.type === LocationType.EntryList) {
-      const selectedViewContext = editorStore.viewContexts.find(viewContext => {
-        return viewContext.slug === location.slug || viewContext.model === location.slug
-      })!
+    // let content: React.ReactNode
 
-      const contexts = [ListPanelContext(selectedViewContext)]
+    // if (location.type === LocationType.EntryList) {
+    //   const viewContext = sessionContext.viewContexts.find(viewContext => {
+    //     return viewContext.slug === location.slug || viewContext.model[1] === location.slug
+    //   })!
 
-      content = (
-        <PanelManager initialContext={contexts} applicationStore={this.props.applicationStore} />
-      )
-    } else if (
-      location.type === LocationType.EntryNew ||
-      location.type === LocationType.EntryEdit
-    ) {
-      const entryID = location.type === LocationType.EntryEdit ? location.id : undefined
-      const selectedViewContext = editorStore.viewContexts.find(viewContext => {
-        return viewContext.slug === location.slug || viewContext.model === location.slug
-      })
+    //   const contexts = [ListPanelContext(viewContext)]
 
-      if (!selectedViewContext)
-        return <div className={`${BaseViewStyle}_error`}>Invalid model!</div>
+    //   content = (
+    //     <PanelManager initialContext={contexts} applicationStore={this.props.applicationStore} />
+    //   )
+    // } else if (
+    //   location.type === LocationType.EntryNew ||
+    //   location.type === LocationType.EntryEdit
+    // ) {
+    //   const entryID = location.type === LocationType.EntryEdit ? location.id : undefined
+    //   const selectedViewContext = editorStore.viewContexts.find(viewContext => {
+    //     return viewContext.slug === location.slug || viewContext.model[1] === location.slug
+    //   })
 
-      const contexts = [
-        ListPanelContext(selectedViewContext),
-        EditPanelContext(selectedViewContext, entryID)
-      ]
+    //   if (!selectedViewContext)
+    //     return <div className={`${BaseViewStyle}_error`}>Invalid model!</div>
 
-      content = (
-        <PanelManager initialContext={contexts} applicationStore={this.props.applicationStore} />
-      )
-    } else if (location.type === LocationType.EntryDelete) {
-      const entryID = location.id
-      const selectedViewContext = editorStore.viewContexts.find(viewContext => {
-        return viewContext.slug === location.slug
-      })
+    //   const contexts = [
+    //     ListPanelContext(selectedViewContext),
+    //     EditPanelContext(selectedViewContext, entryID)
+    //   ]
 
-      if (!selectedViewContext)
-        return <div className={`${BaseViewStyle}_error`}>Invalid model!</div>
+    //   content = (
+    //     <PanelManager initialContext={contexts} applicationStore={this.props.applicationStore} />
+    //   )
+    // } else if (location.type === LocationType.EntryDelete) {
+    //   const entryID = location.id
+    //   const selectedViewContext = editorStore.viewContexts.find(viewContext => {
+    //     return viewContext.slug === location.slug
+    //   })
 
-      const contexts = [
-        ListPanelContext(selectedViewContext),
-        DeletePanelContext(selectedViewContext, entryID)
-      ]
+    //   if (!selectedViewContext)
+    //     return <div className={`${BaseViewStyle}_error`}>Invalid model!</div>
 
-      content = (
-        <PanelManager initialContext={contexts} applicationStore={this.props.applicationStore} />
-      )
-    } else if (location.type === LocationType.NotFound) {
-      content = <div className={`${BaseViewStyle}_error`}>Not Found</div>
-    } else if (location.type === LocationType.NoPermission) {
-      content = <div className={`${BaseViewStyle}_error`}>No Permission</div>
-    }
+    //   const contexts = [
+    //     ListPanelContext(selectedViewContext),
+    //     DeletePanelContext(selectedViewContext, entryID)
+    //   ]
+
+    //   content = (
+    //     <PanelManager initialContext={contexts} applicationStore={this.props.applicationStore} />
+    //   )
+    // } else if (location.type === LocationType.NotFound) {
+    //   content = <div className={`${BaseViewStyle}_error`}>Not Found</div>
+    // } else if (location.type === LocationType.NoPermission) {
+    //   content = <div className={`${BaseViewStyle}_error`}>No Permission</div>
+    // }
 
     return (
       <div className={BaseViewStyle}>
-        <FlexList spacing="none" direction="row" fill>
-          <SidePanel
-            editorStore={this.props.applicationStore.editorStore}
-            locationStore={this.props.applicationStore.locationStore}
-          />
-          <div className={`${BaseViewStyle}_content`}>{content}</div>
-        </FlexList>
+        <SidePanelContainer />
+        <MainPanel />
+        {/* <div className={`${BaseViewStyle}_content`}>{content}</div> */}
       </div>
     )
   }
 }
+
+export const BaseViewContainer = withSession(withLocation(BaseView))

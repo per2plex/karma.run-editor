@@ -2,7 +2,7 @@ import {Ref} from '@karma.run/sdk'
 import * as models from '../../api/karma/model'
 
 export type ModelID = string
-export type ModelGroupID = symbol | Ref
+export type ModelGroupID = Ref
 export const ModelGroupTag = '_frontend_model_group_v1'
 
 export interface ModelGroup {

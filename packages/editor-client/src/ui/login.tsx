@@ -6,13 +6,12 @@ import {Color, Spacing, FontWeight} from '../ui/style'
 
 import {Button, TextInput} from '../ui/common'
 
-import {KarmaError, KarmaErrorType} from '@karma.run/sdk'
+import {KarmaError, KarmaErrorType, Session} from '@karma.run/sdk'
 
 import {Theme, withTheme} from '../context/theme'
 import {SessionContext, withSession} from '../context/session'
 import {withLocale, LocaleContext} from '../context/locale'
-import {LocationContext, withLocation} from '../context/location'
-import {DashboardLocation, AppLocation} from '../store/locationStore'
+import {withLocation} from '../context/location'
 import {CenteredLoadingIndicator} from './common/loader'
 
 export interface LoginFormState {
@@ -24,11 +23,10 @@ export interface LoginFormState {
 }
 
 export interface LoginFormProps {
+  session?: Session
   theme: Theme
   sessionContext: SessionContext
   localeContext: LocaleContext
-  locationContext: LocationContext
-  originalLocation?: AppLocation
 }
 
 export const LoginFormStyle = style({
@@ -140,7 +138,6 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
 
     try {
       await this.props.sessionContext.authenticate(this.state.username, this.state.password)
-      this.props.locationContext.pushLocation(this.props.originalLocation || DashboardLocation())
     } catch (err) {
       const karmaError: KarmaError = err
 
@@ -159,12 +156,22 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
   }
 
   public async componentDidMount() {
-    if (this.props.sessionContext.canRestoreSessionFromStorage) {
+    if (this.props.session) {
+      this.setState({isRestoringSession: true})
+
+      try {
+        await this.props.sessionContext.restoreSession(this.props.session)
+      } catch (err) {
+        this.setState({
+          isRestoringSession: false,
+          error: 'Session expired'
+        })
+      }
+    } else if (this.props.sessionContext.canRestoreSessionFromStorage) {
       this.setState({isRestoringSession: true})
 
       try {
         await this.props.sessionContext.restoreSessionFromLocalStorage()
-        this.props.locationContext.pushLocation(this.props.originalLocation || DashboardLocation())
       } catch (err) {
         this.setState({
           isRestoringSession: false,

@@ -1,10 +1,12 @@
 import * as React from 'react'
 import {style} from 'typestyle'
+import {Ref} from '@karma.run/sdk'
 
 import {TextInputType, TextInput} from '../common'
 import {Color, DefaultBorderRadiusPx, Spacing} from '../style'
 import {boolAttr} from '../../util/react'
 import {EnterKeyCode, UpArrowKeyCode, DownArrowKeyCode} from '../../util/keyCodes'
+import {refToString} from '../../util/ref'
 
 export const SearchInputStyle = style({
   $debugName: 'SearchInput',
@@ -35,9 +37,9 @@ export const SearchInputStyle = style({
 
 export namespace SearchInput {
   export interface ResultItem {
-    id: string
+    id: Ref
     title: string
-    href?: string
+    href: string
   }
 
   export interface State {
@@ -120,7 +122,7 @@ export class SearchInput extends React.Component<SearchInput.Props, SearchInput.
         <div className={`${SearchInputStyle}_resultContainer`}>
           {results.map((result, index) => (
             <SearchInputItem
-              key={result.id}
+              key={refToString(result.id)}
               item={result}
               selected={index === this.state.selectedIndex}
               onMouseDown={this.handleItemClick}
@@ -177,7 +179,7 @@ export class SearchInputItem extends React.Component<SearchInputItem.Props> {
   public render() {
     return (
       <a
-        key={this.props.item.id}
+        key={refToString(this.props.item.id)}
         className={SearchInputItemStyle}
         href={this.props.item.href}
         data-selected={boolAttr(this.props.selected)}

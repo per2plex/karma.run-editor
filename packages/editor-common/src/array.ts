@@ -43,3 +43,7 @@ export function reduceToMap<T, V>(arr: T[], callback: ReduceCallbackFn<T, V>): O
     {} as ObjectMap<V>
   )
 }
+
+export function uniqueFilter(value: any, index: number, array: any[]) {
+  return array.indexOf(value) === index
+}

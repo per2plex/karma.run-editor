@@ -133,13 +133,13 @@ export function urlPathForLocation(location: AppLocation): string {
     case LocationType.Dashboard:
       return prefixWithBasePath('/')
     case LocationType.EntryList:
-      return prefixWithBasePath(`/entries/${location.slug}`)
+      return prefixWithBasePath(`/record/${location.slug}`)
     case LocationType.EntryNew:
-      return prefixWithBasePath(`/entries/${location.slug}/new`)
+      return prefixWithBasePath(`/record/${location.slug}/new`)
     case LocationType.EntryEdit:
-      return prefixWithBasePath(`/entries/${location.slug}/edit/${location.id}`)
+      return prefixWithBasePath(`/record/${location.slug}/edit/${location.id}`)
     case LocationType.EntryDelete:
-      return prefixWithBasePath(`/entries/${location.slug}/delete/${location.id}`)
+      return prefixWithBasePath(`/record/${location.slug}/delete/${location.id}`)
     case LocationType.NotFound:
       return prefixWithBasePath('/404')
     case LocationType.NoPermission:
@@ -178,23 +178,23 @@ export function locationForURLPath(url: string): AppLocation {
   if ((matchArray = url.match(/^\/404(\/?)$/))) return NotFoundLocation()
   if ((matchArray = url.match(/^\/403(\/?)$/))) return NoPermissionLocation()
 
-  if ((matchArray = url.match(/^\/entries\/(.+?)\/new(\/?)$/))) {
+  if ((matchArray = url.match(/^\/record\/(.+?)\/new(\/?)$/))) {
     return EntryNewLocation(matchArray[1])
   }
 
-  if ((matchArray = url.match(/^\/entries\/(.+?)\/edit\/(.+?)(\/?)$/))) {
+  if ((matchArray = url.match(/^\/record\/(.+?)\/edit\/(.+?)(\/?)$/))) {
     return EntryEditLocation(matchArray[1], matchArray[2])
   }
 
-  if ((matchArray = url.match(/^\/entries\/(.+?)\/delete\/(.+?)(\/?)$/))) {
+  if ((matchArray = url.match(/^\/record\/(.+?)\/delete\/(.+?)(\/?)$/))) {
     return EntryDeleteLocation(matchArray[1], matchArray[2])
   }
 
-  if ((matchArray = url.match(/^\/entries\/(.+?)(\/?)$/))) {
+  if ((matchArray = url.match(/^\/record\/(.+?)(\/?)$/))) {
     return EntryListLocation(matchArray[1])
   }
 
-  if (url === '' || url.match(/^\/((entries)(\/)?)?$/)) {
+  if (url === '' || url.match(/^\/((record)(\/)?)?$/)) {
     return DashboardLocation()
   }
 

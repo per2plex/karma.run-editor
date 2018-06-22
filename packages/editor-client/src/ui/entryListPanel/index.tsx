@@ -163,16 +163,13 @@ export class EntryListPanel extends FilteredEntryListPanel<EntryListPanel.Props>
 
   public render() {
     let content: React.ReactNode
-    const newLocation = EntryNewLocation(
-      this.props.viewContext.slug || this.props.viewContext.model
-    )
 
     const createNewLink = (
       <LocationButton
         type={ButtonType.Icon}
         icon={IconName.NewDocument}
         label="Create New"
-        location={newLocation}
+        location={EntryNewLocation(this.props.viewContext.slug || this.props.viewContext.model[1])}
         onTrigger={this.handleLocationTrigger}
       />
     )

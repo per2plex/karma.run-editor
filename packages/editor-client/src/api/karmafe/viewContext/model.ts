@@ -1,6 +1,6 @@
 import {KeyPath, Model, isKeyPathEqual, keyPathToString} from '../../karma'
 
-import {lastItem} from '@karma.run/editor-common'
+import {lastItem, Omit} from '@karma.run/editor-common'
 import {deleteNullValues} from '@karma.run/editor-common'
 import {convertKeyToLabel, slugify, stringToColor} from '../../../util/string'
 import {DateFormat} from '../../../store/fields/dateTimeFieldStore'
@@ -8,21 +8,32 @@ import {Layout} from '../../../store/fields/fieldsetStore'
 import {Select, Control, LinkType, StyleGroup, BlockType, CustomElement} from '../../../ui/common'
 import {getValueForKeyPath} from '../../../util/values'
 import {MediaType} from '@karma.run/editor-media-client'
+import {Ref} from '@karma.run/sdk'
+import {refToString} from '../../../util/ref'
 
 // ViewContext
 // ===========
 
-export interface ViewContext {
-  id?: string
-  model: string
+export interface ViewContextOverride {
+  id: symbol | Ref
+  model: Ref
   name?: string
   slug?: string
-  icon?: string
   color?: string
   description?: string
   descriptionKeyPaths?: KeyPath[]
   fields?: Field[]
 }
+
+export interface InferedViewContext {
+  model: Ref
+  name: string
+  slug: string
+  color: string
+  fields: Field[]
+}
+
+export type ViewContext = InferedViewContext & Omit<ViewContextOverride, 'id'>
 
 // Modifiers
 // =========
@@ -305,13 +316,12 @@ export type Field =
 
 export type FieldType = Field['type']
 
-export function inferViewContextFromModel(id: string, model: Model, tag?: string): ViewContext {
+export function inferViewContextFromModel(id: Ref, model: Model, tag?: string): InferedViewContext {
   return {
     model: id,
-    color: stringToColor(id),
-    name: tag ? convertKeyToLabel(tag) : id,
-    slug: slugify(tag || id),
-    descriptionKeyPaths: [],
+    color: stringToColor(refToString(id)),
+    name: tag ? convertKeyToLabel(tag) : id[1],
+    slug: slugify(tag || id[1]),
     fields: inferFieldsFromModel(model)
   }
 }
