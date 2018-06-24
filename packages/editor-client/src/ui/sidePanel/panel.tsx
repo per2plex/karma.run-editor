@@ -10,7 +10,7 @@ import {Color, Spacing, FontWeight, DefaultBorderRadiusPx} from '../../ui/style'
 import {Select, SelectType} from '../../ui/common'
 import {Colors, Theme, withTheme} from '../../context/theme'
 
-import {urlPathForLocation, locationForURLPath, EntryListLocation} from '../../store/locationStore'
+import {urlPathForLocation, locationForURLPath, EntryListLocation} from '../../context/location'
 
 import {SearchInput} from '../../ui/common/searchInput'
 import {convertKeyToLabel} from '../../util/string'
@@ -58,6 +58,15 @@ export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
     }
   }
 
+  public shouldComponentUpdate(nextProps: SidePanelProps, nextState: SidePanelState) {
+    if (this.state === nextState && this.props.theme === nextProps.theme) {
+      return false
+    }
+
+    console.log(nextProps, this.props, nextProps == this.props)
+    return true
+  }
+
   private handleLogoutClick = () => {
     this.props.sessionContext.invalidate()
   }
@@ -67,7 +76,7 @@ export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
   }
 
   private handleViewContextClick = (href: string) => {
-    this.props.locationContext.pushLocation(locationForURLPath(href))
+    this.props.locationContext.pushLocation(this.props.locationContext.locationForURLPath(href))
   }
 
   private handleEditorContextChange = (id?: string) => {

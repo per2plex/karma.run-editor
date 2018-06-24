@@ -125,9 +125,9 @@ export function urlPathForLocation(basePath: string, location: AppLocation): str
     case LocationType.EntryDelete:
       return `${basePath}/record/${location.slug}/delete/${location.id}`
     case LocationType.NotFound:
-      return '${basePath}/404'
+      return `${basePath}/404`
     case LocationType.NoPermission:
-      return '${basePath}/403'
+      return `${basePath}/403`
     case LocationType.External:
       return location.url
   }
@@ -184,6 +184,7 @@ export interface LocationContext {
   hasUnsavedChanges: boolean
   pushLocation(location: AppLocation, onlyUpdateURL?: boolean): void
   replaceLocation(location: AppLocation, onlyUpdateURL?: boolean): void
+  locationForURLPath(path: string): AppLocation
 }
 
 export const LocationContext = React.createContext<LocationContext>({
@@ -196,12 +197,41 @@ export const LocationContext = React.createContext<LocationContext>({
 
   async replaceLocation() {
     console.warn('No LocationProvider found!')
+  },
+
+  locationForURLPath() {
+    console.warn('No LocationProvider found!')
+    return NotFoundLocation()
   }
 })
 
 export interface LocationProviderProps {
   config: Config
   sessionContext: SessionContext
+}
+
+export function sessionContextMiddleware(
+  location: AppLocation,
+  sessionContext: SessionContext
+): AppLocation {
+  if (location.type === 'login' && sessionContext.session) {
+    return location.originalLocation
+      ? sessionContextMiddleware(location.originalLocation, sessionContext)
+      : DashboardLocation()
+  }
+
+  if (location.type !== 'login' && !sessionContext.session) {
+    return LoginLocation(location)
+  }
+
+  if (
+    location.type === LocationType.EntryList &&
+    !sessionContext.viewContextSlugMap.get(location.slug)
+  ) {
+    return NotFoundLocation()
+  }
+
+  return location
 }
 
 export class LocationProvider extends React.Component<LocationProviderProps, LocationContext> {
@@ -212,7 +242,8 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
       shouldReplaceLocation: false,
       hasUnsavedChanges: false,
       pushLocation: this.pushLocation,
-      replaceLocation: this.replaceLocation
+      replaceLocation: this.replaceLocation,
+      locationForURLPath: this.locationForURLPath
     }
   }
 
@@ -251,6 +282,10 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
         window.location.pathname + window.location.search
       )
     )
+  }
+
+  public locationForURLPath(path: string): AppLocation {
+    return locationForURLPath(this.props.config.basePath, path)
   }
 
   public pushLocation = (location: AppLocation) => {
@@ -303,15 +338,9 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
     state: LocationContext
   ): Partial<LocationContext> | null {
     if (state.location) {
-      if (state.location.type === 'login' && props.sessionContext.session) {
-        return {
-          location: state.location.originalLocation || DashboardLocation(),
-          shouldReplaceLocation: true
-        }
-      }
-
-      if (state.location.type !== 'login' && !props.sessionContext.session) {
-        return {location: LoginLocation(state.location), shouldReplaceLocation: true}
+      return {
+        location: sessionContextMiddleware(state.location, props.sessionContext),
+        shouldReplaceLocation: true
       }
     }
 
@@ -321,3 +350,29 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
 
 export const withLocation = createContextHOC(LocationContext, 'locationContext', 'withLocale')
 export const LocationProviderContainer = withConfig(withSession(LocationProvider))
+
+export interface LocationActionContext {
+  pushLocation(location: AppLocation, onlyUpdateURL?: boolean): void
+  replaceLocation(location: AppLocation, onlyUpdateURL?: boolean): void
+  locationForURLPath(path: string): AppLocation
+}
+
+export const LocationActionContext = React.createContext<LocationActionContext>({
+  async pushLocation() {
+    console.warn('No LocationProvider found!')
+  },
+
+  async replaceLocation() {
+    console.warn('No LocationProvider found!')
+  },
+
+  locationForURLPath() {
+    console.warn('No LocationProvider found!')
+    return NotFoundLocation()
+  }
+})
+
+export interface LocationProviderProps {
+  config: Config
+  sessionContext: SessionContext
+}

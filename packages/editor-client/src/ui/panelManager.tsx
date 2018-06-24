@@ -27,12 +27,22 @@ export const enum PanelType {
   Edit = 'edit',
   Delete = 'delete',
   Editor = 'editor',
-  JSONEditor = 'jsonEditor'
+  JSONEditor = 'jsonEditor',
+  NotFound = 'notFound'
 }
 
 export interface PanelComponent {
   panelWillAppear(): void
   panelWillDisappear(): void
+}
+
+export interface NotFoundContext {
+  type: PanelType.NotFound
+  contextID: string
+}
+
+export function NotFoundContext(): NotFoundContext {
+  return {type: PanelType.NotFound, contextID: shortid.generate()}
 }
 
 export interface ListPanelContext {
@@ -126,6 +136,7 @@ export type PanelContext =
   | DeletePanelContext
   | EditorPanelContext
   | JSONEditorPanelContext
+  | NotFoundContext
 
 export class PanelManagerStore {
   public contexts: IObservableArray<PanelContext> = observable.shallowArray()

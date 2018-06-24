@@ -40,6 +40,7 @@ export interface EditorData {
   modelGroupMap: ReadonlyRefMap<ModelGroup>
   viewContexts: ViewContext[]
   viewContextMap: ReadonlyRefMap<ViewContext>
+  viewContextSlugMap: ReadonlyMap<string, ViewContext>
 }
 
 export const initialEditorData: EditorData = {
@@ -53,7 +54,8 @@ export const initialEditorData: EditorData = {
   modelGroups: [],
   modelGroupMap: new RefMap(),
   viewContexts: [],
-  viewContextMap: new RefMap()
+  viewContextMap: new RefMap(),
+  viewContextSlugMap: new Map()
 }
 
 export interface SessionContext extends EditorData {
@@ -200,6 +202,12 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       inferedViewContexts.map(viewContext => [viewContext.model, viewContext] as [Ref, ViewContext])
     )
 
+    const viewContextSlugMap = new RefMap(
+      inferedViewContexts.map(
+        viewContext => [viewContext.slug, viewContext] as [string, ViewContext]
+      )
+    )
+
     return {
       tags,
       tagMap,
@@ -211,7 +219,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       editorContexts,
       editorContextMap,
       viewContexts,
-      viewContextMap
+      viewContextMap,
+      viewContextSlugMap
     }
   }
 
