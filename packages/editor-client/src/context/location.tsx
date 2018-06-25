@@ -424,8 +424,7 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
   ): Partial<LocationContext> | null {
     if (state.location) {
       return {
-        location: sessionContextMiddleware(state.location, props.sessionContext),
-        shouldReplaceLocation: true
+        location: sessionContextMiddleware(state.location, props.sessionContext)
       }
     }
 
