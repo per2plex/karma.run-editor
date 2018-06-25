@@ -5,8 +5,7 @@ import {IReactionDisposer, reaction} from 'mobx'
 import {observer} from 'mobx-react'
 
 import {EditorStore} from '../../store/editorStore'
-import {EntryNewLocation, AppLocation, LocationType} from '../../store/locationStore'
-import {NotificationStore, NotificationType} from '../../store/notificationStore'
+import {EntryNewLocation} from '../../context/location'
 import {ViewContext} from '../../api/karmafe/viewContext'
 import {Spacing} from '../../ui/style'
 
@@ -15,7 +14,7 @@ import {EntryFilterStore} from '../../filter/stores/entryFilterStore'
 import {CenteredLoadingIndicator} from '../../ui/common/loader'
 import {ViewContextPanelHeader} from '../../ui/common/panel/viewContextHeader'
 import {PanelToolbar} from '../../ui/common/panel/toolbar'
-import {Button, LocationButton, ButtonType} from '../../ui/common'
+import {Button, ButtonType, LocationButtonContainer} from '../../ui/common'
 import {QuickSearchField, QuickSearchFieldStyle} from '../../filter/ui/searchField'
 import {SortField, SortFieldStyle} from '../../filter/ui/sortField'
 import {FilterList} from '../../filter/ui/filterList'
@@ -23,6 +22,7 @@ import {Panel} from '../../ui/common/panel'
 import {PanelContent} from '../../ui/common/panel/content'
 import {IconName} from '../../ui/common/icon'
 import {PanelComponent} from '../../ui/panelManager'
+import {NotificationType} from '../../context/notification'
 
 export const EntryToolbarFilterStyle = style({
   display: 'flex',
@@ -72,7 +72,7 @@ export class EntryToolbarFilter extends React.Component<EntryToolbarFilter.Props
 export namespace FilteredEntryListPanel {
   export type Props<P> = {
     editorStore: EditorStore
-    notificationStore: NotificationStore
+    notificationStore: any
     viewContext: ViewContext
   } & P
 
@@ -102,7 +102,7 @@ export class FilteredEntryListPanel<P = {}> extends React.Component<
 
     this.entrySyncDispose = reaction(
       () => {
-        const entries = this.props.editorStore.entries.get(this.props.viewContext.model)
+        const entries = this.props.editorStore.entries.get(this.props.viewContext.model[1])
         return entries ? entries.slice() : undefined
       },
       entries => {
@@ -118,7 +118,7 @@ export class FilteredEntryListPanel<P = {}> extends React.Component<
 
   public async componentDidMount() {
     try {
-      await this.props.editorStore.loadEntriesForModel(this.props.viewContext.model)
+      await this.props.editorStore.loadEntriesForModel(this.props.viewContext.model[1])
       this.setState({isLoading: false})
     } catch (err) {
       this.props.notificationStore.notify({
@@ -142,16 +142,16 @@ export namespace EntryListPanel {
 @observer
 export class EntryListPanel extends FilteredEntryListPanel<EntryListPanel.Props>
   implements PanelComponent {
-  private handleLocationTrigger = (location: AppLocation) => {
-    switch (location.type) {
-      case LocationType.EntryEdit:
-        return this.props.onEntryEdit(this.props.viewContext, location.id)
-      case LocationType.EntryDelete:
-        return this.props.onEntryDelete(this.props.viewContext, location.id)
-      case LocationType.EntryNew:
-        return this.props.onNewEntry(this.props.viewContext)
-    }
-  }
+  // private handleLocationTrigger = (location: AppLocation) => {
+  //   switch (location.type) {
+  //     case LocationType.EntryEdit:
+  //       return this.props.onEntryEdit(this.props.viewContext, location.id)
+  //     case LocationType.EntryDelete:
+  //       return this.props.onEntryDelete(this.props.viewContext, location.id)
+  //     case LocationType.EntryNew:
+  //       return this.props.onNewEntry(this.props.viewContext)
+  //   }
+  // }
 
   private handleEntryChoose = (model: string) => {
     const viewContext = this.props.editorStore.viewContextMap[model]
@@ -165,12 +165,11 @@ export class EntryListPanel extends FilteredEntryListPanel<EntryListPanel.Props>
     let content: React.ReactNode
 
     const createNewLink = (
-      <LocationButton
+      <LocationButtonContainer
         type={ButtonType.Icon}
         icon={IconName.NewDocument}
         label="Create New"
-        location={EntryNewLocation(this.props.viewContext.slug || this.props.viewContext.model[1])}
-        onTrigger={this.handleLocationTrigger}
+        location={EntryNewLocation(this.props.viewContext.slug)}
       />
     )
 
@@ -197,7 +196,6 @@ export class EntryListPanel extends FilteredEntryListPanel<EntryListPanel.Props>
           viewContext={this.props.viewContext}
           entries={this.state.filterStore!.filteredEntries}
           reverseTags={this.props.editorStore.reverseTags}
-          onLocationTrigger={this.handleLocationTrigger}
         />
       )
     }

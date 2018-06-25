@@ -3,10 +3,10 @@ import {style} from 'typestyle'
 import {boolAttr} from '../../util/react'
 import {FontWeight, Color, Spacing, DefaultBorderRadiusPx, FontFamily} from '../style'
 import {SpaceKeyCode} from '../../util/keyCodes'
-import {AppLocation, urlPathForLocation} from '../../store/locationStore'
 import {solidBorderWithColor} from '../../util/style'
 import {Icon, IconName} from '../common/icon'
 import {LoadingIndicator} from './loader'
+import {AppLocation, LocationActionContext, withLocationAction} from '../../context/location'
 
 export interface ButtonBaseProps {
   icon?: IconName
@@ -69,7 +69,8 @@ export class Button extends React.Component<Button.Props> {
 export namespace LocationButton {
   export interface Props extends ButtonBaseProps {
     location: AppLocation
-    onTrigger: (location: AppLocation) => void
+    locationActionContext: LocationActionContext
+    onTrigger?: (location: AppLocation) => void
   }
 
   export interface State {
@@ -77,14 +78,25 @@ export namespace LocationButton {
   }
 }
 
-export class LocationButton extends React.Component<LocationButton.Props, LocationButton.State> {
+export class LocationButton extends React.PureComponent<
+  LocationButton.Props,
+  LocationButton.State
+> {
   state: LocationButton.State = {
     isActive: false
   }
 
+  private handleTrigger = () => {
+    if (this.props.onTrigger) {
+      this.props.onTrigger(this.props.location)
+    } else {
+      this.props.locationActionContext.pushLocation(this.props.location)
+    }
+  }
+
   private handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault()
-    this.props.onTrigger(this.props.location)
+    this.handleTrigger()
   }
 
   private handleKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
@@ -97,7 +109,7 @@ export class LocationButton extends React.Component<LocationButton.Props, Locati
     if (e.keyCode === SpaceKeyCode) {
       e.preventDefault()
       this.setState({isActive: false})
-      this.props.onTrigger(this.props.location)
+      this.handleTrigger()
     }
   }
 
@@ -107,19 +119,27 @@ export class LocationButton extends React.Component<LocationButton.Props, Locati
         className={`${Button.Style} ${buttonStyleForType(this.props.type)}`}
         data-disabled={boolAttr(this.props.disabled)}
         data-active={boolAttr(this.state.isActive)}
-        href={urlPathForLocation(this.props.location)}
+        href={this.props.locationActionContext.urlPathForLocation(this.props.location)}
         role="button"
         onKeyDown={this.handleKeyDown}
         onKeyUp={this.handleKeyUp}
         onClick={this.handleClick}>
         <span className="content">
-          {this.props.icon && <Icon name={this.props.icon} />}
-          {this.props.label && <span className="label">{this.props.label}</span>}
+          {this.props.loading ? (
+            <LoadingIndicator />
+          ) : (
+            <>
+              {this.props.icon && <Icon name={this.props.icon} />}
+              {this.props.label && <span className="label">{this.props.label}</span>}
+            </>
+          )}
         </span>
       </a>
     )
   }
 }
+
+export const LocationButtonContainer = withLocationAction(LocationButton)
 
 export namespace Button {
   export const Style = style({

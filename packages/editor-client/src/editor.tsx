@@ -14,6 +14,7 @@ import {LocaleProvider} from './context/locale'
 
 import englishMessageMap from './locale/en.json'
 import {LocationProviderContainer} from './context/location'
+import {NotificationProvider} from './context/notification'
 
 useStrict(true)
 
@@ -63,7 +64,9 @@ export class EditorComponent extends React.Component<EditorProps> {
             <SessionProviderContainer>
               <LocationProviderContainer>
                 <ThemeProvider theme={theme}>
-                  <RootViewContainer />
+                  <NotificationProvider>
+                    <RootViewContainer />
+                  </NotificationProvider>
                 </ThemeProvider>
               </LocationProviderContainer>
             </SessionProviderContainer>

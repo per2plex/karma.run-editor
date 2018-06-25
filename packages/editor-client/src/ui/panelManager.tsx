@@ -14,7 +14,7 @@ import {
   EntryEditLocation,
   EntryDeleteLocation,
   EntryListLocation
-} from '../store/locationStore'
+} from '../context/location'
 import {EntryEditPanel} from '../ui/entryEditPanel'
 import {FieldStore} from '../store/fields/fieldStore'
 import {EditorPanel} from '../ui/editorPanel'
@@ -202,7 +202,7 @@ export class PanelManager extends React.Component<PanelManager.Props, PanelManag
       // TODO: Move outside of PanelManager
       if (this.state.store.contexts.length === 1) {
         this.props.applicationStore.locationStore.pushLocation(
-          EntryEditLocation(viewContext.slug || viewContext.model, id),
+          EntryEditLocation(viewContext.slug, id),
           false
         )
       }
@@ -210,7 +210,7 @@ export class PanelManager extends React.Component<PanelManager.Props, PanelManag
       // TODO: Move outside of PanelManager
       if (this.state.store.contexts.length === 1) {
         this.props.applicationStore.locationStore.pushLocation(
-          EntryNewLocation(viewContext.slug || viewContext.model),
+          EntryNewLocation(viewContext.slug),
           false
         )
       }
@@ -226,7 +226,7 @@ export class PanelManager extends React.Component<PanelManager.Props, PanelManag
     // TODO: Move outside of PanelManager
     if (this.state.store.contexts.length === 1) {
       this.props.applicationStore.locationStore.pushLocation(
-        EntryDeleteLocation(viewContext.slug || viewContext.model, id),
+        EntryDeleteLocation(viewContext.slug, id),
         false
       )
     }
@@ -254,7 +254,7 @@ export class PanelManager extends React.Component<PanelManager.Props, PanelManag
     if (this.state.store.contexts.length === 1) {
       const context = this.state.store.contexts[0] as ListPanelContext
       this.props.applicationStore.locationStore.pushLocation(
-        EntryListLocation(context.viewContext.slug || context.viewContext.model),
+        EntryListLocation(context.viewContext.slug || context.viewContext.model[1]),
         false
       )
     }
@@ -275,7 +275,7 @@ export class PanelManager extends React.Component<PanelManager.Props, PanelManag
     if (this.state.store.contexts.length === 1) {
       const context = this.state.store.contexts[0] as ListPanelContext
       this.props.applicationStore.locationStore.pushLocation(
-        EntryListLocation(context.viewContext.slug || context.viewContext.model),
+        EntryListLocation(context.viewContext.slug),
         false
       )
     }
@@ -285,7 +285,7 @@ export class PanelManager extends React.Component<PanelManager.Props, PanelManag
     // TODO: Move outside of PanelManager
     if (this.state.store.contexts.length === 2) {
       this.props.applicationStore.locationStore.replaceLocation(
-        EntryEditLocation(viewContext.slug || viewContext.model, id),
+        EntryEditLocation(viewContext.slug, id),
         false
       )
     }
@@ -437,6 +437,9 @@ export class PanelManager extends React.Component<PanelManager.Props, PanelManag
                   onApply={this.handleJSONApply}
                 />
               )
+
+            default:
+              return <div />
           }
         })}
       </StackView>

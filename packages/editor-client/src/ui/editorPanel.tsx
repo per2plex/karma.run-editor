@@ -14,17 +14,17 @@ import {Panel} from '../ui/common/panel'
 import {PanelToolbar} from '../ui/common/panel/toolbar'
 import {PanelContent} from '../ui/common/panel/content'
 import {ViewContext} from '../api/karmafe/viewContext'
-import {NotificationStore, NotificationType} from '../store/notificationStore'
 import {PanelHeader} from '../ui/common/panel/header'
 import {IconName} from '../ui/common/icon'
 import {PanelComponent} from './panelManager'
+import {NotificationType} from '../context/notification'
 
 export namespace EditorPanel {
   export interface Props {
     disabled: boolean
     editorStore: EditorStore
     store: FieldStore
-    notificationStore: NotificationStore
+    notificationStore: any
     onEditEntry: (viewContext: ViewContext, id: string | undefined) => Promise<string | undefined>
     onChooseEntry: (viewContext: ViewContext) => Promise<string | undefined>
     onOpenEditor: (store: FieldStore) => Promise<any>

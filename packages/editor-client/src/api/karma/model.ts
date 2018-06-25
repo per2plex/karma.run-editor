@@ -1,4 +1,3 @@
-import * as debug from '../../util/debug'
 import {firstKey, mapObject, ObjectMap} from '@karma.run/editor-common'
 
 export type KeyPath = (string | number)[]
@@ -405,7 +404,7 @@ export function unserializeModel(rawModel: any): Model {
     }
 
     default: {
-      debug.info(`Unknown model of type ${type}.`)
+      console.info(`Unknown model of type ${type}.`)
       return Unknown(type, rawModel[type])
     }
   }

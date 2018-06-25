@@ -2,10 +2,10 @@ import * as React from 'react'
 import {observer} from 'mobx-react'
 
 import {EntryItem} from './item'
-import {LocationButton, Button, ButtonType} from '../../ui/common'
+import {Button, ButtonType, LocationButtonContainer} from '../../ui/common'
 import {ViewContext} from '../../api/karmafe/viewContext'
 import {Entry} from '../../api/karma'
-import {EntryEditLocation, EntryDeleteLocation, AppLocation} from '../../store/locationStore'
+import {EntryEditLocation, EntryDeleteLocation} from '../../context/location'
 import {ObjectMap} from '@karma.run/editor-common'
 import {style} from 'typestyle'
 import {Spacing} from '../../ui/style'
@@ -17,7 +17,6 @@ export namespace EditEntryList {
     viewContext: ViewContext
     entries: Entry[]
     reverseTags: ObjectMap<string>
-    onLocationTrigger: (location: AppLocation) => void
   }
 }
 
@@ -27,34 +26,22 @@ export class EditEntryList extends React.Component<EditEntryList.Props> {
     return (
       <div className={EditEntryList.Style}>
         {this.props.entries.map(entry => {
-          const editLocation = EntryEditLocation(
-            this.props.viewContext.slug || this.props.viewContext.model,
-            entry.id
-          )
-
-          const deleteLocation = EntryDeleteLocation(
-            this.props.viewContext.slug || this.props.viewContext.model,
-            entry.id
-          )
-
           return (
             <EntryItem
               key={entry.id}
               entry={entry}
               viewContext={this.props.viewContext}
               reverseTags={this.props.reverseTags}>
-              <LocationButton
+              <LocationButtonContainer
                 type={ButtonType.Icon}
                 label="Edit"
-                location={editLocation}
-                onTrigger={this.props.onLocationTrigger}
+                location={EntryEditLocation(this.props.viewContext.slug, entry.id)}
                 icon={IconName.EditDocument}
               />
-              <LocationButton
+              <LocationButtonContainer
                 type={ButtonType.Icon}
                 label="Delete"
-                location={deleteLocation}
-                onTrigger={this.props.onLocationTrigger}
+                location={EntryDeleteLocation(this.props.viewContext.slug, entry.id)}
                 icon={IconName.DeleteDocument}
               />
             </EntryItem>

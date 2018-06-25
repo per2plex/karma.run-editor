@@ -97,7 +97,7 @@ function nodeForDataAndViewContext(id: string, data: any, viewContext: ViewConte
     title = values[0] || id
   }
 
-  return {id, label: title, shape: 'dot', color: viewContext.color, group: viewContext.model}
+  return {id, label: title, shape: 'dot', color: viewContext.color, group: viewContext.model[1]}
 }
 
 function edgeFromTo(idA: string, idB: string): Edge | EdgeOptions {
@@ -128,7 +128,7 @@ function edgesForGraphMap(startID: string, graphMap: GraphMap) {
 function groupsForViewContexts(viewContexts: ViewContext[]) {
   return viewContexts.reduce(
     (groups, viewContext) => {
-      groups[viewContext.model] = {
+      groups[viewContext.model[1]] = {
         color: viewContext.color,
         font: {
           color: color(viewContext.color!)

@@ -57,7 +57,7 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
       <StackView>
         {panelContexts.map(panelContext => (
           <React.Fragment key={panelContext.contextID}>
-            {this.getPanelForContext(panelContext)}
+            {this.getPanelForContext(panelContext, false)}
           </React.Fragment>
         ))}
       </StackView>

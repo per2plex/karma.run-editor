@@ -5,20 +5,20 @@ import {observer} from 'mobx-react'
 import {EditorStore} from '../store/editorStore'
 
 import {FlexList, Button, ButtonType} from '../ui/common'
-import {NotificationStore, NotificationType} from '../store/notificationStore'
 import {Panel} from '../ui/common/panel'
 import {PanelToolbar} from '../ui/common/panel/toolbar'
 import {PanelHeader} from '../ui/common/panel/header'
 import {Spacing} from '../ui/style'
 import {IconName} from '../ui/common/icon'
 import {PanelComponent} from './panelManager'
+import {NotificationType} from '../context/notification'
 
 export namespace JSONEditorPanel {
   export interface Props {
     disabled: boolean
     data: any
     editorStore: EditorStore
-    notificationStore: NotificationStore
+    notificationStore: any
     onApply: (data: any) => void
     onCancel: () => void
   }

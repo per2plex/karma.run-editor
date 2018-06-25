@@ -1,11 +1,10 @@
 import * as React from 'react'
 import {style} from 'typestyle'
 import {Spacing, Color} from '../style'
-import {Notification, NotificationStore} from '../../store/notificationStore'
-import {observer} from 'mobx-react'
+import {Notification, NotificationItem, withNotification} from '../../context/notification'
 
-export const NotificationViewStyle = style({
-  $debugName: 'NotificationView',
+export const NotificationItemViewStyle = style({
+  $debugName: 'NotificationItem',
   width: '30vw',
   padding: Spacing.medium,
   marginBottom: Spacing.small,
@@ -31,15 +30,13 @@ export const NotificationViewStyle = style({
   }
 })
 
-export namespace NotificationView {
-  export interface Props {
-    notification: Notification
-  }
+export interface NotificationItemViewProps {
+  notification: Notification
 }
 
-export const NotificationView: React.StatelessComponent<NotificationView.Props> = props => {
+export const NotificationItemView: React.StatelessComponent<NotificationItemViewProps> = props => {
   return (
-    <div className={NotificationViewStyle} data-type={props.notification.type}>
+    <div className={NotificationItemViewStyle} data-type={props.notification.type}>
       {props.notification.message}
     </div>
   )
@@ -61,18 +58,20 @@ export const NotificationContainerStyle = style({
   overflow: 'hidden'
 })
 
-export namespace NotificationContainer {
-  export interface Props {
-    store: NotificationStore
+export interface NotificationViewProps {
+  notifications: NotificationItem[]
+}
+
+export class NotificationView extends React.PureComponent<NotificationViewProps> {
+  public render() {
+    const notifications = this.props.notifications.map(notification => (
+      <NotificationItemView key={notification.id} notification={notification} />
+    ))
+
+    return <div className={NotificationContainerStyle}>{notifications}</div>
   }
 }
 
-export const NotificationContainer = observer<
-  React.StatelessComponent<NotificationContainer.Props>
->(props => {
-  const notifications = props.store.notifications.map(notification => (
-    <NotificationView key={notification.id} notification={notification} />
-  ))
-
-  return <div className={NotificationContainerStyle}>{notifications}</div>
+export const NotificationViewContainer = withNotification(props => {
+  return <NotificationView notifications={props.notificationContext.notifications} />
 })

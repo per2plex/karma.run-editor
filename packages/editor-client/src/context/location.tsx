@@ -1,4 +1,5 @@
 import React from 'react'
+import memoize from 'memoize-one'
 import {Session} from '@karma.run/sdk'
 import qs from 'qs'
 
@@ -178,19 +179,14 @@ export function locationForURLPath(basePath: string, url: string): AppLocation {
   return NotFoundLocation()
 }
 
-export interface LocationContext {
-  location?: AppLocation
-  shouldReplaceLocation: boolean
-  hasUnsavedChanges: boolean
-  pushLocation(location: AppLocation, onlyUpdateURL?: boolean): void
-  replaceLocation(location: AppLocation, onlyUpdateURL?: boolean): void
+export interface LocationActionContext {
+  pushLocation(location: AppLocation): void
+  replaceLocation(location: AppLocation): void
   locationForURLPath(path: string): AppLocation
+  urlPathForLocation(location: AppLocation): string
 }
 
-export const LocationContext = React.createContext<LocationContext>({
-  shouldReplaceLocation: false,
-  hasUnsavedChanges: false,
-
+export const defaultActionContext = {
   async pushLocation() {
     console.warn('No LocationProvider found!')
   },
@@ -202,7 +198,87 @@ export const LocationContext = React.createContext<LocationContext>({
   locationForURLPath() {
     console.warn('No LocationProvider found!')
     return NotFoundLocation()
+  },
+
+  urlPathForLocation() {
+    console.warn('No LocationProvider found!')
+    return ''
   }
+}
+
+export const LocationActionContext = React.createContext<LocationActionContext>({
+  ...defaultActionContext
+})
+
+export interface LocationActionProviderProps {
+  locationContext: LocationContext
+}
+
+export class LocationActionProvider extends React.Component<
+  LocationActionProviderProps,
+  LocationActionContext
+> {
+  public shouldComponentUpdate(nextProps: LocationActionProviderProps) {
+    const locationContext = this.props.locationContext
+    const nextLocationContext = nextProps.locationContext
+
+    if (
+      locationContext.pushLocation !== nextLocationContext.pushLocation ||
+      locationContext.replaceLocation !== nextLocationContext.replaceLocation ||
+      locationContext.locationForURLPath !== nextLocationContext.locationForURLPath ||
+      locationContext.urlPathForLocation !== nextLocationContext.urlPathForLocation
+    ) {
+      return true
+    }
+
+    return false
+  }
+
+  private getActionContext = memoize(
+    (
+      pushLocation: LocationActionContext['pushLocation'],
+      replaceLocation: LocationActionContext['replaceLocation'],
+      locationForURLPath: LocationActionContext['locationForURLPath'],
+      urlPathForLocation: LocationActionContext['urlPathForLocation']
+    ): LocationActionContext => {
+      return {
+        pushLocation,
+        replaceLocation,
+        locationForURLPath,
+        urlPathForLocation
+      }
+    }
+  )
+
+  public render() {
+    const locationContext = this.props.locationContext
+    const actionContext = this.getActionContext(
+      locationContext.pushLocation,
+      locationContext.replaceLocation,
+      locationContext.locationForURLPath,
+      locationContext.urlPathForLocation
+    )
+
+    return (
+      <LocationActionContext.Provider value={actionContext}>
+        {this.props.children}
+      </LocationActionContext.Provider>
+    )
+  }
+}
+
+export interface LocationStateContext {
+  location?: AppLocation
+  shouldReplaceLocation: boolean
+  hasUnsavedChanges: boolean
+}
+
+export type LocationContext = LocationStateContext & LocationActionContext
+
+export const LocationContext = React.createContext<LocationContext>({
+  shouldReplaceLocation: false,
+  hasUnsavedChanges: false,
+  ...defaultActionContext
 })
 
 export interface LocationProviderProps {
@@ -243,7 +319,8 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
       hasUnsavedChanges: false,
       pushLocation: this.pushLocation,
       replaceLocation: this.replaceLocation,
-      locationForURLPath: this.locationForURLPath
+      locationForURLPath: this.locationForURLPath,
+      urlPathForLocation: this.urlPathForLocation
     }
   }
 
@@ -284,8 +361,12 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
     )
   }
 
-  public locationForURLPath(path: string): AppLocation {
+  public locationForURLPath = (path: string): AppLocation => {
     return locationForURLPath(this.props.config.basePath, path)
+  }
+
+  public urlPathForLocation = (location: AppLocation): string => {
+    return urlPathForLocation(this.props.config.basePath, location)
   }
 
   public pushLocation = (location: AppLocation) => {
@@ -304,12 +385,6 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
     }
 
     this.setState({location, shouldReplaceLocation: true})
-  }
-
-  public render() {
-    return (
-      <LocationContext.Provider value={this.state}>{this.props.children}</LocationContext.Provider>
-    )
   }
 
   public componentDidUpdate(_prevProps: LocationProviderProps, prevState: LocationContext) {
@@ -333,6 +408,16 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
     }
   }
 
+  public render() {
+    return (
+      <LocationContext.Provider value={this.state}>
+        <LocationActionProvider locationContext={this.state}>
+          {this.props.children}
+        </LocationActionProvider>
+      </LocationContext.Provider>
+    )
+  }
+
   public static getDerivedStateFromProps(
     props: LocationProviderProps,
     state: LocationContext
@@ -348,31 +433,11 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
   }
 }
 
-export const withLocation = createContextHOC(LocationContext, 'locationContext', 'withLocale')
+export const withLocation = createContextHOC(LocationContext, 'locationContext', 'withLocation')
+export const withLocationAction = createContextHOC(
+  LocationActionContext,
+  'locationActionContext',
+  'withLocationAction'
+)
+
 export const LocationProviderContainer = withConfig(withSession(LocationProvider))
-
-export interface LocationActionContext {
-  pushLocation(location: AppLocation, onlyUpdateURL?: boolean): void
-  replaceLocation(location: AppLocation, onlyUpdateURL?: boolean): void
-  locationForURLPath(path: string): AppLocation
-}
-
-export const LocationActionContext = React.createContext<LocationActionContext>({
-  async pushLocation() {
-    console.warn('No LocationProvider found!')
-  },
-
-  async replaceLocation() {
-    console.warn('No LocationProvider found!')
-  },
-
-  locationForURLPath() {
-    console.warn('No LocationProvider found!')
-    return NotFoundLocation()
-  }
-})
-
-export interface LocationProviderProps {
-  config: Config
-  sessionContext: SessionContext
-}

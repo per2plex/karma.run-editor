@@ -1,10 +1,9 @@
 import * as React from 'react'
 
 import {LoginContainer} from './login'
-import {NotificationContainer} from '../ui/common/notification'
+import {NotificationViewContainer} from '../ui/common/notification'
 import {CenteredLoadingIndicator} from '../ui/common/loader'
 import {withLocation, LocationContext, AppLocation} from '../context/location'
-import {applicationStore} from '../store/applicationStore'
 import {AsyncComponent} from './asyncComponent'
 
 export interface RootViewProps {
@@ -35,7 +34,7 @@ export class RootView extends React.Component<RootViewProps> {
     return (
       <>
         {rootViewForLocation(this.props.locationContext.location)}
-        <NotificationContainer store={applicationStore.notificationStore} />
+        <NotificationViewContainer />
       </>
     )
   }

@@ -11,8 +11,8 @@ import {KarmaError, KarmaErrorType, Session} from '@karma.run/sdk'
 import {Theme, withTheme} from '../context/theme'
 import {SessionContext, withSession} from '../context/session'
 import {withLocale, LocaleContext} from '../context/locale'
-import {withLocation} from '../context/location'
 import {CenteredLoadingIndicator} from './common/loader'
+import {withNotification, NotificationContext, NotificationType} from '../context/notification'
 
 export interface LoginFormState {
   username: string
@@ -27,6 +27,7 @@ export interface LoginFormProps {
   theme: Theme
   sessionContext: SessionContext
   localeContext: LocaleContext
+  notificationContext: NotificationContext
 }
 
 export const LoginFormStyle = style({
@@ -143,13 +144,23 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
 
       if (karmaError.type === KarmaErrorType.PermissionDeniedError) {
         this.setState({
-          isSubmitting: false,
-          error: 'Invalid login'
+          isSubmitting: false
+          // error: 'Invalid login'
+        })
+
+        this.props.notificationContext.notify({
+          type: NotificationType.Error,
+          message: 'Invalid login'
         })
       } else {
         this.setState({
-          isSubmitting: false,
-          error: karmaError.message
+          isSubmitting: false
+          // error: karmaError.message
+        })
+
+        this.props.notificationContext.notify({
+          type: NotificationType.Error,
+          message: karmaError.message
         })
       }
     }
@@ -236,4 +247,4 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
   }
 }
 
-export const LoginContainer = withLocale(withSession(withLocation(withTheme(Login))))
+export const LoginContainer = withLocale(withSession(withTheme(withNotification(Login))))

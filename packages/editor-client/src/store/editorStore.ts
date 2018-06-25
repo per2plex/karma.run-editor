@@ -539,9 +539,9 @@ export class EditorStore {
         this.viewContexts.push(
           ...modelEntries.map(([id, model]) => {
             const tag = reverseTags[id]
-            const deducedViewContext = inferViewContextFromModel(id, model, tag)
+            const deducedViewContext = inferViewContextFromModel([id, id], model, tag)
             const matchingViewContexts = viewContexts.filter(
-              viewContext => viewContext.model === id
+              viewContext => viewContext.model[1] === id
             )
             const defaultContext = defaultViewContextMap[id]
 
@@ -796,7 +796,7 @@ export class EditorStore {
   @computed
   public get viewContextMap(): ObjectMap<ViewContext | undefined> {
     return this.viewContexts.reduce((prev: ObjectMap<ViewContext | undefined>, viewContext) => {
-      prev[viewContext.model] = viewContext
+      prev[viewContext.model[1]] = viewContext
       return prev
     }, {})
   }

@@ -1,4 +1,3 @@
-import {LocationStore} from './locationStore'
 import {NotificationStore} from '../store/notificationStore'
 import {EditorStore} from '../store/editorStore'
 import {ModelTag} from '../api/karma'
@@ -8,13 +7,11 @@ import {expose} from '../util/dev'
 
 export interface ApplicationStore {
   readonly editorStore: EditorStore
-  readonly locationStore: LocationStore
-  readonly notificationStore: NotificationStore
+  readonly locationStore: any
+  readonly notificationStore: any
 }
 
 const editorStore = new EditorStore()
-const notificationStore = new NotificationStore()
-const locationStore = new LocationStore(editorStore)
 
 // editorStore.restoreSessionFromLocalStorage()
 // locationStore.syncLocationFromURL()
@@ -50,6 +47,6 @@ expose('editorLoadEntry', async (model: string, id: string) => {
 
 export const applicationStore: ApplicationStore = {
   editorStore,
-  locationStore,
-  notificationStore
+  locationStore: {},
+  notificationStore: {}
 }

@@ -20,10 +20,10 @@ import {Panel} from '../ui/common/panel'
 import {PanelToolbar} from '../ui/common/panel/toolbar'
 import {PanelContent} from '../ui/common/panel/content'
 import {ViewContext} from '../api/karmafe/viewContext'
-import {NotificationStore, NotificationType} from '../store/notificationStore'
 import {IconName} from '../ui/common/icon'
 import {reaction, IReactionDisposer} from 'mobx'
 import {PanelComponent} from './panelManager'
+import {NotificationType} from '../context/notification'
 
 export namespace EntryEditPanel {
   export interface Props {
@@ -31,7 +31,7 @@ export namespace EntryEditPanel {
     viewContext: ViewContext
     disabled: boolean
     editorStore: EditorStore
-    notificationStore: NotificationStore
+    notificationStore: any
     onEditEntry: (viewContext: ViewContext, id: string | undefined) => Promise<string | undefined>
     onChooseEntry: (viewContext: ViewContext) => Promise<string | undefined>
     onOpenEditor: (store: FieldStore) => Promise<any>
@@ -69,7 +69,7 @@ export class EntryEditPanel extends React.Component<EntryEditPanel.Props, EntryE
 
     if (this.props.id) {
       const entry = await this.props.editorStore.loadEntryForID(
-        this.props.viewContext.model,
+        this.props.viewContext.model[1],
         this.props.id
       )
 
@@ -157,10 +157,10 @@ export class EntryEditPanel extends React.Component<EntryEditPanel.Props, EntryE
         const value = await this.state.store.asJS()
 
         if (!id) {
-          entryID = await this.props.editorStore.createEntry(this.props.viewContext.model, value)
+          entryID = await this.props.editorStore.createEntry(this.props.viewContext.model[1], value)
         } else {
           entryID = await this.props.editorStore.updateEntry(
-            this.props.viewContext.model,
+            this.props.viewContext.model[1],
             id,
             value
           )

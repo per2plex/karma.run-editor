@@ -1,6 +1,6 @@
-import {ViewContext} from './model'
+// import {ViewContext} from './model'
 
-export function createDefaultUserViewContext(userModelID: string): ViewContext {
+export function createDefaultUserViewContext(userModelID: string): any {
   return {
     model: userModelID,
     name: 'User',
@@ -13,7 +13,7 @@ export function createDefaultUserViewContext(userModelID: string): ViewContext {
   }
 }
 
-export function createDefaultRoleViewContext(roleModelID: string): ViewContext {
+export function createDefaultRoleViewContext(roleModelID: string): any {
   return {
     model: roleModelID,
     name: 'Role',
@@ -22,7 +22,7 @@ export function createDefaultRoleViewContext(roleModelID: string): ViewContext {
   }
 }
 
-export function createDefaultTagViewContext(tagModelID: string): ViewContext {
+export function createDefaultTagViewContext(tagModelID: string): any {
   return {
     model: tagModelID,
     name: 'Tag',
@@ -31,7 +31,7 @@ export function createDefaultTagViewContext(tagModelID: string): ViewContext {
   }
 }
 
-export function createDefaultEditorContextViewContext(editorContextID: string): ViewContext {
+export function createDefaultEditorContextViewContext(editorContextID: string): any {
   return {
     model: editorContextID,
     name: 'Editor Context',
@@ -40,7 +40,7 @@ export function createDefaultEditorContextViewContext(editorContextID: string): 
   }
 }
 
-export function createDefaultModelGroupViewContext(modelGroupID: string): ViewContext {
+export function createDefaultModelGroupViewContext(modelGroupID: string): any {
   return {
     model: modelGroupID,
     name: 'Model Group',
@@ -53,7 +53,7 @@ export function createDefaultModelGroupViewContext(modelGroupID: string): ViewCo
   }
 }
 
-export function createDefaultViewContextViewContext(viewContextID: string): ViewContext {
+export function createDefaultViewContextViewContext(viewContextID: string): any {
   return {
     model: viewContextID,
     name: 'View Context',

@@ -10,19 +10,19 @@ import {Color, Spacing, FontWeight, DefaultBorderRadiusPx} from '../../ui/style'
 import {Select, SelectType} from '../../ui/common'
 import {Colors, Theme, withTheme} from '../../context/theme'
 
-import {urlPathForLocation, locationForURLPath, EntryListLocation} from '../../context/location'
+import {EntryListLocation, withLocationAction, LocationActionContext} from '../../context/location'
 
 import {SearchInput} from '../../ui/common/searchInput'
 import {convertKeyToLabel} from '../../util/string'
 import {version} from '../../version'
 import {withSession, SessionContext} from '../../context/session'
-import {withLocation, LocationContext} from '../../context/location'
-import {refToString} from '../../util/ref'
+import {refToString, ReadonlyRefMap} from '../../util/ref'
 import {EditorContext} from '../../api/karmafe/editorContext'
 import {ModelGroup} from '../../api/karmafe/modelGroup'
 import {SidePanelFooter} from './footer'
 import {SidePanelSection, SidePanelSectionItem} from './section'
 import {ViewContext} from '../../api/karmafe/viewContext'
+import memoize from 'memoize-one'
 
 export const GroupStateStorageKey = 'sidePanelGroupState_v1'
 
@@ -42,12 +42,10 @@ export interface SidePanelState {
 export interface SidePanelProps {
   theme: Theme
   sessionContext: SessionContext
-  locationContext: LocationContext
+  locationActionContext: LocationActionContext
 }
 
-export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
-  private fuseSearchInstance!: Fuse
-
+export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelState> {
   constructor(props: SidePanelProps) {
     super(props)
     this.state = {
@@ -56,15 +54,6 @@ export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
       groupState: storage.get(GroupStateStorageKey) || {},
       editorContext: props.sessionContext.editorContexts[0]
     }
-  }
-
-  public shouldComponentUpdate(nextProps: SidePanelProps, nextState: SidePanelState) {
-    if (this.state === nextState && this.props.theme === nextProps.theme) {
-      return false
-    }
-
-    console.log(nextProps, this.props, nextProps == this.props)
-    return true
   }
 
   private handleLogoutClick = () => {
@@ -76,7 +65,9 @@ export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
   }
 
   private handleViewContextClick = (href: string) => {
-    this.props.locationContext.pushLocation(this.props.locationContext.locationForURLPath(href))
+    this.props.locationActionContext.pushLocation(
+      this.props.locationActionContext.locationForURLPath(href)
+    )
   }
 
   private handleEditorContextChange = (id?: string) => {
@@ -89,7 +80,13 @@ export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
     }
   }
   private handleSearchChange = (searchValue: string) => {
-    const searchResults = this.fuseSearchInstance.search<FuseSearchItem>(searchValue).slice(0, 5)
+    const fuseInstance = this.getFuseInstance(
+      this.state.editorContext,
+      this.props.sessionContext.modelGroupMap,
+      this.props.sessionContext.viewContextMap
+    )
+
+    const searchResults = fuseInstance.search<FuseSearchItem>(searchValue).slice(0, 5)
     this.setState({searchValue, searchResults})
   }
 
@@ -106,56 +103,51 @@ export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
     storage.set(GroupStateStorageKey, newGroupState)
   }
 
-  private updateFuseInstance() {
-    const groups = this.getActiveModelGroups()
-    const modelIDs = groups
-      .map(group => group.models.map(model => refToString(model)))
-      .reduce((acc, models) => acc.concat(models))
-      .filter(uniqueFilter)
+  private getFuseInstance = memoize(
+    (
+      editorContext: EditorContext,
+      modelGroupMap: ReadonlyRefMap<ModelGroup>,
+      viewContextMap: ReadonlyRefMap<ViewContext>
+    ) => {
+      const groups = this.getActiveModelGroups(editorContext, modelGroupMap)
+      const modelIDs = groups
+        .map(group => group.models.map(model => refToString(model)))
+        .reduce((acc, models) => acc.concat(models))
+        .filter(uniqueFilter)
 
-    const viewContexts = modelIDs
-      .map(modelID => this.props.sessionContext.viewContextMap.get(modelID))
-      .filter(viewContext => viewContext != undefined) as ViewContext[]
+      const viewContexts = modelIDs
+        .map(modelID => viewContextMap.get(modelID))
+        .filter(viewContext => viewContext != undefined) as ViewContext[]
 
-    const searchItems: FuseSearchItem[] = viewContexts.map(viewContext => ({
-      name: viewContext.name,
-      slug: viewContext.slug,
-      model: viewContext.model
-    }))
+      const searchItems: FuseSearchItem[] = viewContexts.map(viewContext => ({
+        name: viewContext.name,
+        slug: viewContext.slug,
+        model: viewContext.model
+      }))
 
-    this.fuseSearchInstance = new Fuse(searchItems, {
-      shouldSort: true,
-      tokenize: true,
-      matchAllTokens: false,
-      location: 0,
-      distance: 50,
-      threshold: 0.5,
-      keys: ['name']
-    })
-  }
-
-  private getActiveModelGroups() {
-    return this.state.editorContext.modelGroups
-      .map(modelGroupID => this.props.sessionContext.modelGroupMap.get(modelGroupID))
-      .filter(modelGroup => modelGroup) as ModelGroup[]
-  }
-
-  public componentDidUpdate(prevProps: SidePanelProps, prevState: SidePanelState) {
-    if (
-      this.props.sessionContext.editorContexts !== prevProps.sessionContext.editorContexts ||
-      this.state.editorContext !== prevState.editorContext
-    ) {
-      this.updateFuseInstance()
+      return new Fuse(searchItems, {
+        shouldSort: true,
+        tokenize: true,
+        matchAllTokens: false,
+        location: 0,
+        distance: 50,
+        threshold: 0.5,
+        keys: ['name']
+      })
     }
-  }
+  )
 
-  public componentDidMount() {
-    this.updateFuseInstance()
-  }
+  private getActiveModelGroups = memoize(
+    (editorContext: EditorContext, modelGroupMap: ReadonlyRefMap<ModelGroup>) => {
+      return editorContext.modelGroups
+        .map(modelGroupID => modelGroupMap.get(modelGroupID))
+        .filter(modelGroup => modelGroup != undefined) as ModelGroup[]
+    }
+  )
 
   public render() {
     const sessionContext = this.props.sessionContext
-    const groups = this.getActiveModelGroups()
+    const groups = this.getActiveModelGroups(this.state.editorContext, sessionContext.modelGroupMap)
 
     const groupSections = groups.map(group => {
       const items: SidePanelSectionItem[] = group.models.map(model => {
@@ -169,8 +161,10 @@ export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
 
         return {
           id: refToString(viewContext.model),
-          label: viewContext.name || viewContext.model[1],
-          href: urlPathForLocation(EntryListLocation(viewContext.slug || viewContext.model[1]))
+          label: viewContext.name,
+          href: this.props.locationActionContext.urlPathForLocation(
+            EntryListLocation(viewContext.slug)
+          )
         }
       })
 
@@ -212,7 +206,9 @@ export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
         id: searchResult.model,
         title: searchResult.name,
         subtitle: searchResult.slug,
-        href: urlPathForLocation(EntryListLocation(searchResult.slug))
+        href: this.props.locationActionContext.urlPathForLocation(
+          EntryListLocation(searchResult.slug)
+        )
       })
     )
 
@@ -243,7 +239,7 @@ export class SidePanel extends React.Component<SidePanelProps, SidePanelState> {
   }
 }
 
-export const SidePanelContainer = withSession(withLocation(withTheme(SidePanel)))
+export const SidePanelContainer = withSession(withLocationAction(withTheme(SidePanel)))
 
 export const SidePanelStyle = (colors: Colors) =>
   style({

@@ -9,7 +9,6 @@ import {Button, ButtonType, FlexList} from '../ui/common'
 import {FieldStore} from '../store/fields/fieldStore'
 import {createFieldStoreForViewContextAndFill} from '../store/fields/createFromViewContext'
 import {CenteredLoadingIndicator} from '../ui/common/loader'
-import {NotificationStore, NotificationType} from '../store/notificationStore'
 import {APIError, Entry} from '../api/karma'
 import {Panel} from '../ui/common/panel'
 import {ViewContextPanelHeader} from '../ui/common/panel/viewContextHeader'
@@ -17,6 +16,7 @@ import {PanelToolbar} from '../ui/common/panel/toolbar'
 import {IconName} from '../ui/common/icon'
 import {GraphView} from './common/graphView'
 import {PanelComponent} from './panelManager'
+import {NotificationType} from '../context/notification'
 
 export namespace EntryDeletePanel {
   export interface Props {
@@ -24,7 +24,7 @@ export namespace EntryDeletePanel {
     viewContext: ViewContext
     id: string
     editorStore: EditorStore
-    notificationStore: NotificationStore
+    notificationStore: any
     onDoubleClickEntry: (viewContext: ViewContext, id: string) => void
     onPostDelete: (viewContext: ViewContext, id: string) => void
     onCancel: (viewContext: ViewContext, id: string) => void
@@ -45,7 +45,7 @@ export class EntryDeletePanel
 
   public async componentWillMount() {
     const entry = await this.props.editorStore.loadEntryForID(
-      this.props.viewContext.model,
+      this.props.viewContext.model[1],
       this.props.id
     )
 
@@ -65,7 +65,7 @@ export class EntryDeletePanel
     if (this.state.store!.onDelete) await this.state.store!.onDelete!()
 
     try {
-      await this.props.editorStore.deleteEntry(this.props.viewContext.model, this.props.id)
+      await this.props.editorStore.deleteEntry(this.props.viewContext.model[1], this.props.id)
 
       this.props.onPostDelete(this.props.viewContext, this.props.id)
     } catch (err) {
