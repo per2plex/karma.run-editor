@@ -129,41 +129,38 @@ export class FilteredEntryListPanel<P = {}> extends React.Component<
   }
 }
 
-export namespace EntryListPanel {
-  export interface Props {
-    disabled: boolean
-    onEntryEdit: (viewContext: ViewContext, id: string) => void
-    onEntryDelete: (viewContext: ViewContext, id: string) => void
-    onNewEntry: (viewContext: ViewContext) => void
-    onEntryChoose: (viewContext: ViewContext) => Promise<string | undefined>
-  }
+export interface RootRecordListPanelProps {
+  disabled: boolean
+  onRecordEdit: (viewContext: ViewContext, id: string) => void
+  onRecordDelete: (viewContext: ViewContext, id: string) => void
+  onNewRecord: (viewContext: ViewContext) => void
+  onRecordChoose: (viewContext: ViewContext) => Promise<string | undefined>
 }
 
 @observer
-export class EntryListPanel extends FilteredEntryListPanel<EntryListPanel.Props>
-  implements PanelComponent {
-  // private handleLocationTrigger = (location: AppLocation) => {
-  //   switch (location.type) {
-  //     case LocationType.EntryEdit:
-  //       return this.props.onEntryEdit(this.props.viewContext, location.id)
-  //     case LocationType.EntryDelete:
-  //       return this.props.onEntryDelete(this.props.viewContext, location.id)
-  //     case LocationType.EntryNew:
-  //       return this.props.onNewEntry(this.props.viewContext)
-  //   }
-  // }
-
+export class RootRecordListPanel extends FilteredEntryListPanel<RootRecordListPanelProps> {
   private handleEntryChoose = (model: string) => {
     const viewContext = this.props.editorStore.viewContextMap[model]
-    return this.props.onEntryChoose(viewContext!)
+    return this.props.onRecordChoose(viewContext!)
   }
 
-  public panelWillAppear() {}
-  public panelWillDisappear() {}
+  private contentForState() {
+    if (this.state.isLoading || this.state.filterStore!.isLoading) {
+      return <CenteredLoadingIndicator />
+    } else if (this.state.filterStore!.filteredEntries.length === 0) {
+      return <div>No Results</div>
+    } else {
+      return (
+        <EditEntryList
+          viewContext={this.props.viewContext}
+          entries={this.state.filterStore!.filteredEntries}
+          reverseTags={this.props.editorStore.reverseTags}
+        />
+      )
+    }
+  }
 
   public render() {
-    let content: React.ReactNode
-
     const createNewLink = (
       <LocationButtonContainer
         type={ButtonType.Icon}
@@ -186,25 +183,11 @@ export class EntryListPanel extends FilteredEntryListPanel<EntryListPanel.Props>
       undefined
     )
 
-    if (this.state.isLoading || this.state.filterStore!.isLoading) {
-      content = <CenteredLoadingIndicator />
-    } else if (this.state.filterStore!.filteredEntries.length === 0) {
-      content = <div>No Results</div>
-    } else {
-      content = (
-        <EditEntryList
-          viewContext={this.props.viewContext}
-          entries={this.state.filterStore!.filteredEntries}
-          reverseTags={this.props.editorStore.reverseTags}
-        />
-      )
-    }
-
     return (
       <Panel>
         <ViewContextPanelHeader viewContext={this.props.viewContext} prefix="List" />
         <PanelToolbar left={createNewLink} right={toolbarFilter} drawer={filterList} />
-        <PanelContent>{content}</PanelContent>
+        <PanelContent>{this.contentForState()}</PanelContent>
       </Panel>
     )
   }

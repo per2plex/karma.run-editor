@@ -5,7 +5,7 @@ import {observable, action, IObservableArray} from 'mobx'
 import {observer} from 'mobx-react'
 
 import {StackView} from '../ui/common/stackView'
-import {EntryListPanel, ChooseEntryListPanel} from '../ui/entryListPanel'
+import {RootRecordListPanel, ChooseEntryListPanel} from '../ui/entryListPanel'
 import {ApplicationStore} from '../store/applicationStore'
 import {ViewContext} from '../api/karmafe/viewContext'
 import {Deferred} from '@karma.run/editor-common'

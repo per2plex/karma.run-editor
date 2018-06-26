@@ -52,7 +52,7 @@ export namespace SearchInput {
     placeholder?: string
     results: ResultItem[]
     onItemSubmit: (item: ResultItem) => void
-    onChange: (value: string, id?: string | number) => void
+    onChange: (value: string) => void
   }
 }
 
@@ -104,12 +104,14 @@ export class SearchInput extends React.Component<SearchInput.Props, SearchInput.
   private handleFocus = () => {
     this.setState({hasFocus: true})
   }
+
   private handleBlur = () => {
     this.setState({hasFocus: false})
   }
 
-  public componentWillReceiveProps(nextProps: SearchInput.Props) {
-    if (this.props.results !== nextProps.results) this.setState({selectedIndex: 0})
+  private handleChange = (value: string) => {
+    this.setState({selectedIndex: 0})
+    this.props.onChange(value)
   }
 
   public render() {
@@ -137,6 +139,7 @@ export class SearchInput extends React.Component<SearchInput.Props, SearchInput.
         <div className={`${SearchInputStyle}_input`}>
           <TextInput
             {...inputProps}
+            onChange={this.handleChange}
             onFocus={this.handleFocus}
             onBlur={this.handleBlur}
             type={TextInputType.Dark}

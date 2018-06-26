@@ -1,4 +1,5 @@
 import React from 'react'
+import {Filter, Sort} from '@karma.run/editor-common'
 
 import {
   Ref,
@@ -10,7 +11,8 @@ import {
   buildFunction,
   getTags,
   getModels,
-  MetarializedRecord
+  MetarializedRecord,
+  buildExpression
 } from '@karma.run/sdk'
 
 import * as storage from '../util/storage'
@@ -22,6 +24,7 @@ import {createContextHOC} from './helper'
 import {ReadonlyRefMap, RefMap} from '../util/ref'
 import {inferViewContextFromModel, ViewContext} from '../api/karmafe/viewContext'
 import {unserializeModel} from '../api/karma'
+import {list} from 'csx/lib'
 
 export const developmentModelGroupID: Ref = ['_editorModelGroup', 'development']
 export const developmentEditorContextID: Ref = ['_editorEditorContext', 'development']
@@ -65,6 +68,13 @@ export interface SessionContext extends EditorData {
   restoreSession(session: Session): Promise<Session>
   authenticate(username: string, password: string): Promise<Session>
   invalidate(): Promise<void>
+  getRecordList(
+    model: Ref,
+    limit: number,
+    offset: number,
+    sort?: Sort,
+    filter?: Filter
+  ): Promise<any[]>
 }
 
 export const SessionContext = React.createContext<SessionContext>({
@@ -85,6 +95,10 @@ export const SessionContext = React.createContext<SessionContext>({
 
   async invalidate() {
     throw new Error('No SessionProvider found!')
+  },
+
+  async getRecordList() {
+    throw new Error('No SessionProvider found!')
   }
 })
 
@@ -104,7 +118,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       restoreSessionFromLocalStorage: this.restoreSessionFromLocalStorage,
       restoreSession: this.restoreSession,
       authenticate: this.authenticate,
-      invalidate: this.invalidate
+      invalidate: this.invalidate,
+      getRecordList: this.getRecordList
     }
   }
 
@@ -146,6 +161,36 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   public invalidate = async () => {
     this.setState({...initialEditorData, session: undefined, canRestoreSessionFromStorage: false})
     storage.remove(SessionStorageKey)
+  }
+
+  public getRecordList = (
+    model: Ref,
+    limit: number,
+    offset: number,
+    sort?: Sort,
+    filter?: Filter
+  ): Promise<any[]> => {
+    let listExpression = buildExpression(e =>
+      e.mapList(e.all(e.data(d => d.ref(model[0], model[1]))), (_, value) => e.metarialize(value))
+    )
+
+    // if (filter) {
+    //   listExpression = buildExpression(e =>
+    //     e.filterList(listExpression, (_, value) => e.bool(true))
+    //   )
+    // }
+
+    // if (sort) {
+    //   listExpression = buildExpression(e =>
+    //     e.memSort(listExpression, value => e.field('id', value))
+    //   )
+    // }
+
+    return query(
+      this.props.config.karmaURL,
+      this.state.session,
+      buildFunction(e => () => e.slice(listExpression, offset, limit))
+    )
   }
 
   private storeSession() {

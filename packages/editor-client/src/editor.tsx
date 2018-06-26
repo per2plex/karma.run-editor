@@ -58,21 +58,23 @@ export class EditorComponent extends React.Component<EditorProps> {
     const theme = {...defaultTheme, ...deleteNullValues(this.props.theme)}
 
     return (
-      <ErrorBoundary>
-        <ConfigProvider config={config}>
-          <LocaleProvider initialMessageMap={englishMessageMap}>
-            <SessionProviderContainer>
-              <LocationProviderContainer>
-                <ThemeProvider theme={theme}>
-                  <NotificationProvider>
-                    <RootViewContainer />
-                  </NotificationProvider>
-                </ThemeProvider>
-              </LocationProviderContainer>
-            </SessionProviderContainer>
-          </LocaleProvider>
-        </ConfigProvider>
-      </ErrorBoundary>
+      <React.StrictMode>
+        <ErrorBoundary>
+          <ConfigProvider config={config}>
+            <LocaleProvider initialMessageMap={englishMessageMap}>
+              <SessionProviderContainer>
+                <LocationProviderContainer>
+                  <ThemeProvider theme={theme}>
+                    <NotificationProvider>
+                      <RootViewContainer />
+                    </NotificationProvider>
+                  </ThemeProvider>
+                </LocationProviderContainer>
+              </SessionProviderContainer>
+            </LocaleProvider>
+          </ConfigProvider>
+        </ErrorBoundary>
+      </React.StrictMode>
     )
   }
 }
