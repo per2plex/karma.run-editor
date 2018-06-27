@@ -3,13 +3,10 @@ import React from 'react'
 import {style} from 'typestyle'
 import {ViewContext} from '../../api/karmafe/viewContext'
 import {Spacing} from '../../ui/style'
-import {EntryFilterStore} from '../../filter/stores/entryFilterStore'
-import {Button, ButtonType} from '../../ui/common'
-import {QuickSearchField, QuickSearchFieldStyle} from '../../filter/ui/searchField'
-import {SortField, SortFieldStyle} from '../../filter/ui/sortField'
-import {IconName} from '../../ui/common/icon'
+import {QuickSearchFieldStyle} from '../../filter/ui/searchField'
+import {SortFieldStyle} from '../../filter/ui/sortField'
 
-export const EntryToolbarFilterStyle = style({
+export const ToolbarFilterStyle = style({
   display: 'flex',
 
   $nest: {
@@ -24,20 +21,21 @@ export const EntryToolbarFilterStyle = style({
   }
 })
 
-export interface RecordListPanelToolbarProps {
+export interface ToolbarProps {
   viewContext: ViewContext
-  entryFilterStore: EntryFilterStore
 }
 
-export class RecordListPanelToolbar extends React.Component<RecordListPanelToolbarProps> {
-  private handleFilterClick = () => {
-    this.props.entryFilterStore.toggleFilterActive()
-  }
+export interface ToolbarFilterState {}
+
+export class ToolbarFilter extends React.Component<ToolbarProps> {
+  // private handleFilterClick = () => {
+  //   // this.props.entryFilterStore.toggleFilterActive()
+  // }
 
   public render() {
     return (
-      <div className={EntryToolbarFilterStyle}>
-        <QuickSearchField store={this.props.entryFilterStore} />
+      <div className={ToolbarFilterStyle}>
+        {/* <QuickSearchField store={this.props.entryFilterStore} />
         <SortField store={this.props.entryFilterStore} />
         {this.props.entryFilterStore.filterStores.length > 0 && (
           <Button
@@ -46,7 +44,7 @@ export class RecordListPanelToolbar extends React.Component<RecordListPanelToolb
             onTrigger={this.handleFilterClick}
             selected={this.props.entryFilterStore.isFilterActive}
           />
-        )}
+        )} */}
       </div>
     )
   }

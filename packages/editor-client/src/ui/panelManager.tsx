@@ -5,16 +5,11 @@ import {observable, action, IObservableArray} from 'mobx'
 import {observer} from 'mobx-react'
 
 import {StackView} from '../ui/common/stackView'
-import {RootRecordListPanel, ChooseEntryListPanel} from '../ui/entryListPanel'
+import {ChooseEntryListPanel} from '../ui/entryListPanel'
 import {ApplicationStore} from '../store/applicationStore'
 import {ViewContext} from '../api/karmafe/viewContext'
 import {Deferred} from '@karma.run/editor-common'
-import {
-  EntryNewLocation,
-  EntryEditLocation,
-  EntryDeleteLocation,
-  EntryListLocation
-} from '../context/location'
+import {EntryNewLocation, EntryEditLocation, EntryListLocation} from '../context/location'
 import {EntryEditPanel} from '../ui/entryEditPanel'
 import {FieldStore} from '../store/fields/fieldStore'
 import {EditorPanel} from '../ui/editorPanel'
@@ -222,17 +217,17 @@ export class PanelManager extends React.Component<PanelManager.Props, PanelManag
     return context.result
   }
 
-  private handleEntryDelete = (viewContext: ViewContext, id: string) => {
-    // TODO: Move outside of PanelManager
-    if (this.state.store.contexts.length === 1) {
-      this.props.applicationStore.locationStore.pushLocation(
-        EntryDeleteLocation(viewContext.slug, id),
-        false
-      )
-    }
+  // private handleEntryDelete = (viewContext: ViewContext, id: string) => {
+  //   // TODO: Move outside of PanelManager
+  //   if (this.state.store.contexts.length === 1) {
+  //     this.props.applicationStore.locationStore.pushLocation(
+  //       EntryDeleteLocation(viewContext.slug, id),
+  //       false
+  //     )
+  //   }
 
-    this.state.store.pushContext(DeletePanelContext(viewContext, id))
-  }
+  //   this.state.store.pushContext(DeletePanelContext(viewContext, id))
+  // }
 
   private handleEntryChosen = (_viewContext: ViewContext, id: string | undefined) => {
     this.getCurrentPanel().panelWillDisappear()
@@ -343,20 +338,7 @@ export class PanelManager extends React.Component<PanelManager.Props, PanelManag
 
           switch (context.type) {
             case PanelType.List:
-              return (
-                <EntryListPanel
-                  key={context.contextID}
-                  ref={component => this.handlePanelRef(context.contextID, component)}
-                  editorStore={this.props.applicationStore.editorStore}
-                  notificationStore={this.props.applicationStore.notificationStore}
-                  viewContext={context.viewContext}
-                  onEntryChoose={this.handleEntryChoose}
-                  onEntryEdit={this.handleEntryEdit}
-                  onEntryDelete={this.handleEntryDelete}
-                  onNewEntry={this.handleEntryEdit}
-                  disabled={isDisabled}
-                />
-              )
+              return <div />
 
             case PanelType.ChooseList:
               return (

@@ -25,7 +25,7 @@ export class EntryItem extends React.Component<EntryItem.Props> {
         <Card>
           <DescriptionView
             viewContext={this.props.viewContext}
-            entry={this.props.entry}
+            record={this.props.entry}
             reverseTags={this.props.reverseTags}
           />
           <CardFooter

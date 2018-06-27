@@ -147,7 +147,13 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
   private getPanelForContext(context: PanelContext, disabled: boolean) {
     switch (context.type) {
       case PanelType.RootList:
-        return <RootRecordListPanelContainer model={context.model} disabled={disabled} />
+        return (
+          <RootRecordListPanelContainer
+            model={context.model}
+            disabled={disabled}
+            onNewRecord={() => {}}
+          />
+        )
 
       default:
       case PanelType.NotFound:

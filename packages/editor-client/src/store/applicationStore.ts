@@ -1,4 +1,3 @@
-import {NotificationStore} from '../store/notificationStore'
 import {EditorStore} from '../store/editorStore'
 import {ModelTag} from '../api/karma'
 
@@ -12,9 +11,6 @@ export interface ApplicationStore {
 }
 
 const editorStore = new EditorStore()
-
-// editorStore.restoreSessionFromLocalStorage()
-// locationStore.syncLocationFromURL()
 
 expose('editorToggleDevelopmentMode', () => {
   editorStore.toggleDeveloperMode()

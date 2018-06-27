@@ -8,11 +8,13 @@ import {SessionContext, withSession} from '../../context/session'
 import {PanelToolbar} from '../common/panel/toolbar'
 import {ViewContext} from '../../api/karmafe/viewContext'
 import {CenteredLoadingIndicator} from '../common/loader'
-import {EntryItem} from '../entryListPanel/item'
 import {Button, ButtonType} from '../common'
 import {refToString} from '../../util/ref'
 import {IconName} from '../common/icon'
 import {PanelContent} from '../common/panel/content'
+import {ToolbarFilter} from './filterToolbar'
+import {withLocale, LocaleContext} from '../../context/locale'
+import {RecordItem} from './recordItem'
 
 export const recordLimitPerPage = 100
 
@@ -21,6 +23,7 @@ export interface PaginatedRecordListProps {
   filter?: Filter
   viewContext: ViewContext
   sessionContext: SessionContext
+  localeContext: LocaleContext
 }
 
 export interface PaginatedRecordListState {
@@ -83,11 +86,12 @@ export class PaginatedRecordList extends React.Component<
     return (
       <div>
         {this.state.records.map(record => (
-          <EntryItem
+          <RecordItem
             key={refToString(record.id)}
-            entry={record}
+            record={record}
             viewContext={this.props.viewContext}
-            reverseTags={{}}>
+            reverseTagMap={this.props.sessionContext.reverseTagMap}
+            localeContext={this.props.localeContext}>
             <Button
               type={ButtonType.Icon}
               data={record.id}
@@ -95,7 +99,7 @@ export class PaginatedRecordList extends React.Component<
               icon={IconName.ChooseDocument}
               label="Choose"
             />
-          </EntryItem>
+          </RecordItem>
         ))}
         <div ref={this.handleIntersectionRef} />
       </div>
@@ -106,10 +110,14 @@ export class PaginatedRecordList extends React.Component<
 export interface RootRecordListPanelProps {
   model: Ref
   sessionContext: SessionContext
+  localeContext: LocaleContext
   disabled: boolean
+  onNewRecord: () => void
 }
 
 export class RootRecordListPanel extends React.Component<RootRecordListPanelProps> {
+  private handleNewTrigger = () => {}
+
   public render() {
     const sessionContext = this.props.sessionContext
     const viewContext = sessionContext.viewContextMap.get(this.props.model)
@@ -117,16 +125,34 @@ export class RootRecordListPanel extends React.Component<RootRecordListPanelProp
     // TODO: Error panel
     if (!viewContext) return <div>Not Found</div>
 
+    const cancelLinkButton = (
+      <Button
+        type={ButtonType.Icon}
+        icon={IconName.NewDocument}
+        onTrigger={this.handleNewTrigger}
+        label={this.props.localeContext.get('newRecord')}
+      />
+    )
+
+    const toolbarFilter = <ToolbarFilter viewContext={viewContext} />
+
     return (
       <Panel>
-        <ViewContextPanelHeader viewContext={viewContext} prefix="List" />
-        <PanelToolbar />
+        <ViewContextPanelHeader
+          viewContext={viewContext}
+          prefix={this.props.localeContext.get('listRecordPrefix')}
+        />
+        <PanelToolbar left={cancelLinkButton} right={toolbarFilter} />
         <PanelContent>
-          <PaginatedRecordList viewContext={viewContext} sessionContext={sessionContext} />
+          <PaginatedRecordList
+            viewContext={viewContext}
+            sessionContext={sessionContext}
+            localeContext={this.props.localeContext}
+          />
         </PanelContent>
       </Panel>
     )
   }
 }
 
-export const RootRecordListPanelContainer = withSession(RootRecordListPanel)
+export const RootRecordListPanelContainer = withLocale(withSession(RootRecordListPanel))

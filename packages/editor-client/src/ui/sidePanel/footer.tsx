@@ -6,13 +6,19 @@ import {Color, Spacing, FontSize, FontWeight} from '../../ui/style'
 import {Button, ButtonType} from '../../ui/common'
 import {IconName} from '../../ui/common/icon'
 import {stringToColor} from '../../util/string'
+import {LocaleContext, withLocale} from '../../context/locale'
 
 export interface SidePanelFooterProps {
   username: string
+  localeContext: LocaleContext
   onLogoutTrigger: () => void
 }
 
 export class SidePanelFooter extends React.Component<SidePanelFooterProps> {
+  private handleLocaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    this.props.localeContext.setLocale(e.currentTarget.value)
+  }
+
   public render() {
     const imageStyle: React.CSSProperties = {
       backgroundColor: `${stringToColor(this.props.username, 0.2, 0.4)}`,
@@ -27,6 +33,13 @@ export class SidePanelFooter extends React.Component<SidePanelFooterProps> {
         <div className="info">
           <div className="username">{this.props.username}</div>
         </div>
+        <select onChange={this.handleLocaleChange} value={this.props.localeContext.locale}>
+          {[...this.props.localeContext.localeMap.entries()].map(([key, name]) => (
+            <option key={key} value={key}>
+              {name}
+            </option>
+          ))}
+        </select>
         <Button
           type={ButtonType.Link}
           icon={IconName.Exit}
@@ -36,6 +49,8 @@ export class SidePanelFooter extends React.Component<SidePanelFooterProps> {
     )
   }
 }
+
+export const SidePanelFooterContainer = withLocale(SidePanelFooter)
 
 export const SidePanelFooterStyle = style({
   $debugName: 'SidePanelFooter',

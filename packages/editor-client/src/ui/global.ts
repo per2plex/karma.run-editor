@@ -8,7 +8,7 @@ cssRule('html', {
   fontSize: '10px',
 
   color: Color.neutral.light5,
-  backgroundColor: Color.neutral.white
+  background: `radial-gradient(circle at center, ${Color.primary.light1}, ${Color.primary.base})`
 })
 
 cssRule('p', {

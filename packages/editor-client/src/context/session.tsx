@@ -24,7 +24,6 @@ import {createContextHOC} from './helper'
 import {ReadonlyRefMap, RefMap} from '../util/ref'
 import {inferViewContextFromModel, ViewContext} from '../api/karmafe/viewContext'
 import {unserializeModel} from '../api/karma'
-import {list} from 'csx/lib'
 
 export const developmentModelGroupID: Ref = ['_editorModelGroup', 'development']
 export const developmentEditorContextID: Ref = ['_editorEditorContext', 'development']
@@ -167,9 +166,11 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     model: Ref,
     limit: number,
     offset: number,
-    sort?: Sort,
-    filter?: Filter
+    _sort?: Sort,
+    _filter?: Filter
   ): Promise<any[]> => {
+    if (!this.state.session) throw new Error('No session!')
+
     let listExpression = buildExpression(e =>
       e.mapList(e.all(e.data(d => d.ref(model[0], model[1]))), (_, value) => e.metarialize(value))
     )

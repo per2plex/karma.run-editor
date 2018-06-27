@@ -19,7 +19,7 @@ import {withSession, SessionContext} from '../../context/session'
 import {refToString, ReadonlyRefMap} from '../../util/ref'
 import {EditorContext} from '../../api/karmafe/editorContext'
 import {ModelGroup} from '../../api/karmafe/modelGroup'
-import {SidePanelFooter} from './footer'
+import {SidePanelFooterContainer} from './footer'
 import {SidePanelSection, SidePanelSectionItem} from './section'
 import {ViewContext} from '../../api/karmafe/viewContext'
 import memoize from 'memoize-one'
@@ -230,7 +230,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
           <div className="modelGroups">{groupSections}</div>
           {editorContextSelect}
         </div>
-        <SidePanelFooter
+        <SidePanelFooterContainer
           username={sessionContext.session!.username}
           onLogoutTrigger={this.handleLogoutClick}
         />
