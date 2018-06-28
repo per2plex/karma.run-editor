@@ -27,7 +27,7 @@
     "watch:editor": "cd packages/editor && npm run watch",
     "start:editor": "cd packages/editor && npm run start",
     "clean": "run-p clean:*",
-    "build:libraries": "run-s build:common build:media-common build:media-server build:media-client build:worker build:client build:server",
+    "build:libraries": "run-s clean build:common build:media-common build:media-server build:media-client build:worker build:client build:server",
     "build": "run-s clean build:libraries build:editor",
     "prettier": "prettier packages/**/*.{ts,tsx,js} --write",
     "prettier-check": "prettier packages/**/*.{ts,tsx,js} --list-different"

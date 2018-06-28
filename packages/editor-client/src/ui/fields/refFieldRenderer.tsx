@@ -131,8 +131,8 @@ export class RefFieldRenderer extends React.Component<
       content = (
         <DescriptionView
           viewContext={viewContext}
-          record={entry}
-          reverseTags={this.props.reverseTags}
+          record={entry as any}
+          reverseTagMap={this.props.reverseTags as any}
         />
       )
 
