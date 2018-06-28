@@ -1,6 +1,6 @@
 import * as shortid from 'shortid'
 
-import {MetaField} from '../api/karma'
+import {MetaField, keyPathToString} from '../api/karma'
 
 import {
   ConditionType,
@@ -92,6 +92,7 @@ export interface FilterField {
 }
 
 export interface SortConfigration {
+  key: string
   path: ValuePath
   type: SortType
   label: string
@@ -217,6 +218,7 @@ export function sortConfigurationForField(
   switch (field.type) {
     case 'text':
       return {
+        key: keyPathToString(field.keyPath),
         type: SortType.String,
         path: [
           {type: ValuePathSegmentType.Struct, key: 'value'},
@@ -233,11 +235,13 @@ export function sortConfigurationForField(
 export function sortConfigurationsForViewContext(viewContext: ViewContext): SortConfigration[] {
   const defaultConfigurations: SortConfigration[] = [
     {
+      key: 'updatedMeta',
       label: labelForMetaField('updated'),
       type: SortType.Date,
       path: [{type: ValuePathSegmentType.Struct, key: 'updated'}]
     },
     {
+      key: 'createdMeta',
       label: labelForMetaField('created'),
       type: SortType.Date,
       path: [{type: ValuePathSegmentType.Struct, key: 'created'}]

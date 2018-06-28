@@ -1,10 +1,9 @@
 import * as React from 'react'
 import {style} from 'typestyle'
 import {Select, SelectStyle, Button, ButtonType, SelectType} from '../../ui/common'
-import {observer} from 'mobx-react'
 import {Color, FontWeight, Spacing} from '../../ui/style'
-import {EntryFilterStore} from '../stores/entryFilterStore'
 import {IconName} from '../../ui/common/icon'
+import {SortConfigration} from '../configuration'
 
 export const SortFieldStyle = style({
   $debugName: 'SortFieldStyle',
@@ -15,7 +14,6 @@ export const SortFieldStyle = style({
   $nest: {
     '> .label': {
       marginRight: Spacing.medium,
-      // textTransform: 'uppercase',
       color: Color.primary.base,
       fontWeight: FontWeight.bold,
       fontSize: '1.5rem'
@@ -27,25 +25,26 @@ export const SortFieldStyle = style({
   }
 })
 
-export namespace SortField {
-  export interface Props {
-    store: EntryFilterStore
-  }
+export interface SortFieldProps {
+  value: SortConfigration
+  descending: boolean
+  configurations: SortConfigration[]
+  onChange: (sort: SortConfigration, descending: boolean) => void
 }
 
-@observer
-export class SortField extends React.Component<SortField.Props> {
+export class SortField extends React.Component<SortFieldProps> {
   private handleSortChange = (key: string | undefined) => {
-    this.props.store.setSelectedSortIndex(parseInt(key!))
+    const sortConfig = this.props.configurations.find(sortConfig => sortConfig.key === key)
+    this.props.onChange(sortConfig!, this.props.descending)
   }
 
   private handleSortDirectionChange = () => {
-    this.props.store.toggleSortDescending()
+    this.props.onChange(this.props.value, !this.props.descending)
   }
 
   public render() {
-    const options: Select.Option[] = this.props.store.sortConfigurations.map((config, index) => ({
-      key: index.toString(),
+    const options: Select.Option[] = this.props.configurations.map(config => ({
+      key: config.key,
       label: config.label
     }))
 
@@ -56,12 +55,12 @@ export class SortField extends React.Component<SortField.Props> {
           options={options}
           type={SelectType.Light}
           onChange={this.handleSortChange}
-          value={this.props.store.selectedSortIndex.toString()}
+          value={this.props.value.key}
           disableUnselectedOption
         />
         <Button
           type={ButtonType.Icon}
-          icon={this.props.store.shouldSortDescending ? IconName.ArrowUp : IconName.ArrowDown}
+          icon={this.props.descending ? IconName.ArrowUp : IconName.ArrowDown}
           onTrigger={this.handleSortDirectionChange}
         />
       </div>

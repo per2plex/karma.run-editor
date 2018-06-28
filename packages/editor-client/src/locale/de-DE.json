@@ -9,5 +9,7 @@
   "username": "Username",
   "password": "Passwort",
   "login": "Login",
-  "newRecord": "Neuer Eintrag"
+  "newRecord": "Neuer Eintrag",
+  "editRecord": "Editieren",
+  "deleteRecord": "Löschen"
 }

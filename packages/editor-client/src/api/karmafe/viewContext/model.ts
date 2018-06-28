@@ -31,6 +31,7 @@ export interface InferedViewContext {
   slug: string
   color: string
   fields: Field[]
+  descriptionKeyPaths: KeyPath[]
 }
 
 export type ViewContext = InferedViewContext & Omit<ViewContextOverride, 'id'>
@@ -322,7 +323,8 @@ export function inferViewContextFromModel(id: Ref, model: Model, tag?: string): 
     color: stringToColor(refToString(id)),
     name: tag ? convertKeyToLabel(tag) : id[1],
     slug: slugify(tag || id[1]),
-    fields: inferFieldsFromModel(model)
+    fields: inferFieldsFromModel(model),
+    descriptionKeyPaths: [['tag']] // TEMP
   }
 }
 

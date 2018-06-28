@@ -9,7 +9,7 @@
   "license": "MIT",
   "repository": "github:karmarun/karma.run-editor",
   "scripts": {
-    "start": "node ./dist/index.js",
+    "start": "node ./dist/index.js run",
     "watch:server:run": "nodemon --watch ./dist/index.js --exec \"node ./dist/index.js run\"",
     "watch": "npm-run-all clean build:server --parallel watch:*",
     "build": "run-p build:server build:client",

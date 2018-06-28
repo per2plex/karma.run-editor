@@ -1,5 +1,12 @@
 import React from 'react'
-import {Filter, Sort} from '@karma.run/editor-common'
+import {
+  Sort,
+  ValuePathSegmentType,
+  ValuePathSegment,
+  Condition,
+  ValuePath,
+  StructPathSegment
+} from '@karma.run/editor-common'
 
 import {
   Ref,
@@ -12,7 +19,9 @@ import {
   getTags,
   getModels,
   MetarializedRecord,
-  buildExpression
+  buildExpression,
+  Expression,
+  expression as e
 } from '@karma.run/sdk'
 
 import * as storage from '../util/storage'
@@ -71,8 +80,8 @@ export interface SessionContext extends EditorData {
     model: Ref,
     limit: number,
     offset: number,
-    sort?: Sort,
-    filter?: Filter
+    sort: Sort,
+    filter: Condition[]
   ): Promise<any[]>
 }
 
@@ -166,8 +175,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     model: Ref,
     limit: number,
     offset: number,
-    _sort?: Sort,
-    _filter?: Filter
+    sort: Sort,
+    filters: Condition[]
   ): Promise<any[]> => {
     if (!this.state.session) throw new Error('No session!')
 
@@ -175,17 +184,55 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       e.mapList(e.all(e.data(d => d.ref(model[0], model[1]))), (_, value) => e.metarialize(value))
     )
 
-    // if (filter) {
-    //   listExpression = buildExpression(e =>
-    //     e.filterList(listExpression, (_, value) => e.bool(true))
-    //   )
-    // }
+    if (filters.length > 0) {
+      for (const filter of filters) {
+        listExpression = buildExpression(e =>
+          e.filterList(listExpression, (_, value) =>
+            e.matchRegex(
+              filter.value,
+              filterValueExpression(value, [StructPathSegment('value'), ...filter.path])
+            )
+          )
+        )
+      }
+    }
 
-    // if (sort) {
-    //   listExpression = buildExpression(e =>
-    //     e.memSort(listExpression, value => e.field('id', value))
-    //   )
-    // }
+    function filterValueExpression(value: Expression, valuePath: ValuePath) {
+      for (const segment of valuePath) {
+        value = expressionForValuePathSegment(value, segment)
+      }
+
+      return value
+    }
+
+    function expressionForValuePathSegment(value: Expression, segment: ValuePathSegment) {
+      switch (segment.type) {
+        case ValuePathSegmentType.Struct:
+          return e.field(segment.key, value)
+
+        case ValuePathSegmentType.Union:
+          return e.field(segment.key, value)
+
+        default:
+          throw new Error('Not implemented!')
+      }
+    }
+
+    let valueExpression = (value: Expression) => {
+      for (const segment of sort.path) {
+        value = expressionForValuePathSegment(value, segment)
+      }
+
+      return value
+    }
+
+    listExpression = buildExpression(e =>
+      e.memSort(listExpression, value => valueExpression(value))
+    )
+
+    if (sort.descending) {
+      listExpression = e.reverseList(listExpression)
+    }
 
     return query(
       this.props.config.karmaURL,
