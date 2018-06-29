@@ -1,6 +1,6 @@
 import {KeyPath, Model, isKeyPathEqual, keyPathToString} from '../../karma'
 
-import {lastItem, Omit} from '@karma.run/editor-common'
+import {lastItem, Omit, lastItemThrow} from '@karma.run/editor-common'
 import {deleteNullValues} from '@karma.run/editor-common'
 import {convertKeyToLabel, slugify, stringToColor} from '../../../util/string'
 import {DateFormat} from '../../../store/fields/dateTimeFieldStore'
@@ -145,7 +145,6 @@ export interface BaseFieldOptions {
   modifiers?: Modifier[]
   label?: string
   description?: string
-  icon?: string
 }
 
 export type BaseField<T extends string | undefined, O = {}> = {type: T} & BaseFieldOptions & O
@@ -318,14 +317,38 @@ export type Field =
 export type FieldType = Field['type']
 
 export function inferViewContextFromModel(id: Ref, model: Model, tag?: string): InferedViewContext {
+  const fields = inferFieldsFromModel(model)
+  const descriptionKeyPaths = inferDescriptionKeyPathsFromFields(fields)
+
   return {
     model: id,
     color: stringToColor(refToString(id)),
     name: tag ? convertKeyToLabel(tag) : id[1],
     slug: slugify(tag || id[1]),
-    fields: inferFieldsFromModel(model),
-    descriptionKeyPaths: [['tag']] // TEMP
+    fields,
+    descriptionKeyPaths
   }
+}
+
+export const preferredFieldKeys = ['tag', 'label', 'title', 'key', 'description']
+
+export function isPreferredFieldKey(key: string) {
+  return preferredFieldKeys.some(preferredKey => key.toLowerCase().includes(preferredKey))
+}
+
+export function inferDescriptionKeyPathsFromFields(fields: Field[]): KeyPath[] {
+  const field = findRootKeyPath(fields)!
+
+  switch (field.type) {
+    case 'fieldset': {
+      const structFields = findChildrenOfKeyPath(field.keyPath, fields)
+      return structFields
+        .filter(field => isPreferredFieldKey(lastItemThrow(field.keyPath)))
+        .map(field => field.keyPath)
+    }
+  }
+
+  return [[]]
 }
 
 export function inferFieldsFromModel(

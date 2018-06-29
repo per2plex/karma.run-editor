@@ -2,12 +2,12 @@ import * as React from 'react'
 import {keyPathToString} from '../../api/karma'
 import {ViewContext, findKeyPath, Field} from '../../api/karmafe/viewContext'
 import {CardSection, CardImage, CardDocument} from '../common'
-import {getValueForKeyPath} from '../../util/values'
-import {ObjectMap} from '@karma.run/editor-common'
+import {ObjectMap, getValuesForValuePath} from '@karma.run/editor-common'
 import {MediaType, unserializeMedia, thumbnailURL} from '@karma.run/editor-media-client'
 import {Env} from '../../util/env'
 import {MetarializedRecord} from '@karma.run/sdk'
 import {ReadonlyRefMap} from '../../util/ref'
+import {objectPathForField} from '../../filter/configuration'
 
 export namespace DescriptionView {
   export interface Props {
@@ -25,12 +25,14 @@ export function contentForViewContext(
   if (!viewContext.descriptionKeyPaths) return []
 
   return viewContext.descriptionKeyPaths.map(keyPath => {
-    const field = findKeyPath(keyPath, viewContext.fields!)
-    const value = getValueForKeyPath(record.value, keyPath)
+    const field = findKeyPath(keyPath, viewContext.fields)
     const key = keyPathToString(keyPath)
 
     if (field) {
-      return <React.Fragment key={key}>{contentForField(value, field)}</React.Fragment>
+      const objectPath = objectPathForField(field, viewContext.fields)
+      const value = getValuesForValuePath(record.value, objectPath)
+
+      return <React.Fragment key={key}>{contentForField(value.toString(), field)}</React.Fragment>
     } else {
       return <React.Fragment key={key}>Invalid keyPath: {key}</React.Fragment>
     }

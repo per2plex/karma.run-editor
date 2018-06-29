@@ -1,10 +1,12 @@
 import React from 'react'
 import {createContextHOC} from './helper'
+import {Field} from '../api/karmafe/viewContext/field'
 
 export interface Config {
   karmaURL: string
   basePath: string
   title: string
+  fieldMap?: ReadonlyMap<string, Field>
 }
 
 export const defaultConfig: Config = Object.freeze({

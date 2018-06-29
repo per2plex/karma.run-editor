@@ -1,6 +1,6 @@
 import {firstKey, mapObject, ObjectMap} from '@karma.run/editor-common'
 
-export type KeyPath = (string | number)[]
+export type KeyPath = string[]
 export function keyPathToString(keyPath: KeyPath) {
   return ['root', ...keyPath].join('.')
 }
