@@ -21,7 +21,7 @@ import {EditorContext} from '../../api/karmafe/editorContext'
 import {ModelGroup} from '../../api/karmafe/modelGroup'
 import {SidePanelFooterContainer} from './footer'
 import {SidePanelSection, SidePanelSectionItem} from './section'
-import {ViewContext} from '../../api/karmafe/viewContext'
+import {ViewContext} from '../../api/newViewContext'
 import memoize from 'memoize-one'
 
 export const GroupStateStorageKey = 'sidePanelGroupState_v1'

@@ -6,7 +6,7 @@ import {Panel} from '../common/panel'
 import {ViewContextPanelHeader} from '../common/panel/viewContextHeader'
 import {SessionContext, withSession} from '../../context/session'
 import {PanelToolbar} from '../common/panel/toolbar'
-import {ViewContext, findKeyPath} from '../../api/karmafe/viewContext'
+import {ViewContext} from '../../api/newViewContext'
 import {CenteredLoadingIndicator} from '../common/loader'
 import {Button, ButtonType, FlexList} from '../common'
 import {refToString} from '../../util/ref'
@@ -147,7 +147,7 @@ export class RootRecordListPanel extends React.Component<
   }
 
   private get sortValue(): SortConfigration {
-    return this.state.sortValue || this.sortConfigurations[0]
+    return this.state.sortValue || this.viewContext!.sortConfigurations[0]
   }
 
   private get sort(): Sort {
@@ -172,23 +172,23 @@ export class RootRecordListPanel extends React.Component<
     this.setState({offset, records: undefined})
 
     const filters: Condition[] = []
-    const fields = this.viewContext.fields
-    const descriptionKeyPaths = this.viewContext.descriptionKeyPaths
+    // const fields = this.viewContext.fields
+    // const descriptionKeyPaths = this.viewContext.descriptionKeyPaths
 
-    if (this.state.quickSearchValue.trim() !== '') {
-      for (const keyPath of descriptionKeyPaths) {
-        const field = findKeyPath(keyPath, fields)
-        if (!field) continue
+    // if (this.state.quickSearchValue.trim() !== '') {
+    //   for (const keyPath of descriptionKeyPaths) {
+    //     const field = findKeyPath(keyPath, fields)
+    //     if (!field) continue
 
-        const objectPath = objectPathForField(field, fields)
+    //     const objectPath = objectPathForField(field, fields)
 
-        filters.push({
-          type: ConditionType.StringIncludes,
-          path: objectPath,
-          value: this.state.quickSearchValue.trim()
-        })
-      }
-    }
+    //     filters.push({
+    //       type: ConditionType.StringIncludes,
+    //       path: objectPath,
+    //       value: this.state.quickSearchValue.trim()
+    //     })
+    //   }
+    // }
 
     // Request one more than the limit to check if there's another page
     const records = await this.props.sessionContext.getRecordList(
@@ -207,15 +207,6 @@ export class RootRecordListPanel extends React.Component<
     }
 
     this.setState({records, hasMore})
-  }
-
-  private sortConfigurationsForViewContext = memoize((viewContext?: ViewContext) => {
-    if (!viewContext) return []
-    return sortConfigurationsForViewContext(viewContext)
-  })
-
-  private get sortConfigurations() {
-    return this.sortConfigurationsForViewContext(this.viewContext)
   }
 
   private filterConfigurationsForViewContext = memoize((viewContext?: ViewContext) => {
@@ -268,7 +259,7 @@ export class RootRecordListPanel extends React.Component<
           right={
             <ToolbarFilter
               viewContext={viewContext}
-              sortConfigurations={this.sortConfigurations}
+              sortConfigurations={viewContext.sortConfigurations}
               sortValue={this.sortValue}
               sortDescending={this.state.sortDescending}
               onSortChange={this.handleSortChange}

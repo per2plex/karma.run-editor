@@ -56,6 +56,10 @@ export function editorMiddleware(opts: Options): express.Router {
     })
   )
 
+  router.use(`${basePath}/static`, (_, res) => {
+    res.status(404).send()
+  })
+
   router.get(`${basePath}(/*)?`, (_, res) => {
     const configJSON = JSON.stringify({
       custom: customClientConfig,
@@ -71,6 +75,7 @@ export function editorMiddleware(opts: Options): express.Router {
         <head>
           <title>{title}</title>
 
+          <link href={`${basePath}/static/favicon.ico`} rel="icon" type="image/x-icon" />
           <link href={`${basePath}/css/draft-js.css`} rel="stylesheet" />
           <link href={`${basePath}/css/react-datetime.css`} rel="stylesheet" />
           <link
@@ -83,6 +88,7 @@ export function editorMiddleware(opts: Options): express.Router {
             type="application/json"
             dangerouslySetInnerHTML={{__html: configJSON}}
           />
+
           <script src={`${basePath}/static/${clientName}`} defer />
         </head>
         <body>

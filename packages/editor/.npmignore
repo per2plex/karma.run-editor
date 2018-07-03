@@ -1,9 +1,6 @@
-src/
-.dockerignore
-Dockerfile
+/src/
+/static/
 .env
 .env.example
 tsconfig.json
-webpack.config.dev.ts
-webpack.config.prod.ts
 webpack.config.ts

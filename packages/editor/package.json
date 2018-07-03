@@ -18,11 +18,12 @@
     "watch:server": "run-p watch:server:build watch:server:run",
     "watch:client": "webpack --require ts-node/register --mode development --watch",
     "build:client": "webpack --require ts-node/register --mode production --progress",
-    "copy-license": "shx cp ../../LICENSE ./",
+    "copy:license": "shx cp ../../LICENSE ./",
+    "copy:favicon": "shx cp ./static/* ./dist/static",
     "clean": "run-p clean:*",
     "clean:dist": "shx rm -rf ./LICENSE ./dist",
     "clean:cache": "shx rm -rf ./.cache",
-    "prepare": "run-s clean copy-license build"
+    "prepare": "run-s clean copy:license build copy:favicon"
   },
   "dependencies": {
     "@karma.run/editor-media-server": "^0.12.1",

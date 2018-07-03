@@ -31,8 +31,9 @@ import {EditorContext} from '../api/karmafe/editorContext'
 import {ModelGroup} from '../api/karmafe/modelGroup'
 import {createContextHOC} from './helper'
 import {ReadonlyRefMap, RefMap} from '../util/ref'
-import {inferViewContextFromModel, ViewContext} from '../api/karmafe/viewContext'
+// import {inferViewContextFromModel, ViewContext} from '../api/karmafe/viewContext'
 import {unserializeModel} from '../api/karma'
+import {ViewContext, defaultFieldRegistry} from '../api/newViewContext'
 
 export const developmentModelGroupID: Ref = ['_editorModelGroup', 'development']
 export const developmentEditorContextID: Ref = ['_editorEditorContext', 'development']
@@ -256,9 +257,10 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     const viewContexts: ViewContext[] = []
 
     const inferedViewContexts = models.map(model =>
-      inferViewContextFromModel(
+      ViewContext.inferFromModel(
         model.id,
         unserializeModel(model.value),
+        defaultFieldRegistry,
         reverseTagMap.get(model.id)
       )
     )

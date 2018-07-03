@@ -1,6 +1,3 @@
-#!/usr/bin/env node
-import 'dotenv/config'
-
 import * as path from 'path'
 import express from 'express'
 import compression from 'compression'
@@ -53,13 +50,9 @@ export default function runCommand(karmaURL: string | undefined, options: any) {
     res.status(200).send({status: 'OK'})
   })
 
-  app.get('/favicon.ico', (_, res) => {
-    res.sendFile(path.join(__dirname, '../../static/favicon.ico'))
-  })
-
   app.use(
     editorMiddleware({
-      staticPath: path.resolve(__dirname, './static'),
+      staticPath: path.resolve(__dirname, '../static'),
       karmaURL: process.env.KARMA_URL || process.env.KARMA_API_URL || karmaURL,
       mediaAPIBasePath: '/api/media',
       customClientConfig: {

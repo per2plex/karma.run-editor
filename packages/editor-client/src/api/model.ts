@@ -1,4 +1,3 @@
-import {Ref as ModelRef} from '@karma.run/sdk'
 import {firstKey, mapObject, ObjectMap} from '@karma.run/editor-common'
 
 export type KeyPath = string[]
@@ -13,22 +12,6 @@ export function isKeyPathEqual(keyPathA: KeyPath | string, keyPathB: KeyPath | s
   return keyPathStringA === keyPathStringB
 }
 
-export type ValidationError = {
-  keyPath: KeyPath
-  errors: string[]
-}
-
-export function validateValueAgainstModel(_value: any, _model: Model): ValidationError[] {
-  // TODO
-  return []
-}
-
-export function throwOnValidationError(validationErrors: ValidationError[]) {
-  if (validationErrors.length !== 0) {
-    throw new Error('TODO: ValidationErrors...')
-  }
-}
-
 // Helpers
 export type ModelMap = ObjectMap<Model>
 
@@ -36,7 +19,7 @@ export interface BaseModel<T extends string> {
   type: T
 }
 export interface RefModel<T extends string> extends BaseModel<T> {
-  model: ModelRef
+  model: string
 }
 export interface ContainerModel<T extends string> extends BaseModel<T> {
   model: Model
@@ -77,7 +60,7 @@ function BaseModelConstructor<T extends ModelType>(type: T) {
 }
 
 function RefModelConstructor<T extends ModelType>(type: T) {
-  return (model: ModelRef): RefModel<T> => ({type, model})
+  return (model: string): RefModel<T> => ({type, model})
 }
 
 function ContainerModelConstructor<T extends ModelType>(type: T) {
@@ -184,18 +167,12 @@ export const Union = FieldModelConstructor('union')
 export interface Tuple extends ArrayModel<'tuple'> {}
 export const Tuple = ArrayModelConstructor('tuple')
 
-export interface Or extends ArrayModel<'or'> {}
-export const Or = ArrayModelConstructor('or')
-
 // Semantic
 export interface Optional extends ContainerModel<'optional'> {}
 export const Optional = ContainerModelConstructor('optional')
 
 export interface Unique extends ContainerModel<'unique'> {}
 export const Unique = ContainerModelConstructor('unique')
-
-export interface Any extends BaseModel<'any'> {}
-export const Any = BaseModelConstructor('any')
 
 export interface Annotation extends AnnotationModel<'annotation'> {}
 export const Annotation = AnnotationModelConstructor('annotation')
@@ -243,12 +220,10 @@ export type Model =
   | Struct
   | Union
   | Tuple
-  | Or
 
   // Semantic
   | Optional
   | Unique
-  | Any
   | Annotation
   | Null
 
@@ -286,19 +261,19 @@ export function unserializeModel(rawModel: any): Model {
     case 'string':
     case 'dateTime':
     case 'bool':
-    case 'any':
     case 'null': {
       return BaseModelConstructor(type)() as Model
     }
 
+    // TODO: Fix for Karma 0.5
     // RefModel
-    case 'ref': {
-      if (!Array.isArray(value) || value.length < 2) {
-        throw new Error(`Expected array, got ${typeof value}.`)
-      }
+    // case 'ref': {
+    //   if (typeof value !== 'string') {
+    //     throw new Error(`Expected string, got ${typeof value}.`)
+    //   }
 
-      return RefModelConstructor(type)(value as ModelRef)
-    }
+    //   return RefModelConstructor(type)(value)
+    // }
 
     // EnumModel
     case 'enum': {
@@ -428,7 +403,6 @@ export function serializeModel(model: Model): any {
     case 'string':
     case 'dateTime':
     case 'bool':
-    case 'any':
     case 'null':
       value = {}
       break
@@ -455,7 +429,6 @@ export function serializeModel(model: Model): any {
 
     // ArrayModel
     case 'tuple':
-    case 'or':
       value = model.fields.map(field => serializeModel(field))
       break
 

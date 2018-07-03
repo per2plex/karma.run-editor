@@ -1,13 +1,11 @@
 import * as React from 'react'
-import {keyPathToString} from '../../api/karma'
-import {ViewContext, findKeyPath, Field} from '../../api/karmafe/viewContext'
-import {CardSection, CardImage, CardDocument} from '../common'
-import {ObjectMap, getValuesForValuePath} from '@karma.run/editor-common'
-import {MediaType, unserializeMedia, thumbnailURL} from '@karma.run/editor-media-client'
-import {Env} from '../../util/env'
 import {MetarializedRecord} from '@karma.run/sdk'
+
+import {keyPathToString} from '../../api/karma'
+import {ViewContext} from '../../api/newViewContext'
+import {CardSection} from '../common'
+import {ObjectMap, getValuesForValuePath} from '@karma.run/editor-common'
 import {ReadonlyRefMap} from '../../util/ref'
-import {objectPathForField} from '../../filter/configuration'
 
 export namespace DescriptionView {
   export interface Props {
@@ -22,39 +20,39 @@ export function contentForViewContext(
   record: MetarializedRecord,
   viewContext: ViewContext
 ): React.ReactNode[] {
-  if (!viewContext.descriptionKeyPaths) return []
+  if (!viewContext.displayKeyPaths) return []
 
-  return viewContext.descriptionKeyPaths.map(keyPath => {
-    const field = findKeyPath(keyPath, viewContext.fields)
+  return viewContext.displayKeyPaths.map(keyPath => {
+    const field = viewContext.field.traverse(keyPath)
     const key = keyPathToString(keyPath)
 
     if (field) {
-      const objectPath = objectPathForField(field, viewContext.fields)
+      const objectPath = viewContext.field.valuePathForKeyPath(keyPath)
       const value = getValuesForValuePath(record.value, objectPath)
 
-      return <React.Fragment key={key}>{contentForField(value.toString(), field)}</React.Fragment>
+      return <React.Fragment key={key}>{field.renderListComponent(value)}</React.Fragment>
     } else {
       return <React.Fragment key={key}>Invalid keyPath: {key}</React.Fragment>
     }
   })
 }
 
-export function contentForField(value: any, field: Field) {
-  switch (field.type) {
-    case 'media': {
-      const media = unserializeMedia(value)
+// export function contentForField(value: any, field: Field) {
+//   switch (field.type) {
+//     case 'media': {
+//       const media = unserializeMedia(value)
 
-      if (media.mediaType === MediaType.Image || media.mediaType === MediaType.Video) {
-        return <CardImage src={thumbnailURL(Env.mediaAPIBasePath, media.id)} />
-      } else {
-        return <CardDocument extension={value.extension} />
-      }
-    }
+//       if (media.mediaType === MediaType.Image || media.mediaType === MediaType.Video) {
+//         return <CardImage src={thumbnailURL(Env.mediaAPIBasePath, media.id)} />
+//       } else {
+//         return <CardDocument extension={value.extension} />
+//       }
+//     }
 
-    default:
-      return <CardSection>{value}</CardSection>
-  }
-}
+//     default:
+//       return <CardSection>{value}</CardSection>
+//   }
+// }
 
 export class DescriptionView extends React.Component<DescriptionView.Props> {
   public render() {
@@ -69,9 +67,7 @@ export class DescriptionView extends React.Component<DescriptionView.Props> {
 
     return (
       <>
-        <CardSection>
-          {this.props.reverseTagMap.get(this.props.record.id) || this.props.record.id}
-        </CardSection>
+        <CardSection>{this.props.record.id}</CardSection>
       </>
     )
   }

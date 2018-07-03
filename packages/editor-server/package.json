@@ -15,9 +15,9 @@
     "watch:dev": "tsc --watch --outDir ./lib/cjs --declaration --declarationDir ./lib/types --declarationMap",
     "mkdir": "shx mkdir -p ./lib/cjs ./lib/types",
     "symlink": "shx ln -s ./cjs ./lib/es6",
-    "copy-license": "shx cp ../../LICENSE ./",
+    "copy:license": "shx cp ../../LICENSE ./",
     "clean": "shx rm -rf ./LICENSE ./lib",
-    "prepare": "run-s clean copy-license build"
+    "prepare": "run-s clean copy:license build"
   },
   "dependencies": {
     "draft-js": "^0.10.5",
