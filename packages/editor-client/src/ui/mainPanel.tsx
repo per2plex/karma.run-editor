@@ -6,6 +6,8 @@ import {withSession, SessionContext} from '../context/session'
 import {StackView} from './common/stackView'
 import {RootRecordListPanelContainer} from './recordListPanel'
 import {Ref} from '@karma.run/sdk'
+import {Deferred} from '@karma.run/editor-common'
+import {RecordEditPanelContainer} from './recordEditPanel'
 
 export const enum PanelType {
   RootList = 'rootList',
@@ -48,23 +50,22 @@ export function ListPanelContext(model: Ref): ListPanelContext {
   return {type: PanelType.List, id: shortid.generate(), model}
 }
 
-// export interface EditPanelContext {
-//   type: PanelType.Edit
-//   contextID: string
-//   id: string | undefined
-//   viewContext: ViewContext
-//   result: Deferred<string | undefined>
-// }
+export interface EditPanelContext extends BasePanelContext {
+  type: PanelType.Edit
+  model: Ref
+  recordID?: Ref
+  result: Deferred<Ref | undefined>
+}
 
-// export function EditPanelContext(viewContext: ViewContext, id?: string): EditPanelContext {
-//   return {
-//     type: PanelType.Edit,
-//     contextID: shortid.generate(),
-//     viewContext,
-//     id,
-//     result: new Deferred()
-//   }
-// }
+export function EditPanelContext(model: Ref, recordID?: Ref): EditPanelContext {
+  return {
+    type: PanelType.Edit,
+    id: shortid.generate(),
+    result: new Deferred(),
+    recordID,
+    model
+  }
+}
 
 // export interface DeletePanelContext {
 //   type: PanelType.Delete
@@ -109,7 +110,7 @@ export function ListPanelContext(model: Ref): ListPanelContext {
 export type PanelContext =
   | RootListPanelContext
   | ListPanelContext
-  // | EditPanelContext
+  | EditPanelContext
   // | DeletePanelContext
   // | EditorPanelContext
   // | JSONEditorPanelContext
@@ -144,6 +145,16 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     }
   }
 
+  private handleNewRecord = (model: Ref) => {
+    this.pushPanelContext(EditPanelContext(model))
+  }
+
+  private pushPanelContext(context: PanelContext) {
+    this.setState({
+      panelContexts: [...this.state.panelContexts, context]
+    })
+  }
+
   private getPanelForContext(context: PanelContext, disabled: boolean) {
     switch (context.type) {
       case PanelType.RootList:
@@ -151,7 +162,20 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
           <RootRecordListPanelContainer
             model={context.model}
             disabled={disabled}
-            onNewRecord={() => {}}
+            onNewRecord={this.handleNewRecord}
+            onEditRecord={() => {}}
+            onDeleteRecord={() => {}}
+          />
+        )
+
+      case PanelType.Edit:
+        return (
+          <RecordEditPanelContainer
+            model={context.model}
+            recordID={context.recordID}
+            disabled={disabled}
+            onNewRecord={this.handleNewRecord}
+            onEditRecord={() => {}}
           />
         )
 
@@ -163,14 +187,15 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
 
   public render() {
     const panelContexts = [
-      this.getRootPanelContextForLocation(this.props.locationContext.location!)
+      this.getRootPanelContextForLocation(this.props.locationContext.location!),
+      ...this.state.panelContexts
     ]
 
     return (
       <StackView>
-        {panelContexts.map(panelContext => (
+        {panelContexts.map((panelContext, index) => (
           <React.Fragment key={panelContext.id}>
-            {this.getPanelForContext(panelContext, false)}
+            {this.getPanelForContext(panelContext, index !== panelContexts.length - 1)}
           </React.Fragment>
         ))}
       </StackView>

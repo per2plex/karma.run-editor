@@ -7,6 +7,8 @@ import {stringToColor, convertKeyToLabel, slugify} from '../util/string'
 import {refToString} from '../util/ref'
 import {SortConfigration, labelForMetaField, FilterField} from '../filter/configuration'
 import {CardSection} from '../ui/common/card'
+import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/fields/field'
+import {TextAreaInput, TextInput, TextInputType} from '../ui/common'
 
 export type InferFieldFunction = (model: Model, label?: string) => Field
 export type UnserializeFieldFunction = (rawField: any, model: Model) => Field
@@ -21,9 +23,23 @@ export interface SerializedField {
   [key: string]: any
 }
 
+export interface EditRenderProps<V = any> {
+  disabled: boolean
+  isWrapped: boolean
+  depth: number
+  index: number
+  value: V
+  changeKey?: string
+  onChange: (value: V, key?: string) => void
+}
+
+export interface EditComponentRenderProps<F extends Field = Field> extends EditRenderProps {
+  field: F
+}
+
 export interface Field<V = any> {
   renderListComponent(value: V): React.ReactNode
-  renderEditComponent(value: V, onChange: () => void): React.ReactNode
+  renderEditComponent(props: EditRenderProps<V>): React.ReactNode
 
   serialize(): SerializedField
   defaultValue(): V
@@ -110,104 +126,75 @@ export class ErrorField implements Field<null> {
   }
 }
 
-export class UniqueField implements Field<any> {
-  public readonly field: Field
-
-  public constructor(field: Field) {
-    this.field = field
+export class StringFieldEditComponent extends React.PureComponent<
+  EditComponentRenderProps<StringField>
+> {
+  private handleChange = (value: any) => {
+    this.props.onChange(value, this.props.changeKey)
   }
 
-  public renderListComponent(value: any) {
-    return this.field.renderListComponent(value)
-  }
-
-  public renderEditComponent(value: any) {
-    return this.field.renderListComponent(value)
-  }
-
-  public defaultValue() {
-    return ''
-  }
-
-  public transformRawValue() {
-    return ''
-  }
-
-  public transformValueToExpression(value: string) {
-    return e.string(value)
-  }
-
-  public isValidValue() {
-    return null
-  }
-
-  public serialize() {
-    return {
-      type: UniqueField.type,
-      field: this.field.serialize()
-    }
-  }
-
-  public traverse(keyPath: KeyPath) {
-    return this.field.traverse(keyPath)
-  }
-
-  public valuePathForKeyPath(keyPath: KeyPath) {
-    return this.field.valuePathForKeyPath(keyPath)
-  }
-
-  public static type = 'unique'
-
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'unique') return null
-    return new UniqueField(inferField(model.model, label))
-  }
-
-  static unserialize(
-    rawField: SerializedField,
-    model: Model,
-    unserializeField: UnserializeFieldFunction
-  ) {
-    if (model.type !== 'unique') {
-      return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
-      })
-    }
-
-    if (typeof rawField.field !== 'object') {
-      return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid field!'
-      })
-    }
-
-    return new UniqueField(unserializeField(rawField.field, model.model))
+  public render() {
+    return (
+      <FieldComponent depth={this.props.depth} index={this.props.index}>
+        {!this.props.isWrapped && (
+          <FieldLabel
+            label={this.props.field.label}
+            description={this.props.field.description}
+            depth={this.props.depth}
+            index={this.props.index}
+          />
+        )}
+        {this.props.field.multiline ? (
+          <TextAreaInput
+            onChange={this.handleChange}
+            value={this.props.value}
+            disabled={this.props.disabled}
+            autoresize
+          />
+        ) : (
+          <TextInput
+            type={TextInputType.Lighter}
+            onChange={this.handleChange}
+            value={this.props.value}
+            disabled={this.props.disabled}
+            minLength={this.props.field.minLength}
+            maxLength={this.props.field.maxLength}
+          />
+        )}
+      </FieldComponent>
+    )
   }
 }
 
 export interface StringFieldOptions {
   readonly label?: string
   readonly description?: string
+  readonly minLength?: number
+  readonly maxLength?: number
+  readonly multiline?: boolean
 }
 
 export class StringField implements Field<string> {
   public readonly label?: string
   public readonly description?: string
+  public readonly minLength?: number
+  public readonly maxLength?: number
+  public readonly multiline?: boolean
 
   public constructor(opts: StringFieldOptions) {
     this.label = opts.label
     this.description = opts.description
+    this.minLength = opts.minLength
+    this.maxLength = opts.maxLength
+    this.multiline = opts.multiline
   }
 
   public renderListComponent(value: string) {
     return <CardSection>{value}</CardSection>
   }
 
-  public renderEditComponent() {
-    return ''
+  public renderEditComponent(props: EditRenderProps<string>) {
+    return <StringFieldEditComponent {...props} field={this} />
   }
 
   public defaultValue() {
@@ -267,6 +254,48 @@ export class StringField implements Field<string> {
 
 export type StructFieldChildTuple = [string, Field]
 
+export class StructFieldEditComponent extends React.PureComponent<
+  EditComponentRenderProps<StructField>
+> {
+  private handleChange = (value: any, key?: string) => {
+    this.props.onChange({...this.props.value, [key!]: value})
+  }
+
+  public render() {
+    const fields = this.props.field.fields.map(([key, field], index) => (
+      <React.Fragment key={key}>
+        {field.renderEditComponent({
+          index: index,
+          depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
+          isWrapped: true,
+          disabled: this.props.disabled,
+          value: this.props.value[key],
+          onChange: this.handleChange,
+          changeKey: key
+        })}
+      </React.Fragment>
+    ))
+
+    if (this.props.isWrapped) {
+      return fields
+    } else {
+      return (
+        <FieldWrapper depth={this.props.depth} index={this.props.index}>
+          <FieldComponent depth={this.props.depth} index={this.props.index}>
+            <FieldLabel
+              label={this.props.field.label}
+              description={this.props.field.description}
+              depth={this.props.depth}
+              index={this.props.index}
+            />
+          </FieldComponent>
+          <FieldInset>{fields}</FieldInset>
+        </FieldWrapper>
+      )
+    }
+  }
+}
+
 export interface StructFieldOptions {
   readonly label?: string
   readonly description?: string
@@ -290,8 +319,8 @@ export class StructField implements Field<StructFieldValue> {
     return ''
   }
 
-  public renderEditComponent() {
-    return ''
+  public renderEditComponent(props: EditRenderProps) {
+    return <StructFieldEditComponent {...props} field={this} />
   }
 
   public defaultValue() {
@@ -415,96 +444,7 @@ export function mergeFieldRegistries(...registries: FieldRegistry[]): FieldRegis
   return createFieldRegistry(...values)
 }
 
-export const defaultFieldRegistry = createFieldRegistry(StringField, StructField, UniqueField)
-
-// export function viewContextModelForFieldRegistries(registry: FieldRegistry): DataExpression {
-//   const modifierModels: ObjectMap<DataExpression> = {}
-//   const fieldModels: ObjectMap<DataExpression> = {}
-
-//   for (const [type, field] of registry.entries()) {
-//     const optionsModel = field.optionsModel()
-
-//     switch (field.type) {
-//       case FieldType.Modifier:
-//         modifierModels[type] = optionsModel
-//         break
-
-//       case FieldType.Field:
-//         fieldModels[type] = optionsModel
-//         break
-//     }
-//   }
-
-//   return m.struct({
-//     key: m.struct(),
-//     name: m.optional(m.string()),
-//     description: m.optional(m.string()),
-//     slug: m.optional(m.string()),
-//     model: m.ref(d.expr(e.tag(DefaultTags.Model))),
-//     displayKeyPaths: m.optional(m.list(m.list(m.string()))),
-//     fields: m.optional(
-//       m.list(
-//         m.struct({
-//           keyPath: m.list(m.string()),
-//           label: m.optional(m.string()),
-//           description: m.optional(m.string()),
-//           modifiers: m.optional(m.list(m.optional(m.union(modifierModels)))),
-//           type: m.optional(m.union(fieldModels))
-//         })
-//       )
-//     )
-//   })
-// }
-
-// export interface ViewContextFieldModifierOverride {
-//   type?: string
-//   options: any
-// }
-
-// export interface ViewContextFieldOverride {
-//   type?: string
-//   keyPath: KeyPath
-//   label: string
-//   description: string
-//   modifiers?: ViewContextFieldModifierOverride[]
-//   options: any
-// }
-
-// export interface ViewContextOverride {
-//   id: Ref
-//   model: Ref
-//   name?: string
-//   slug?: string
-//   color?: string
-//   description?: string
-//   displayKeyPaths?: KeyPath[]
-//   fields?: ViewContextFieldOverride[]
-// }
-
-// export interface ViewContext {
-//   model: Ref
-//   name: string
-//   slug: string
-//   color: string
-//   field: Field
-//   displayKeyPaths: KeyPath[]
-// }
-
-// export function inferViewContextForModel(
-//   id: Ref,
-//   model: Model,
-//   registry: FieldRegistry,
-//   tag?: string
-// ): ViewContext {
-//   return new ViewContext({
-//     model: id,
-//     color: stringToColor(refToString(id)),
-//     name: tag ? convertKeyToLabel(tag) : id[1],
-//     slug: slugify(tag || id[1]),
-//     field: inferFieldForModel(model, registry),
-//     displayKeyPaths: []
-//   })
-// }
+export const defaultFieldRegistry = createFieldRegistry(StringField, StructField)
 
 export interface ViewContextOptions {
   readonly model: Ref
@@ -593,28 +533,13 @@ export class ViewContext {
   }
 }
 
-// export function unserializeViewContext(viewContext: any): ViewContext {}
-
-// export function keyPathToString(keyPath: KeyPath) {
-//   return ['root', ...keyPath].join('.')
-// }
-
-// export function isKeyPathEqual(keyPathA: KeyPath, keyPathB: KeyPath) {
-//   if (keyPathA.length !== keyPathB.length) return false
-//   return keyPathA.every((key, index) => keyPathB[index] === key)
-// }
-
-// export function findKeyPath(
-//   keyPath: KeyPath,
-//   items: ViewContextFieldOverride[]
-// ): ViewContextFieldOverride | undefined {
-//   return items.find(item => {
-//     return isKeyPathEqual(keyPath, item.keyPath)
-//   })
-// }
-
 export function inferFieldFromModel(model: Model, registry: FieldRegistry): Field {
   function inferField(model: Model, label?: string): Field {
+    // Unwrap unique
+    if (model.type === 'unique') {
+      model = model.model
+    }
+
     for (const fieldClass of registry.values()) {
       if (fieldClass.inferFromModel) {
         const field = fieldClass.inferFromModel(model, label, inferField)

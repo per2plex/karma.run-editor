@@ -144,7 +144,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
   public restoreSession = async (session: Session) => {
     try {
-      const newSession = await refreshSession(this.props.config.karmaURL, session)
+      const newSession = {username: 'test', signature: '1234'} // TEMP: await refreshSession(this.props.config.karmaURL, session)
       const editorData = await this.getEditorData(session)
 
       this.setState({...editorData, session: newSession})
@@ -158,7 +158,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   }
 
   public authenticate = async (username: string, password: string) => {
-    const session = await authenticate(this.props.config.karmaURL, username, password)
+    const session = {username: 'test', signature: '1234'} // TEMP: await authenticate(this.props.config.karmaURL, username, password)
     const editorData = await this.getEditorData(session)
 
     this.setState({...editorData, session})
@@ -322,6 +322,25 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   private async getTagsAndModels(
     session: Session
   ): Promise<{tags: Tag[]; models: MetarializedRecord[]}> {
+    // TEMP
+    return {
+      tags: [{tag: 'test', model: ['test', 'foo']}],
+      models: [
+        {
+          id: ['test', 'foo'],
+          created: new Date().toISOString(),
+          updated: new Date().toISOString(),
+          model: ['model', 'test'],
+          value: {
+            struct: {
+              foo: {string: {}},
+              bar: {unique: {string: {}}}
+            }
+          }
+        }
+      ]
+    }
+
     return query(
       this.props.config.karmaURL,
       session,
