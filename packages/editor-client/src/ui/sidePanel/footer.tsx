@@ -33,13 +33,14 @@ export class SidePanelFooter extends React.Component<SidePanelFooterProps> {
         <div className="info">
           <div className="username">{this.props.username}</div>
         </div>
-        <select onChange={this.handleLocaleChange} value={this.props.localeContext.locale}>
+        {/* TODO */}
+        {/* <select onChange={this.handleLocaleChange} value={this.props.localeContext.locale}>
           {[...this.props.localeContext.localeMap.entries()].map(([key, name]) => (
             <option key={key} value={key}>
               {name}
             </option>
           ))}
-        </select>
+        </select> */}
         <Button
           type={ButtonType.Link}
           icon={IconName.Exit}

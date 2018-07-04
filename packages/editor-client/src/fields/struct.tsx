@@ -31,7 +31,7 @@ export class StructFieldEditComponent extends React.PureComponent<
         {field.renderEditComponent({
           index: index,
           depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
-          isWrapped: true,
+          isWrapped: false,
           disabled: this.props.disabled,
           value: this.props.value[key],
           onChange: this.handleChange,
