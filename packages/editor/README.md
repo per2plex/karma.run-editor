@@ -9,7 +9,7 @@ npm install -g @karma.run/editor
 ## Usage
 
 ```
-> karma-editor --help
+$ karma-editor --help
 
   Usage: karma-editor [options]
 

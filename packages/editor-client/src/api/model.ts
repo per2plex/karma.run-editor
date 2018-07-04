@@ -1,3 +1,4 @@
+import {Ref as ModelRef} from '@karma.run/sdk'
 import {firstKey, mapObject, ObjectMap} from '@karma.run/editor-common'
 
 export type KeyPath = string[]
@@ -19,7 +20,7 @@ export interface BaseModel<T extends string> {
   type: T
 }
 export interface RefModel<T extends string> extends BaseModel<T> {
-  model: string
+  model: ModelRef
 }
 export interface ContainerModel<T extends string> extends BaseModel<T> {
   model: Model
@@ -60,7 +61,7 @@ function BaseModelConstructor<T extends ModelType>(type: T) {
 }
 
 function RefModelConstructor<T extends ModelType>(type: T) {
-  return (model: string): RefModel<T> => ({type, model})
+  return (model: ModelRef): RefModel<T> => ({type, model})
 }
 
 function ContainerModelConstructor<T extends ModelType>(type: T) {
@@ -265,15 +266,14 @@ export function unserializeModel(rawModel: any): Model {
       return BaseModelConstructor(type)() as Model
     }
 
-    // TODO: Fix for Karma 0.5
     // RefModel
-    // case 'ref': {
-    //   if (typeof value !== 'string') {
-    //     throw new Error(`Expected string, got ${typeof value}.`)
-    //   }
+    case 'ref': {
+      if (!Array.isArray(value) || value.length < 2) {
+        throw new Error(`Expected array, got ${typeof value}.`)
+      }
 
-    //   return RefModelConstructor(type)(value)
-    // }
+      return RefModelConstructor(type)(value as ModelRef)
+    }
 
     // EnumModel
     case 'enum': {
