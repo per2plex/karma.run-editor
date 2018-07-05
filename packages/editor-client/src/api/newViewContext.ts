@@ -10,6 +10,7 @@ import {Field, FieldRegistry, ErrorField} from '../fields'
 export interface ViewContextOptions {
   readonly model: Ref
   readonly name: string
+  readonly description?: string
   readonly slug: string
   readonly color: string
   readonly field: Field
@@ -19,6 +20,7 @@ export interface ViewContextOptions {
 export class ViewContext {
   public readonly model: Ref
   public readonly name: string
+  public readonly description?: string
   public readonly slug: string
   public readonly color: string
   public readonly field: Field
@@ -29,6 +31,7 @@ export class ViewContext {
   public constructor(opts: ViewContextOptions) {
     this.model = opts.model
     this.name = opts.name
+    this.description = opts.description
     this.slug = opts.slug
     this.color = opts.color
     this.field = opts.field
@@ -95,7 +98,7 @@ export class ViewContext {
 }
 
 export function inferFieldFromModel(model: Model, registry: FieldRegistry): Field {
-  function inferField(model: Model, label?: string): Field {
+  function inferField(model: Model, key?: string): Field {
     // Unwrap unique
     if (model.type === 'unique') {
       model = model.model
@@ -103,12 +106,15 @@ export function inferFieldFromModel(model: Model, registry: FieldRegistry): Fiel
 
     for (const fieldClass of registry.values()) {
       if (fieldClass.inferFromModel) {
-        const field = fieldClass.inferFromModel(model, label, inferField)
+        const field = fieldClass.inferFromModel(model, key, inferField)
         if (field) return field
       }
     }
 
-    return new ErrorField({message: `Coulnd't infer field from model of type: ${model.type}`})
+    return new ErrorField({
+      label: key && convertKeyToLabel(key),
+      message: `Coulnd't infer field from model of type: ${model.type}`
+    })
   }
 
   return inferField(model)

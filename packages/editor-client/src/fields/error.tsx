@@ -1,39 +1,46 @@
 import React from 'react'
 import {expression as e} from '@karma.run/sdk'
-import {
-  CommonFieldOptions,
-  Field,
-  SerializedField,
-  EditComponentRenderProps,
-  EditRenderProps
-} from './interface'
-import {FieldErrors, Field as FieldComponent} from '../ui/fields/field'
+import {Field, SerializedField, EditComponentRenderProps, EditRenderProps} from './interface'
+import {FieldErrors, Field as FieldComponent, FieldLabel} from '../ui/fields/field'
+import {CardError} from '../ui/common/card'
 
 export class ErrorEditComponent extends React.PureComponent<EditComponentRenderProps<ErrorField>> {
   public render() {
     return (
       <FieldComponent depth={this.props.depth} index={this.props.index}>
+        {!this.props.isWrapped && (
+          <FieldLabel
+            label={this.props.field.label}
+            description={this.props.field.description}
+            depth={this.props.depth}
+            index={this.props.index}
+          />
+        )}
         <FieldErrors errors={[this.props.field.message]} />
       </FieldComponent>
     )
   }
 }
 
-export interface ErrorFieldOptions extends CommonFieldOptions {
-  message: string
+export interface ErrorFieldOptions {
+  readonly label?: string
+  readonly description?: string
+  readonly message: string
 }
 
 export class ErrorField implements Field<null> {
   public readonly label?: string
+  public readonly description?: string
   public readonly message: string
 
   public constructor(opts: ErrorFieldOptions) {
     this.label = opts.label
+    this.description = opts.description
     this.message = opts.message
   }
 
   public renderListComponent() {
-    return this.message
+    return <CardError>{this.message}</CardError>
   }
 
   public renderEditComponent(props: EditRenderProps<null>) {

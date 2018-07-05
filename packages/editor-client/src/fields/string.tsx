@@ -10,12 +10,13 @@ import {TextAreaInput, TextInput, TextInputType} from '../ui/common/input'
 import {CardSection} from '../ui/common/card'
 import {SortConfigration} from '../filter/configuration'
 import {SortType} from '@karma.run/editor-common'
+import {convertKeyToLabel} from '../util/string'
 
 export class StringFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StringField>
 > {
   private handleChange = (value: any) => {
-    this.props.onChange(value, this.props.changeKey)
+    this.props.onValueChange(value, this.props.changeKey)
   }
 
   public render() {
@@ -125,9 +126,9 @@ export class StringField implements Field<string> {
 
   public static type = 'string'
 
-  static inferFromModel(model: Model, label: string | undefined) {
+  static inferFromModel(model: Model, key: string | undefined) {
     if (model.type !== 'string') return null
-    return new StringField({label})
+    return new StringField({label: key && convertKeyToLabel(key)})
   }
 
   static unserialize(rawField: SerializedField, model: Model) {

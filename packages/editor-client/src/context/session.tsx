@@ -1,38 +1,12 @@
 import React from 'react'
-import {
-  Sort,
-  ValuePathSegmentType,
-  ValuePathSegment,
-  Condition,
-  ValuePath,
-  StructPathSegment
-} from '@karma.run/editor-common'
+import {Sort, Condition} from '@karma.run/editor-common'
 
-import {
-  Ref,
-  Tag,
-  Session,
-  authenticate,
-  refreshSession,
-  query,
-  buildFunction,
-  getTags,
-  getModels,
-  MetarializedRecord,
-  buildExpression,
-  Expression,
-  expression as e
-} from '@karma.run/sdk'
+import {Ref, Tag, Session, MetarializedRecord} from '@karma.run/sdk'
 
-import * as storage from '../util/storage'
-import {SessionStorageKey} from '../store/editorStore'
-import {Config, withConfig} from './config'
 import {EditorContext} from '../api/karmafe/editorContext'
 import {ModelGroup} from '../api/karmafe/modelGroup'
 import {createContextHOC} from './helper'
 import {ReadonlyRefMap, RefMap} from '../util/ref'
-// import {inferViewContextFromModel, ViewContext} from '../api/karmafe/viewContext'
-import {unserializeModel} from '../api/model'
 import {ViewContext} from '../api/newViewContext'
 
 export interface EditorData {
@@ -72,7 +46,7 @@ export interface SessionContext extends EditorData {
   restoreSession(session: Session): Promise<Session>
   authenticate(username: string, password: string): Promise<Session>
   invalidate(): Promise<void>
-  getRecord(id: Ref): Promise<MetarializedRecord[]>
+  getRecord(model: Ref, id: Ref): Promise<MetarializedRecord>
   getRecordList(
     model: Ref,
     limit: number,
@@ -80,6 +54,7 @@ export interface SessionContext extends EditorData {
     sort: Sort,
     filter: Condition[]
   ): Promise<MetarializedRecord[]>
+  saveRecord(model: Ref, id: Ref | undefined, value: any): Promise<MetarializedRecord>
 }
 
 export const SessionContext = React.createContext<SessionContext>({
@@ -107,6 +82,10 @@ export const SessionContext = React.createContext<SessionContext>({
   },
 
   async getRecordList() {
+    throw new Error('No SessionProvider found!')
+  },
+
+  async saveRecord() {
     throw new Error('No SessionProvider found!')
   }
 })

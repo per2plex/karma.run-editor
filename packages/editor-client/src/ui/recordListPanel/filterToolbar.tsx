@@ -1,7 +1,7 @@
 import React from 'react'
 
 import {style} from 'typestyle'
-import {ViewContext} from '../../api/karmafe/viewContext'
+import {ViewContext} from '../../api/newViewContext'
 import {Spacing} from '../../ui/style'
 import {QuickSearchFieldStyle, QuickSearchField} from '../../filter/ui/searchField'
 import {SortFieldStyle, SortField} from '../../filter/ui/sortField'

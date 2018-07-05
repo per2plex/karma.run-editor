@@ -7,11 +7,6 @@ import {SortConfigration, FilterField} from '../filter/configuration'
 export type InferFieldFunction = (model: Model, label?: string) => Field
 export type UnserializeFieldFunction = (rawField: any, model: Model) => Field
 
-export interface CommonFieldOptions {
-  label?: string
-  description?: string
-}
-
 export interface SerializedField {
   type: string
   [key: string]: any
@@ -24,10 +19,12 @@ export interface EditRenderProps<V = any> {
   index: number
   value: V
   changeKey?: string
-  onChange: (value: V, key?: string) => void
+  onValueChange: (value: V, key?: string) => void
+  onEditRecord: (model: Ref, id?: Ref) => Promise<Ref | undefined>
 }
 
-export interface EditComponentRenderProps<F extends Field = Field> extends EditRenderProps {
+export interface EditComponentRenderProps<F extends Field = Field, V = any>
+  extends EditRenderProps<V> {
   field: F
 }
 
@@ -49,8 +46,8 @@ export interface Field<V = any> {
   sortConfigurations?(): SortConfigration[]
   filterConfigurations?(): FilterField[]
 
-  onSave?(value: V): Promise<void>
-  onDelete?(value: V): Promise<void>
+  onSave?(value: V): Promise<V>
+  onDelete?(value: V): Promise<V>
 }
 
 export interface FieldClass<V = any> {
@@ -64,7 +61,7 @@ export interface FieldClass<V = any> {
 
   inferFromModel?(
     model: Model,
-    inferredLabel: string | undefined,
+    key: string | undefined,
     inferField: InferFieldFunction
   ): Field<V> | null
 }

@@ -34,6 +34,7 @@ import {RefMap} from '../util/ref'
 import {unserializeModel} from '../api/model'
 import {ViewContext} from '../api/newViewContext'
 import {SessionContext, initialEditorData, EditorData} from '../context/session'
+import {defaultFieldRegistry} from '../fields/registry'
 
 export const developmentModelGroupID: Ref = ['_editorModelGroup', 'development']
 export const developmentEditorContextID: Ref = ['_editorEditorContext', 'development']
@@ -58,7 +59,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       authenticate: this.authenticate,
       invalidate: this.invalidate,
       getRecord: this.getRecord,
-      getRecordList: this.getRecordList
+      getRecordList: this.getRecordList,
+      saveRecord: this.saveRecord
     }
   }
 
@@ -74,10 +76,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
   public restoreSession = async (session: Session) => {
     try {
-      // TEMP
-      // const newSession = {username: 'test', signature: '1234'}
       const newSession = await refreshSession(this.props.config.karmaURL, session)
-
       const editorData = await this.getEditorData(session)
 
       this.setState({...editorData, session: newSession})
@@ -91,8 +90,6 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   }
 
   public authenticate = async (username: string, password: string) => {
-    // TEMP
-    // const session = {username: 'test', signature: '1234'}
     const session = await authenticate(this.props.config.karmaURL, username, password)
     const editorData = await this.getEditorData(session)
 
@@ -107,22 +104,36 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     storage.remove(SessionStorageKey)
   }
 
-  public getRecord = (id: Ref) => {
-    // TODO
-    return {}
+  public getRecord = async (model: Ref, id: Ref): Promise<MetarializedRecord> => {
+    if (!this.state.session) throw new Error('No session!')
+
+    const viewContext = this.state.viewContextMap.get(model)
+    if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
+
+    const record: MetarializedRecord = await query(
+      this.props.config.karmaURL,
+      this.state.session,
+      buildFunction(e => () => e.metarialize(e.get(e.data(d => d.ref(id)))))
+    )
+
+    record.value = viewContext.field.transformRawValue(record.value)
+    return record
   }
 
-  public getRecordList = (
+  public getRecordList = async (
     model: Ref,
     limit: number,
     offset: number,
     sort: Sort,
     filters: Condition[]
-  ): Promise<any[]> => {
+  ): Promise<MetarializedRecord[]> => {
     if (!this.state.session) throw new Error('No session!')
 
+    const viewContext = this.state.viewContextMap.get(model)
+    if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
+
     let listExpression = buildExpression(e =>
-      e.mapList(e.all(e.data(d => d.ref(model[0], model[1]))), (_, value) => e.metarialize(value))
+      e.mapList(e.all(e.data(d => d.ref(model))), (_, value) => e.metarialize(value))
     )
 
     if (filters.length > 0) {
@@ -175,11 +186,49 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       listExpression = e.reverseList(listExpression)
     }
 
-    return query(
+    const records: MetarializedRecord[] = await query(
       this.props.config.karmaURL,
       this.state.session,
       buildFunction(e => () => e.slice(listExpression, offset, limit))
     )
+
+    records.forEach(record => {
+      record.value = viewContext.field.transformRawValue(record.value)
+    })
+
+    return records
+  }
+
+  public saveRecord = async (
+    model: Ref,
+    id: Ref | undefined,
+    value: any
+  ): Promise<MetarializedRecord> => {
+    if (!this.state.session) throw new Error('No session!')
+
+    const viewContext = this.state.viewContextMap.get(model)
+    if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
+
+    if (viewContext.field.onSave) {
+      value = viewContext.field.onSave(value)
+    }
+
+    const expressionValue = viewContext.field.transformValueToExpression(value)
+    const result = await query(
+      this.props.config.karmaURL,
+      this.state.session,
+      buildFunction(e => () => [
+        e.define(
+          'recordID',
+          id
+            ? e.update(e.data(d => d.ref(id)), expressionValue)
+            : e.create(e.data(d => d.ref(model)), () => expressionValue)
+        ),
+        e.metarialize(e.get(e.scope('recordID')))
+      ])
+    )
+
+    return result
   }
 
   private storeSession() {
@@ -195,9 +244,6 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     const modelGroups: ModelGroup[] = []
     const editorContexts: EditorContext[] = []
     const viewContexts: ViewContext[] = []
-
-    // Import dynamicallly to avoid circular dependency
-    const {defaultFieldRegistry} = await import('../fields/registry')
 
     const inferedViewContexts = models.map(model =>
       ViewContext.inferFromModel(
@@ -265,25 +311,6 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   private async getTagsAndModels(
     session: Session
   ): Promise<{tags: Tag[]; models: MetarializedRecord[]}> {
-    // TEMP
-    // return {
-    //   tags: [{tag: 'test', model: ['test', 'foo']}],
-    //   models: [
-    //     {
-    //       id: ['test', 'foo'],
-    //       created: new Date().toISOString(),
-    //       updated: new Date().toISOString(),
-    //       model: ['model', 'test'],
-    //       value: {
-    //         struct: {
-    //           foo: {string: {}},
-    //           bar: {unique: {string: {}}}
-    //         }
-    //       }
-    //     }
-    //   ]
-    // }
-
     return query(
       this.props.config.karmaURL,
       session,

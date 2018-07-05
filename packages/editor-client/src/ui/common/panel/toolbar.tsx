@@ -6,15 +6,13 @@ import {solidBorderWithColor} from '../../../util/style'
 import {QuickSearchFieldStyle} from '../../../filter/ui/searchField'
 import {SortFieldStyle} from '../../../filter/ui/sortField'
 
-export namespace PanelToolbar {
-  export interface Props {
-    left?: React.ReactNode
-    right?: React.ReactNode
-    drawer?: React.ReactNode
-  }
+export interface PanelToolbarProps {
+  left?: React.ReactNode
+  right?: React.ReactNode
+  drawer?: React.ReactNode
 }
 
-export class PanelToolbar extends React.Component<PanelToolbar.Props> {
+export class PanelToolbar extends React.PureComponent<PanelToolbarProps> {
   public render() {
     return (
       <div className={PanelToolbar.Style}>

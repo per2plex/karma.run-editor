@@ -13,7 +13,6 @@ import {
 
 import {KeyPath, Model} from '../api/model'
 import {ErrorField} from './error'
-import {convertKeyToLabel} from '../util/string'
 import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/fields/field'
 
 export type StructFieldChildTuple = [string, Field]
@@ -22,7 +21,7 @@ export class StructFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StructField>
 > {
   private handleChange = (value: any, key?: string) => {
-    this.props.onChange({...this.props.value, [key!]: value})
+    this.props.onValueChange({...this.props.value, [key!]: value})
   }
 
   public render() {
@@ -34,7 +33,8 @@ export class StructFieldEditComponent extends React.PureComponent<
           isWrapped: false,
           disabled: this.props.disabled,
           value: this.props.value[key],
-          onChange: this.handleChange,
+          onValueChange: this.handleChange,
+          onEditRecord: this.props.onEditRecord,
           changeKey: key
         })}
       </React.Fragment>
@@ -185,7 +185,7 @@ export class StructField implements Field<StructFieldValue> {
     return new StructField({
       label,
       fields: Object.entries(model.fields).map(
-        ([key, model]) => [key, inferField(model, convertKeyToLabel(key))] as StructFieldChildTuple
+        ([key, model]) => [key, inferField(model, key)] as StructFieldChildTuple
       )
     })
   }

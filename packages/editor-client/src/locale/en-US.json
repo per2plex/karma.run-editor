@@ -2,6 +2,8 @@
   "recordUpdated": "Updated",
   "recordCreated": "Created",
   "listRecordPrefix": "List",
+  "editRecordPrefix": "Edit",
+  "newRecordPrefix": "New",
   "invalidLogin": "Invalid login",
   "unknownError": "Unknown error",
   "karmaURL": "Karma URL",

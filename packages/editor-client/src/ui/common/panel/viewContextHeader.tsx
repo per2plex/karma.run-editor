@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import {ViewContext} from '../../../api/karmafe/viewContext'
+import {ViewContext} from '../../../api/newViewContext'
 import {Markdown} from '../../common/markdown'
 import {PanelHeader} from '../../common/panel/header'
 
@@ -11,7 +11,7 @@ export namespace ViewContextPanelHeader {
   }
 }
 
-export class ViewContextPanelHeader extends React.Component<ViewContextPanelHeader.Props> {
+export class ViewContextPanelHeader extends React.PureComponent<ViewContextPanelHeader.Props> {
   public render() {
     const title = `${this.props.prefix} / ${this.props.viewContext.name}`
     const description = this.props.viewContext.description ? (

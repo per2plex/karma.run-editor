@@ -7,8 +7,7 @@ import {Model} from '../api/model'
 import {ErrorField} from './error'
 import {SerializedField, EditComponentRenderProps, EditRenderProps, Field} from './interface'
 import {Field as FieldComponent, FieldLabel} from '../ui/fields/field'
-import {TextAreaInput, TextInput, TextInputType} from '../ui/common/input'
-import {CardSection, CardError, Card, CardFooter} from '../ui/common/card'
+import {CardSection, Card, CardFooter} from '../ui/common/card'
 import {SortConfigration} from '../filter/configuration'
 import {SortType} from '@karma.run/editor-common'
 import {withSession, SessionContext} from '../context/session'
@@ -17,12 +16,15 @@ import {DescriptionView} from '../ui/common/descriptionView'
 import {Button, ButtonType} from '../ui/common/button'
 import {IconName} from '../ui/common/icon'
 import {Spacing} from '../ui/style'
+import {convertKeyToLabel} from '../util/string'
 
-export interface RefFieldEditComponentProps extends EditComponentRenderProps<RefField> {
+export interface RefFieldEditComponentProps
+  extends EditComponentRenderProps<RefField, RefFieldValue> {
   sessionContext: SessionContext
 }
 
 export interface RefFieldEditComponentState {
+  isLoadingRecord?: boolean
   record?: MetarializedRecord
 }
 
@@ -33,7 +35,32 @@ export class RefFieldEditComponent extends React.PureComponent<
   public state: RefFieldEditComponentState = {}
 
   private handleChange = (value: any) => {
-    this.props.onChange(value, this.props.changeKey)
+    this.props.onValueChange(value, this.props.changeKey)
+  }
+
+  private handleEditRecord = () => {
+    this.props.onEditRecord(this.props.field.model, this.props.value)
+  }
+
+  private handleNewRecord = () => {
+    this.props.onEditRecord(this.props.field.model)
+  }
+
+  private handleChooseRecord = () => {}
+
+  private async loadRecord(id: Ref) {
+    this.setState({
+      isLoadingRecord: true
+    })
+
+    this.setState({
+      isLoadingRecord: false,
+      record: await this.props.sessionContext.getRecord(this.props.field.model, id)
+    })
+  }
+
+  public componentDidMount() {
+    if (this.props.value) this.loadRecord(this.props.value)
   }
 
   public render() {
@@ -50,7 +77,7 @@ export class RefFieldEditComponent extends React.PureComponent<
     if (false) {
       // TODO: Error this.state.error
       // content = <CardError>{this.state.error}</CardError>
-    } else if (!record) {
+    } else if (this.state.isLoadingRecord) {
       content = (
         <CardSection>
           <LoadingIndicator style={LoadingIndicatorStyle.Dark} />
@@ -103,7 +130,7 @@ export class RefFieldEditComponent extends React.PureComponent<
             key="new"
             label="New"
             icon={IconName.NewDocument}
-            onTrigger={this.handleNewClick}
+            onTrigger={this.handleNewRecord}
             disabled={this.props.disabled}
           />
           {this.props.value != undefined && (
@@ -112,7 +139,7 @@ export class RefFieldEditComponent extends React.PureComponent<
               key="edit"
               label="Edit"
               icon={IconName.EditDocument}
-              onTrigger={this.handleEditClick}
+              onTrigger={this.handleEditRecord}
               disabled={this.props.disabled}
             />
           )}
@@ -122,7 +149,7 @@ export class RefFieldEditComponent extends React.PureComponent<
 
     return (
       <FieldComponent
-        className={RefFieldEditComponent.Style}
+        className={RefFieldEditComponentStyle}
         depth={this.props.depth}
         index={this.props.index}>
         {!this.props.isWrapped && (
@@ -144,7 +171,7 @@ export class RefFieldEditComponent extends React.PureComponent<
                   type={ButtonType.Icon}
                   label="Choose"
                   icon={IconName.ChooseDocument}
-                  onTrigger={this.handleChooseClick}
+                  onTrigger={this.handleChooseRecord}
                   disabled={this.props.disabled}
                 />
               </>
@@ -157,30 +184,28 @@ export class RefFieldEditComponent extends React.PureComponent<
   }
 }
 
-export namespace RefFieldEditComponent {
-  export const Style = style({
-    $debugName: 'RefField',
+export const RefFieldEditComponentStyle = style({
+  $debugName: 'RefField',
 
-    $nest: {
-      '> .buttonWrapper': {
-        display: 'flex',
+  $nest: {
+    '> .buttonWrapper': {
+      display: 'flex',
 
-        opacity: 0.5,
-        marginTop: Spacing.large,
+      opacity: 0.5,
+      marginTop: Spacing.large,
 
-        $nest: {
-          '> button': {
-            marginRight: Spacing.medium
-          }
+      $nest: {
+        '> button': {
+          marginRight: Spacing.medium
         }
-      },
-
-      '&:hover > .buttonWrapper': {
-        opacity: 1
       }
+    },
+
+    '&:hover > .buttonWrapper': {
+      opacity: 1
     }
-  })
-}
+  }
+})
 
 export const RefFieldEditComponentContainer = withSession(RefFieldEditComponent)
 
@@ -221,7 +246,7 @@ export class RefField implements Field<RefFieldValue> {
 
   public transformValueToExpression(value: RefFieldValue) {
     if (!value) return e.null()
-    return e.data(d.ref(value[0], value[1]))
+    return e.data(d.ref(value))
   }
 
   public isValidValue(value: RefFieldValue) {
@@ -250,9 +275,9 @@ export class RefField implements Field<RefFieldValue> {
 
   public static type = 'ref'
 
-  static inferFromModel(model: Model, label: string | undefined) {
+  static inferFromModel(model: Model, key: string | undefined) {
     if (model.type !== 'ref') return null
-    return new RefField({label, model: model.model})
+    return new RefField({label: key && convertKeyToLabel(key), model: model.model})
   }
 
   static unserialize(rawField: SerializedField, model: Model) {

@@ -77,9 +77,8 @@ export interface RootRecordListPanelProps {
   sessionContext: SessionContext
   localeContext: LocaleContext
   disabled: boolean
-  onNewRecord: (model: Ref) => void
-  onEditRecord: (id: Ref) => void
-  onDeleteRecord: (id: Ref) => void
+  onEditRecord: (model: Ref, id?: Ref) => void
+  onDeleteRecord: (model: Ref, id: Ref) => void
 }
 
 export interface RootRecordListPanelState {
@@ -94,7 +93,7 @@ export interface RootRecordListPanelState {
   quickSearchValue: string
 }
 
-export class RootRecordListPanel extends React.Component<
+export class RootRecordListPanel extends React.PureComponent<
   RootRecordListPanelProps,
   RootRecordListPanelState
 > {
@@ -104,10 +103,6 @@ export class RootRecordListPanel extends React.Component<
     hasMore: true,
     sortDescending: false,
     quickSearchValue: ''
-  }
-
-  private handleNew = () => {
-    this.props.onNewRecord(this.props.model)
   }
 
   private handleNextPage = () => {
@@ -218,6 +213,14 @@ export class RootRecordListPanel extends React.Component<
     return this.filterConfigurationsForViewContext(this.viewContext)
   }
 
+  private handleEditRecord = (id?: Ref) => {
+    this.props.onEditRecord(this.props.model, id)
+  }
+
+  private handleDeleteRecord = (id: Ref) => {
+    this.props.onDeleteRecord(this.props.model, id)
+  }
+
   public componentDidMount() {
     this.loadRecords(this.state.offset)
   }
@@ -239,7 +242,7 @@ export class RootRecordListPanel extends React.Component<
               <Button
                 type={ButtonType.Icon}
                 icon={IconName.NewDocument}
-                onTrigger={this.handleNew}
+                onTrigger={this.handleEditRecord}
                 label={_('newRecord')}
               />
               <Button
@@ -280,13 +283,13 @@ export class RootRecordListPanel extends React.Component<
                 key: 'edit',
                 icon: IconName.EditDocument,
                 label: _('editRecord'),
-                onTrigger: this.props.onEditRecord
+                onTrigger: this.handleEditRecord
               },
               {
                 key: 'delete',
                 icon: IconName.DeleteDocument,
                 label: _('deleteRecord'),
-                onTrigger: this.props.onDeleteRecord
+                onTrigger: this.handleDeleteRecord
               }
             ]}
           />
