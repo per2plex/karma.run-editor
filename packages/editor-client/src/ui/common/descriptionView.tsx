@@ -30,7 +30,7 @@ export function contentForViewContext(
       const objectPath = viewContext.field.valuePathForKeyPath(keyPath)
       const value = getValuesForValuePath(record.value, objectPath)
 
-      return <React.Fragment key={key}>{field.renderListComponent(value)}</React.Fragment>
+      return <React.Fragment key={key}>{field.renderListComponent({value})}</React.Fragment>
     } else {
       return <React.Fragment key={key}>Invalid keyPath: {key}</React.Fragment>
     }

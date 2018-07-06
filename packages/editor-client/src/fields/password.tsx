@@ -1,11 +1,16 @@
 import React from 'react'
 import * as shortid from 'shortid'
-import {style} from 'typestyle'
 import {expression as e, Expression} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
-import {SerializedField, EditComponentRenderProps, EditRenderProps, Field} from './interface'
+import {
+  SerializedField,
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps
+} from './interface'
 import {Field as FieldComponent, FieldLabel} from '../ui/fields/field'
 import {TextInput} from '../ui/common/input'
 import {CardSection} from '../ui/common/card'
@@ -93,8 +98,8 @@ export class PasswordField implements Field<PasswordFieldValue> {
     this.costFactor = opts.costFactor
   }
 
-  public renderListComponent(value: PasswordFieldValue) {
-    return <CardSection>{value.hash}</CardSection>
+  public renderListComponent(props: ListRenderProps<PasswordFieldValue>) {
+    return <CardSection>{props.value}</CardSection>
   }
 
   public renderEditComponent(props: EditRenderProps<PasswordFieldValue>) {

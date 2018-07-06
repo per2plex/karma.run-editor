@@ -14,14 +14,16 @@ import {
 import {KeyPath, Model} from '../api/model'
 import {ErrorField} from './error'
 import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/fields/field'
+import {convertKeyToLabel} from '../util/string'
 
 export type StructFieldChildTuple = [string, Field]
 
 export class StructFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StructField>
 > {
-  private handleChange = (value: any, key?: string) => {
-    this.props.onValueChange({...this.props.value, [key!]: value})
+  private handleChange = (value: any, key: string | undefined) => {
+    if (!key) throw new Error('Child field did not call onValueChange with changeKey!')
+    this.props.onValueChange({...this.props.value, [key]: value}, this.props.changeKey)
   }
 
   public render() {
@@ -33,6 +35,7 @@ export class StructFieldEditComponent extends React.PureComponent<
           isWrapped: false,
           disabled: this.props.disabled,
           value: this.props.value[key],
+          context: this.props.context,
           onValueChange: this.handleChange,
           onEditRecord: this.props.onEditRecord,
           changeKey: key
@@ -87,20 +90,23 @@ export class StructField implements Field<StructFieldValue> {
     return <StructFieldEditComponent {...props} field={this} />
   }
 
-  public defaultValue() {
-    return reduceToMap(this.fields, ([key, field]) => [key, field.defaultValue()])
+  public defaultValue(context?: any) {
+    return reduceToMap(this.fields, ([key, field]) => [key, field.defaultValue(context)])
   }
 
-  public transformRawValue(value: any) {
-    return reduceToMap(this.fields, ([key, field]) => [key, field.transformRawValue(value[key])])
+  public transformRawValue(value: any, context?: any) {
+    return reduceToMap(this.fields, ([key, field]) => [
+      key,
+      field.transformRawValue(value[key], context)
+    ])
   }
 
-  public transformValueToExpression(value: StructFieldValue) {
+  public transformValueToExpression(value: StructFieldValue, context?: any) {
     return e.data(
       d.struct(
         reduceToMap(this.fields, ([key, field]) => [
           key,
-          d.expr(field.transformValueToExpression(value[key]))
+          d.expr(field.transformValueToExpression(value[key], context))
         ])
       )
     )
@@ -180,10 +186,10 @@ export class StructField implements Field<StructFieldValue> {
     })
   }
 
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
+  static inferFromModel(model: Model, key: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'struct') return null
     return new StructField({
-      label,
+      label: key && convertKeyToLabel(key),
       fields: Object.entries(model.fields).map(
         ([key, model]) => [key, inferField(model, key)] as StructFieldChildTuple
       )

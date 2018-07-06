@@ -4,7 +4,7 @@ import {ValuePath} from '@karma.run/editor-common'
 import {KeyPath, Model} from '../api/model'
 import {SortConfigration, FilterField} from '../filter/configuration'
 
-export type InferFieldFunction = (model: Model, label?: string) => Field
+export type InferFieldFunction = (model: Model, key?: string) => Field
 export type UnserializeFieldFunction = (rawField: any, model: Model) => Field
 
 export interface SerializedField {
@@ -12,31 +12,42 @@ export interface SerializedField {
   [key: string]: any
 }
 
-export interface EditRenderProps<V = any> {
+export interface ListRenderProps<V = any, C = any> {
+  value: V
+  context?: C
+}
+
+export interface EditRenderProps<V = any, C = any> {
   disabled: boolean
   isWrapped: boolean
   depth: number
   index: number
   value: V
+  context?: C
   changeKey?: string
-  onValueChange: (value: V, key?: string) => void
+  onValueChange: (value: V, key: string | undefined) => void
   onEditRecord: (model: Ref, id?: Ref) => Promise<Ref | undefined>
 }
 
-export interface EditComponentRenderProps<F extends Field = Field, V = any>
-  extends EditRenderProps<V> {
+export interface ListComponentRenderProps<F extends Field = Field, V = any, C = any>
+  extends ListRenderProps<V, C> {
   field: F
 }
 
-export interface Field<V = any> {
-  renderListComponent(value: V): React.ReactNode
-  renderEditComponent(props: EditRenderProps<V>): React.ReactNode
+export interface EditComponentRenderProps<F extends Field = Field, V = any, C = any>
+  extends EditRenderProps<V, C> {
+  field: F
+}
+
+export interface Field<V = any, C = any> {
+  renderListComponent(props: ListRenderProps<V, C>): React.ReactNode
+  renderEditComponent(props: EditRenderProps<V, C>): React.ReactNode
 
   serialize(): SerializedField
-  defaultValue(): V
+  defaultValue(context?: C): V
 
-  transformRawValue(value: any): V
-  transformValueToExpression(value: V): Expression
+  transformRawValue(value: any, context?: C): V
+  transformValueToExpression(value: V, context?: C): Expression
 
   isValidValue(value: V): string[] | null
 

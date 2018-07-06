@@ -1,5 +1,5 @@
 import React from 'react'
-import memoize from 'memoize-one'
+import memoizeOne from 'memoize-one'
 import {Session} from '@karma.run/sdk'
 import qs from 'qs'
 
@@ -234,7 +234,7 @@ export class LocationActionProvider extends React.Component<
     return false
   }
 
-  private getActionContext = memoize(
+  private getActionContext = memoizeOne(
     (
       pushLocation: LocationActionContext['pushLocation'],
       replaceLocation: LocationActionContext['replaceLocation'],

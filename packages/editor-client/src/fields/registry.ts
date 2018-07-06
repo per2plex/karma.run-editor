@@ -3,6 +3,8 @@ import {StringField} from './string'
 import {StructField} from './struct'
 import {RefField} from './ref'
 import {PasswordField} from './password'
+import {RecursionField, RecurseField, RecursiveField} from './recursion'
+import {OptionalField} from './optional'
 
 export type FieldRegistry = ReadonlyMap<string, FieldClass>
 
@@ -25,5 +27,9 @@ export const defaultFieldRegistry = createFieldRegistry(
   PasswordField,
   StringField,
   StructField,
-  RefField
+  RefField,
+  RecursionField,
+  RecursiveField,
+  RecurseField,
+  OptionalField
 )

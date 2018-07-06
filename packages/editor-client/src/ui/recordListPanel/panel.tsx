@@ -15,7 +15,7 @@ import {PanelContent} from '../common/panel/content'
 import {ToolbarFilter} from './filterToolbar'
 import {withLocale, LocaleContext} from '../../context/locale'
 import {RecordItem} from './recordItem'
-import memoize from 'memoize-one'
+import memoizeOne from 'memoize-one'
 
 import {
   sortConfigurationsForViewContext,
@@ -204,7 +204,7 @@ export class RootRecordListPanel extends React.PureComponent<
     this.setState({records, hasMore})
   }
 
-  private filterConfigurationsForViewContext = memoize((viewContext?: ViewContext) => {
+  private filterConfigurationsForViewContext = memoizeOne((viewContext?: ViewContext) => {
     if (!viewContext) return []
     return filterConfigurationsForViewContext(viewContext)
   })

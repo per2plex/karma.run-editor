@@ -22,7 +22,7 @@ import {ModelGroup} from '../../api/karmafe/modelGroup'
 import {SidePanelFooterContainer} from './footer'
 import {SidePanelSection, SidePanelSectionItem} from './section'
 import {ViewContext} from '../../api/newViewContext'
-import memoize from 'memoize-one'
+import memoizeOne from 'memoize-one'
 
 export const GroupStateStorageKey = 'sidePanelGroupState_v1'
 
@@ -103,7 +103,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
     storage.set(GroupStateStorageKey, newGroupState)
   }
 
-  private getFuseInstance = memoize(
+  private getFuseInstance = memoizeOne(
     (
       editorContext: EditorContext,
       modelGroupMap: ReadonlyRefMap<ModelGroup>,
@@ -137,7 +137,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
     }
   )
 
-  private getActiveModelGroups = memoize(
+  private getActiveModelGroups = memoizeOne(
     (editorContext: EditorContext, modelGroupMap: ReadonlyRefMap<ModelGroup>) => {
       return editorContext.modelGroups
         .map(modelGroupID => modelGroupMap.get(modelGroupID))

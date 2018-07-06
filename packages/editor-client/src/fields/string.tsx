@@ -4,7 +4,13 @@ import {expression as e} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
-import {SerializedField, EditComponentRenderProps, EditRenderProps, Field} from './interface'
+import {
+  SerializedField,
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps
+} from './interface'
 import {Field as FieldComponent, FieldLabel} from '../ui/fields/field'
 import {TextAreaInput, TextInput, TextInputType} from '../ui/common/input'
 import {CardSection} from '../ui/common/card'
@@ -13,7 +19,7 @@ import {SortType} from '@karma.run/editor-common'
 import {convertKeyToLabel} from '../util/string'
 
 export class StringFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<StringField>
+  EditComponentRenderProps<StringField, string>
 > {
   private handleChange = (value: any) => {
     this.props.onValueChange(value, this.props.changeKey)
@@ -75,8 +81,8 @@ export class StringField implements Field<string> {
     this.multiline = opts.multiline
   }
 
-  public renderListComponent(value: string) {
-    return <CardSection>{value}</CardSection>
+  public renderListComponent(props: ListRenderProps<string>) {
+    return <CardSection>{props.value}</CardSection>
   }
 
   public renderEditComponent(props: EditRenderProps<string>) {
