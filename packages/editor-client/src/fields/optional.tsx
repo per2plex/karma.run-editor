@@ -26,7 +26,7 @@ export class OptionalFieldEditComponent extends React.PureComponent<
     this.props.onValueChange(
       {
         isPresent: value,
-        value: this.props.value.value || this.props.field.field.defaultValue(this.props.context)
+        value: this.props.value.value || this.props.field.field.defaultValue()
       },
       this.props.changeKey
     )
@@ -60,19 +60,19 @@ export class OptionalFieldEditComponent extends React.PureComponent<
             }
           />
         </FieldComponent>
-        <FieldInset>
-          {this.props.value.isPresent &&
-            this.props.field.field.renderEditComponent({
+        {this.props.value.isPresent && (
+          <FieldInset>
+            {this.props.field.field.renderEditComponent({
               index: 0,
               depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
               isWrapped: true,
               disabled: this.props.disabled,
               value: this.props.value.value,
-              context: this.props.context,
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord
             })}
-        </FieldInset>
+          </FieldInset>
+        )}
       </FieldWrapper>
     )
   }
@@ -98,6 +98,7 @@ export class OptionalField implements Field<OptionalFieldValue> {
     this.label = options.label
     this.description = options.description
     this.field = options.field
+    this.field.parent = this
   }
 
   public renderListComponent(value: OptionalFieldValue) {
@@ -115,7 +116,7 @@ export class OptionalField implements Field<OptionalFieldValue> {
     }
   }
 
-  public transformRawValue(value: any, context?: any) {
+  public transformRawValue(value: any) {
     if (value == undefined) {
       return {
         isPresent: false,
@@ -124,13 +125,13 @@ export class OptionalField implements Field<OptionalFieldValue> {
     } else {
       return {
         isPresent: true,
-        value: this.field.transformRawValue(value, context)
+        value: this.field.transformRawValue(value)
       }
     }
   }
 
-  public transformValueToExpression(value: OptionalFieldValue, context?: any) {
-    return value.isPresent ? this.field.transformValueToExpression(value.value, context) : e.null()
+  public transformValueToExpression(value: OptionalFieldValue) {
+    return value.isPresent ? this.field.transformValueToExpression(value.value) : e.null()
   }
 
   public isValidValue(value: OptionalFieldValue) {
@@ -156,6 +157,22 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   public sortConfigurations(): SortConfigration[] {
     return []
+  }
+
+  public async onSave(value: OptionalFieldValue): Promise<OptionalFieldValue> {
+    if (this.field.onSave && value.isPresent) {
+      return {isPresent: value.isPresent, value: await this.field.onSave(value.value)}
+    }
+
+    return value
+  }
+
+  public async onDelete(value: OptionalFieldValue): Promise<OptionalFieldValue> {
+    if (this.field.onDelete && value.isPresent) {
+      return {isPresent: value.isPresent, value: await this.field.onDelete(value.value)}
+    }
+
+    return value
   }
 
   public static type = 'optional'

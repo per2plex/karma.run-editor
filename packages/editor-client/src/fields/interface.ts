@@ -12,42 +12,43 @@ export interface SerializedField {
   [key: string]: any
 }
 
-export interface ListRenderProps<V = any, C = any> {
+export interface ListRenderProps<V = any> {
   value: V
-  context?: C
 }
 
-export interface EditRenderProps<V = any, C = any> {
+export interface EditRenderProps<V = any> {
   disabled: boolean
   isWrapped: boolean
   depth: number
   index: number
   value: V
-  context?: C
-  changeKey?: string
-  onValueChange: (value: V, key: string | undefined) => void
+  changeKey?: any
+  onValueChange: (value: V, key: any) => void
   onEditRecord: (model: Ref, id?: Ref) => Promise<Ref | undefined>
 }
 
-export interface ListComponentRenderProps<F extends Field = Field, V = any, C = any>
-  extends ListRenderProps<V, C> {
+export interface ListComponentRenderProps<F extends Field = Field, V = any>
+  extends ListRenderProps<V> {
   field: F
 }
 
-export interface EditComponentRenderProps<F extends Field = Field, V = any, C = any>
-  extends EditRenderProps<V, C> {
+export interface EditComponentRenderProps<F extends Field = Field, V = any>
+  extends EditRenderProps<V> {
   field: F
 }
 
-export interface Field<V = any, C = any> {
-  renderListComponent(props: ListRenderProps<V, C>): React.ReactNode
-  renderEditComponent(props: EditRenderProps<V, C>): React.ReactNode
+export interface Field<V = any> {
+  readonly label?: string
+  parent?: Field
+
+  renderListComponent(props: ListRenderProps<V>): React.ReactNode
+  renderEditComponent(props: EditRenderProps<V>): React.ReactNode
 
   serialize(): SerializedField
-  defaultValue(context?: C): V
+  defaultValue(): V
 
-  transformRawValue(value: any, context?: C): V
-  transformValueToExpression(value: V, context?: C): Expression
+  transformRawValue(value: any): V
+  transformValueToExpression(value: V): Expression
 
   isValidValue(value: V): string[] | null
 

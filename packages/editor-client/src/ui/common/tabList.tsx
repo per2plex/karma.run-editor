@@ -134,7 +134,7 @@ export namespace EditableTab {
   }
 }
 
-export class EditableTab extends React.Component<EditableTab.Props, EditableTab.State> {
+export class EditableTab extends React.PureComponent<EditableTab.Props, EditableTab.State> {
   private inputElement: HTMLInputElement | HTMLSelectElement | null = null
 
   constructor(props: EditableTab.Props) {
@@ -275,7 +275,7 @@ export const TabListStyle = style({
 })
 
 export namespace EditableTabList {
-  export type Value = {key: string; value: string}
+  export type Value = {id: string; key: string}
 
   export interface Props {
     values: Value[]
@@ -288,7 +288,7 @@ export namespace EditableTabList {
   }
 }
 
-export class EditableTabList extends React.Component<EditableTabList.Props> {
+export class EditableTabList extends React.PureComponent<EditableTabList.Props> {
   tabElements: (EditableTab | null)[] = []
 
   private handleTabClick = (index: number) => {
@@ -322,7 +322,7 @@ export class EditableTabList extends React.Component<EditableTabList.Props> {
       return this.props.options.map(optionValue => {
         return {
           value: optionValue,
-          disabled: this.props.values.find(value => value.value === optionValue) != undefined
+          disabled: this.props.values.find(value => value.key === optionValue) != undefined
         }
       })
     }
@@ -339,8 +339,8 @@ export class EditableTabList extends React.Component<EditableTabList.Props> {
       return (
         <EditableTab
           ref={tab => (this.tabElements[index] = tab)}
-          key={value.key}
-          value={value.value}
+          key={value.id}
+          value={value.key}
           active={this.props.activeTab === index}
           index={index}
           onClick={this.handleTabClick}

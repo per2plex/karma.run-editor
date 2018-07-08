@@ -122,7 +122,8 @@ export class PasswordField implements Field<PasswordFieldValue> {
   }
 
   public transformValueToExpression(value: PasswordFieldValue): Expression {
-    return e.string(value.hash!)
+    if (!value.hash) return e.null()
+    return e.string(value.hash)
   }
 
   public async onSave(value: PasswordFieldValue): Promise<PasswordFieldValue> {

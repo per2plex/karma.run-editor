@@ -97,7 +97,12 @@ export class ViewContext {
   }
 }
 
-export function inferFieldFromModel(model: Model, registry: FieldRegistry): Field {
+// TODO: Add ignoring types for inference option to config
+export function inferFieldFromModel(
+  model: Model,
+  registry: FieldRegistry,
+  ignoreTypes: string[] = []
+): Field {
   function inferField(model: Model, key?: string): Field {
     // Unwrap unique
     if (model.type === 'unique') {
@@ -105,6 +110,8 @@ export function inferFieldFromModel(model: Model, registry: FieldRegistry): Fiel
     }
 
     for (const fieldClass of registry.values()) {
+      if (ignoreTypes.includes(fieldClass.type)) continue
+
       if (fieldClass.inferFromModel) {
         const field = fieldClass.inferFromModel(model, key, inferField)
         if (field) return field

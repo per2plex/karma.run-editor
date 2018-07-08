@@ -110,18 +110,18 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     const viewContext = this.state.viewContextMap.get(model)
     if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
 
-    return {
-      id: ['test', 'bar'],
-      model: ['test', 'foo'],
-      created: 'now',
-      updated: 'now',
-      value: viewContext.field.transformRawValue({
-        test: '1234',
-        recurse: {
-          test: 'abcd'
-        }
-      })
-    }
+    // return {
+    //   id: ['test', 'bar'],
+    //   model: ['test', 'foo'],
+    //   created: 'now',
+    //   updated: 'now',
+    //   value: viewContext.field.transformRawValue({
+    //     test: '1234',
+    //     recurse: {
+    //       test: 'abcd'
+    //     }
+    //   })
+    // }
 
     const record: MetarializedRecord = await query(
       this.props.config.karmaURL,
@@ -140,15 +140,15 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     sort: Sort,
     filters: Condition[]
   ): Promise<MetarializedRecord[]> => {
-    return [
-      {
-        id: ['test', 'bar'],
-        model: ['test', 'foo'],
-        created: 'now',
-        updated: 'now',
-        value: {}
-      }
-    ]
+    // return [
+    //   {
+    //     id: ['test', 'bar'],
+    //     model: ['test', 'foo'],
+    //     created: 'now',
+    //     updated: 'now',
+    //     value: {}
+    //   }
+    // ]
 
     if (!this.state.session) throw new Error('No session!')
 
@@ -233,7 +233,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
 
     if (viewContext.field.onSave) {
-      value = viewContext.field.onSave(value)
+      value = await viewContext.field.onSave(value)
     }
 
     const expressionValue = viewContext.field.transformValueToExpression(value)
@@ -334,47 +334,49 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   private async getTagsAndModels(
     session: Session
   ): Promise<{tags: Tag[]; models: MetarializedRecord[]}> {
-    return {
-      tags: [{model: ['test', 'foo'], tag: 'test'}],
-      models: [
-        {
-          id: ['test', 'foo'],
-          model: ['test', 'model'],
-          created: 'now',
-          updated: 'now',
-          value: {
-            recursion: {
-              label: 'test',
-              model: {
-                struct: {
-                  test: {string: {}},
-                  recurse: {
-                    recursion: {
-                      label: 'test2',
-                      model: {
-                        struct: {
-                          test: {string: {}},
-                          test2: {
-                            optional: {
-                              recurse: 'test2'
-                            }
-                          },
-                          test3: {
-                            optional: {
-                              recurse: 'test'
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      ]
-    }
+    // return {
+    //   tags: [{model: ['test', 'foo'], tag: 'test'}],
+    //   models: [
+    //     {
+    //       id: ['test', 'foo'],
+    //       model: ['test', 'model'],
+    //       created: 'now',
+    //       updated: 'now',
+    //       value: {
+    //         recursion: {
+    //           label: 'test',
+    //           model: {
+    //             struct: {
+    //               test: {string: {}},
+    //               password: {string: {}},
+    //               ref: {ref: ['test', 'foo']},
+    //               recurse: {
+    //                 recursion: {
+    //                   label: 'test2',
+    //                   model: {
+    //                     struct: {
+    //                       test: {string: {}},
+    //                       test2: {
+    //                         optional: {
+    //                           recurse: 'test2'
+    //                         }
+    //                       },
+    //                       test3: {
+    //                         optional: {
+    //                           recurse: 'test'
+    //                         }
+    //                       }
+    //                     }
+    //                   }
+    //                 }
+    //               }
+    //             }
+    //           }
+    //         }
+    //       }
+    //     }
+    //   ]
+    // }
 
     return query(
       this.props.config.karmaURL,

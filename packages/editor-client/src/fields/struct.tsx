@@ -1,6 +1,12 @@
 import React from 'react'
 import {expression as e, data as d} from '@karma.run/sdk'
-import {reduceToMap, ValuePath, ValuePathSegmentType} from '@karma.run/editor-common'
+
+import {
+  reduceToMap,
+  ValuePath,
+  ValuePathSegmentType,
+  mapObjectAsync
+} from '@karma.run/editor-common'
 
 import {
   EditComponentRenderProps,
@@ -21,7 +27,7 @@ export type StructFieldChildTuple = [string, Field]
 export class StructFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StructField>
 > {
-  private handleChange = (value: any, key: string | undefined) => {
+  private handleValueChange = (value: any, key: string | undefined) => {
     if (!key) throw new Error('Child field did not call onValueChange with changeKey!')
     this.props.onValueChange({...this.props.value, [key]: value}, this.props.changeKey)
   }
@@ -35,13 +41,14 @@ export class StructFieldEditComponent extends React.PureComponent<
           isWrapped: false,
           disabled: this.props.disabled,
           value: this.props.value[key],
-          context: this.props.context,
-          onValueChange: this.handleChange,
+          onValueChange: this.handleValueChange,
           onEditRecord: this.props.onEditRecord,
           changeKey: key
         })}
       </React.Fragment>
     ))
+
+    if (fields.length === 0) return null
 
     if (this.props.isWrapped) {
       return fields
@@ -74,12 +81,17 @@ export type StructFieldValue = {[key: string]: any}
 export class StructField implements Field<StructFieldValue> {
   public readonly label?: string
   public readonly description?: string
+  public readonly fieldMap: ReadonlyMap<string, Field>
   public readonly fields: StructFieldChildTuple[]
+
+  public parent?: Field
 
   public constructor(opts: StructFieldOptions) {
     this.label = opts.label
     this.description = opts.description
     this.fields = opts.fields
+    this.fieldMap = new Map(this.fields)
+    this.fields.forEach(([_, field]) => (field.parent = this))
   }
 
   public renderListComponent() {
@@ -90,23 +102,20 @@ export class StructField implements Field<StructFieldValue> {
     return <StructFieldEditComponent {...props} field={this} />
   }
 
-  public defaultValue(context?: any) {
-    return reduceToMap(this.fields, ([key, field]) => [key, field.defaultValue(context)])
+  public defaultValue() {
+    return reduceToMap(this.fields, ([key, field]) => [key, field.defaultValue()])
   }
 
-  public transformRawValue(value: any, context?: any) {
-    return reduceToMap(this.fields, ([key, field]) => [
-      key,
-      field.transformRawValue(value[key], context)
-    ])
+  public transformRawValue(value: any) {
+    return reduceToMap(this.fields, ([key, field]) => [key, field.transformRawValue(value[key])])
   }
 
-  public transformValueToExpression(value: StructFieldValue, context?: any) {
+  public transformValueToExpression(value: StructFieldValue) {
     return e.data(
       d.struct(
         reduceToMap(this.fields, ([key, field]) => [
           key,
-          d.expr(field.transformValueToExpression(value[key], context))
+          d.expr(field.transformValueToExpression(value[key]))
         ])
       )
     )
@@ -129,27 +138,42 @@ export class StructField implements Field<StructFieldValue> {
     if (keyPath.length === 0) return this
 
     const key = keyPath[0]
-    const fieldTuple = this.fields.find(([fieldKey]) => {
-      return fieldKey === key
-    })
+    const field = this.fieldMap.get(key)
 
-    if (!fieldTuple) return undefined
+    if (!field) return undefined
 
-    return fieldTuple[1].traverse(keyPath.slice(1))
+    return field.traverse(keyPath.slice(1))
   }
 
   public valuePathForKeyPath(keyPath: KeyPath): ValuePath {
     const key = keyPath[0]
-    const fieldTuple = this.fields.find(([fieldKey]) => {
-      return fieldKey === key
-    })
+    const field = this.fieldMap.get(key)
 
-    if (!fieldTuple) throw new Error('Invalid KeyPath!')
+    if (!field) throw new Error('Invalid KeyPath!')
 
     return [
       {type: ValuePathSegmentType.Struct, key: key},
-      ...fieldTuple[1].valuePathForKeyPath(keyPath.slice(1))
+      ...field.valuePathForKeyPath(keyPath.slice(1))
     ]
+  }
+
+  public async onSave(value: StructFieldValue) {
+    return mapObjectAsync(value, async (value, key) => {
+      const field = this.fieldMap.get(key)
+
+      if (!field) throw new Error(`Couln't find field for key: ${key}`)
+      if (!field.onSave) return value
+      return await field.onSave(value)
+    })
+  }
+
+  public async onDelete(value: StructFieldValue) {
+    return mapObjectAsync(value, async (value, key) => {
+      const field = this.fieldMap.get(key)
+      if (!field) throw new Error(`Couln't find field for key: ${key}`)
+      if (!field.onDelete) return value
+      return await field.onDelete(value)
+    })
   }
 
   public static type = 'struct'

@@ -1,3 +1,4 @@
+import {expression as e} from '@karma.run/sdk'
 import {Model, KeyPath} from '../api/model'
 import {ErrorField} from './error'
 import {
@@ -10,8 +11,7 @@ import {
 } from './interface'
 
 import {SortConfigration} from '../filter/configuration'
-import {ObjectMap, mapObject} from '@karma.run/editor-common'
-import memoizeOne from 'memoize-one'
+import {reduceToMap} from '@karma.run/editor-common'
 
 export interface RecursionContext {
   readonly recursions?: {[key: string]: Field}
@@ -19,61 +19,50 @@ export interface RecursionContext {
 
 export interface RecursiveFieldOptions {
   readonly topRecursionLabel: string
-  readonly fields: ObjectMap<Field>
+  readonly fields: ReadonlyMap<string, Field>
 }
 
-export class RecursiveField implements Field<any, RecursionContext> {
-  private topField: Field
-  private topRecursionLabel: string
-  private fields: ObjectMap<Field>
+export class RecursiveField implements Field<any> {
+  public readonly topField: Field
+  public readonly topRecursionLabel: string
+  public readonly fields: ReadonlyMap<string, Field>
+  public parent?: Field
+
+  public get label(): string | undefined {
+    return this.topField.label
+  }
 
   public constructor(options: RecursiveFieldOptions) {
-    const topField = options.fields[options.topRecursionLabel]
+    const topField = options.fields.get(options.topRecursionLabel)
     if (!topField) throw new Error("Top label doesn't exist in fields.")
 
     this.topRecursionLabel = options.topRecursionLabel
     this.topField = topField
     this.fields = options.fields
+    this.fields.forEach(field => (field.parent = this))
   }
 
-  // TODO: Nested recursions will still recreate context everytime, find better solution
-  private mergeRecursionContext = memoizeOne((context?: RecursionContext) => {
-    return {
-      ...context,
-      recursions: {
-        ...(context ? context.recursions : []),
-        ...this.fields
-      }
-    }
-  })
-
-  public renderListComponent(props: ListRenderProps<any, RecursionContext>) {
-    return this.topField.renderListComponent({
-      ...props,
-      context: this.mergeRecursionContext(props.context)
-    })
+  public renderListComponent(props: ListRenderProps<any>) {
+    return this.topField.renderListComponent(props)
   }
 
-  public renderEditComponent(props: EditRenderProps<any, RecursionContext>) {
-    return this.topField.renderEditComponent({
-      ...props,
-      context: this.mergeRecursionContext(props.context)
-    })
+  public renderEditComponent(props: EditRenderProps<any>) {
+    return this.topField.renderEditComponent(props)
   }
 
-  public defaultValue(context?: RecursionContext) {
-    return this.topField.defaultValue(this.mergeRecursionContext(context))
+  public defaultValue() {
+    return this.topField.defaultValue()
   }
 
-  public transformRawValue(value: any, context?: RecursionContext) {
-    return this.topField.transformRawValue(value, this.mergeRecursionContext(context))
+  public transformRawValue(value: any) {
+    return this.topField.transformRawValue(value)
   }
 
-  public transformValueToExpression(value: string, context?: RecursionContext) {
-    return this.topField.transformValueToExpression(value, this.mergeRecursionContext(context))
+  public transformValueToExpression(value: any) {
+    return this.topField.transformValueToExpression(value)
   }
 
-  public isValidValue(value: string) {
+  public isValidValue(value: any) {
     return this.topField.isValidValue(value)
   }
 
@@ -81,7 +70,10 @@ export class RecursiveField implements Field<any, RecursionContext> {
     return {
       type: RecursionField.type,
       topRecursionLabel: this.topRecursionLabel,
-      fields: mapObject(this.fields, value => value.serialize())
+      fields: reduceToMap(Array.from(this.fields.entries()), ([key, field]) => [
+        key,
+        field.serialize()
+      ])
     }
   }
 
@@ -97,6 +89,22 @@ export class RecursiveField implements Field<any, RecursionContext> {
     return []
   }
 
+  public async onSave(value: any) {
+    if (this.topField.onSave) {
+      return this.topField.onSave(value)
+    }
+
+    return value
+  }
+
+  public async onDelete(value: any) {
+    if (this.topField.onDelete) {
+      return this.topField.onDelete(value)
+    }
+
+    return value
+  }
+
   public static type = 'recursive'
 
   static inferFromModel(model: Model, key: string | undefined, inferField: InferFieldFunction) {
@@ -104,9 +112,11 @@ export class RecursiveField implements Field<any, RecursionContext> {
 
     return new RecursiveField({
       topRecursionLabel: model.top,
-      fields: mapObject(model.models, model => {
-        return inferField(model, key)
-      })
+      fields: new Map(
+        Object.entries(model.models).map(
+          ([recursionKey, model]) => [recursionKey, inferField(model, key)] as [string, Field]
+        )
+      )
     })
   }
 
@@ -125,19 +135,24 @@ export class RecursiveField implements Field<any, RecursionContext> {
 
     return new RecursiveField({
       topRecursionLabel: model.top,
-      fields: mapObject(rawField.fields, (field, key) => {
-        const recursionModel = model.models[key]
+      fields: new Map(
+        Object.entries(rawField.fields).map(([key, field]) => {
+          const recursionModel = model.models[key]
 
-        if (!recursionModel) {
-          return new ErrorField({
-            label: rawField.label,
-            description: rawField.description,
-            message: `Model not found for recursion label: ${key}`
-          })
-        }
+          if (!recursionModel) {
+            return [
+              key,
+              new ErrorField({
+                label: rawField.label,
+                description: rawField.description,
+                message: `Model not found for recursion label: ${key}`
+              })
+            ] as [string, Field]
+          }
 
-        return unserializeField(field, recursionModel)
-      })
+          return [key, unserializeField(field, recursionModel)] as [string, Field]
+        })
+      )
     })
   }
 }
@@ -147,50 +162,39 @@ export interface RecursionFieldOptions {
   readonly field: Field
 }
 
-export class RecursionField implements Field<any, RecursionContext> {
-  private recursionLabel: string
-  private field: Field
+export class RecursionField implements Field<any> {
+  public readonly recursionLabel: string
+  public readonly field: Field
+  public parent?: Field
+
+  public get label(): string | undefined {
+    return this.field.label
+  }
 
   public constructor(options: RecursionFieldOptions) {
     this.recursionLabel = options.recursionLabel
     this.field = options.field
+    this.field.parent = this
   }
 
-  // TODO: Nested recursions will still recreate context everytime, find better solution
-  private mergeRecursionContext = memoizeOne((context?: RecursionContext) => {
-    return {
-      ...context,
-      recursions: {
-        ...(context ? context.recursions : []),
-        [this.recursionLabel]: this.field
-      }
-    }
-  })
-
-  public renderListComponent(props: ListRenderProps<any, RecursionContext>) {
-    return this.field.renderListComponent({
-      ...props,
-      context: this.mergeRecursionContext(props.context)
-    })
+  public renderListComponent(props: ListRenderProps<any>) {
+    return this.field.renderListComponent(props)
   }
 
   public renderEditComponent(props: EditRenderProps<string>) {
-    return this.field.renderEditComponent({
-      ...props,
-      context: this.mergeRecursionContext(props.context)
-    })
+    return this.field.renderEditComponent(props)
   }
 
-  public defaultValue(context?: RecursionContext) {
-    return this.field.defaultValue(this.mergeRecursionContext(context))
+  public defaultValue() {
+    return this.field.defaultValue()
   }
 
-  public transformRawValue(value: any, context?: RecursionContext) {
-    return this.field.transformRawValue(value, this.mergeRecursionContext(context))
+  public transformRawValue(value: any) {
+    return this.field.transformRawValue(value)
   }
 
-  public transformValueToExpression(value: string, context?: RecursionContext) {
-    return this.field.transformValueToExpression(value, this.mergeRecursionContext(context))
+  public transformValueToExpression(value: string) {
+    return this.field.transformValueToExpression(value)
   }
 
   public isValidValue(value: string) {
@@ -217,6 +221,22 @@ export class RecursionField implements Field<any, RecursionContext> {
     return []
   }
 
+  public async onSave(value: any) {
+    if (this.field.onSave) {
+      return this.field.onSave(value)
+    }
+
+    return value
+  }
+
+  public async onDelete(value: any) {
+    if (this.field.onDelete) {
+      return this.field.onDelete(value)
+    }
+
+    return value
+  }
+
   public static type = 'recursion'
 
   static inferFromModel(model: Model, key: string | undefined, inferField: InferFieldFunction) {
@@ -241,7 +261,6 @@ export class RecursionField implements Field<any, RecursionContext> {
       })
     }
 
-    // TODO
     return new RecursionField({
       recursionLabel: rawField.recursionLabel,
       field: unserializeField(rawField.field, model.model)
@@ -249,45 +268,71 @@ export class RecursionField implements Field<any, RecursionContext> {
   }
 }
 
-export class RecurseField implements Field<any, RecursionContext> {
+export class RecurseField implements Field<any> {
   public readonly recursionLabel: string
+  public parent?: Field
+
+  public get label(): string | undefined {
+    return this.field ? this.field.label : undefined
+  }
 
   public constructor(label: string) {
     this.recursionLabel = label
   }
 
-  public renderListComponent(props: ListRenderProps<any, RecursionContext>) {
-    return this.getRecursionField(props.context).renderListComponent(props)
+  private _field?: Field
+  public get field() {
+    if (this._field) return this._field
+
+    let ancestor: Field | undefined = this.parent
+
+    while (ancestor) {
+      if (ancestor instanceof RecursionField && ancestor.recursionLabel === this.recursionLabel) {
+        this._field = ancestor.field
+        break
+      }
+
+      if (ancestor instanceof RecursiveField && ancestor.fields.get(this.recursionLabel)) {
+        this._field = ancestor.fields.get(this.recursionLabel)!
+        break
+      }
+
+      ancestor = ancestor.parent
+    }
+
+    return this._field
   }
 
-  public renderEditComponent(props: EditRenderProps<any, RecursionContext>) {
-    return this.getRecursionField(props.context).renderEditComponent(props)
+  public renderListComponent(props: ListRenderProps<any>) {
+    // TODO: Show error
+    if (!this.field) return null
+    return this.field.renderListComponent(props)
   }
 
-  private getRecursionField(context?: RecursionContext) {
-    if (!context || !context.recursions) throw new Error('No RecursionContext found!')
-
-    const field = context.recursions[this.recursionLabel]
-    if (!field) throw new Error(`No matching recursion found for label: ${this.recursionLabel}`)
-
-    return field
+  public renderEditComponent(props: EditRenderProps<any>) {
+    // TODO: Show error
+    if (!this.field) return null
+    return this.field.renderEditComponent(props)
   }
 
-  public defaultValue(context: RecursionContext) {
-    return this.getRecursionField(context).defaultValue(context)
+  public defaultValue() {
+    if (!this.field) return null
+    return this.field.defaultValue()
   }
 
-  public transformRawValue(value: any, context: RecursionContext) {
-    return this.getRecursionField(context).transformRawValue(value, context)
+  public transformRawValue(value: any) {
+    if (!this.field) return null
+    return this.field.transformRawValue(value)
   }
 
-  public transformValueToExpression(value: string, context: RecursionContext) {
-    return this.getRecursionField(context).transformValueToExpression(value, context)
+  public transformValueToExpression(value: string) {
+    if (!this.field) return e.null()
+    return this.field.transformValueToExpression(value)
   }
 
-  public isValidValue(_value: string) {
-    return null // TODO: Context
-    // return this.getRecursionField(context).isValidValue(value)
+  public isValidValue(value: string) {
+    if (!this.field) return []
+    return this.field.isValidValue(value)
   }
 
   public serialize() {
@@ -297,20 +342,34 @@ export class RecurseField implements Field<any, RecursionContext> {
     }
   }
 
-  public traverse(_keyPath: KeyPath) {
-    // TODO: Context
-    //return this.topField.traverse(keyPath)
-    return this
+  public traverse(keyPath: KeyPath) {
+    if (!this.field) return undefined
+    return this.field.traverse(keyPath)
   }
 
-  public valuePathForKeyPath(_keyPath: KeyPath) {
-    // TODO: Context
-    // return this.topField.valuePathForKeyPath(keyPath)
-    return []
+  public valuePathForKeyPath(keyPath: KeyPath) {
+    if (!this.field) return []
+    return this.field.valuePathForKeyPath(keyPath)
   }
 
   public sortConfigurations(): SortConfigration[] {
     return []
+  }
+
+  public async onSave(value: any) {
+    if (this.field && this.field.onSave) {
+      return this.field.onSave(value)
+    }
+
+    return value
+  }
+
+  public async onDelete(value: any) {
+    if (this.field && this.field.onDelete) {
+      return this.field.onDelete(value)
+    }
+
+    return value
   }
 
   public static type = 'recurse'

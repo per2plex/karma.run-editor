@@ -26,6 +26,7 @@ export interface RecordEditPanelProps {
 
 export interface RecordEditPanelState {
   record?: MetarializedRecord
+  isSaving: boolean
   isLoadingRecord: boolean
   hasUnsavedChanges: boolean
   value?: any
@@ -36,6 +37,7 @@ export class RecordEditPanel extends React.PureComponent<
   RecordEditPanelState
 > {
   public state: RecordEditPanelState = {
+    isSaving: false,
     isLoadingRecord: false,
     hasUnsavedChanges: false
   }
