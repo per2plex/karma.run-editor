@@ -3,15 +3,17 @@ import ReactDOM from 'react-dom'
 import {useStrict} from 'mobx'
 import {forceRenderStyles} from 'typestyle'
 
-import {applicationStore} from './store/applicationStore'
 import {RootViewContainer} from './ui/rootView'
 import {ErrorBoundary} from './error/boundary'
 import {Theme, ThemeProvider, defaultTheme} from './context/theme'
-import {Config, ConfigProvider, defaultConfig} from './context/config'
+
+import {Config, defaultConfig} from './context/config'
+import {ConfigProvider} from './provider/config'
+
 import {deleteNullValues, EventDispatcher} from '@karma.run/editor-common'
 import {Environment} from './util/env'
 import {SessionProviderContainer} from './provider/session'
-import {LocaleProvider} from './context/locale'
+import {LocaleProvider} from './provider/locale'
 import {LocationProviderContainer} from './context/location'
 import {NotificationProvider} from './context/notification'
 
@@ -42,7 +44,8 @@ export class EditorComponent extends React.Component<EditorProps> {
     )
 
     window.addEventListener('beforeunload', e => {
-      if (applicationStore.editorStore.hasUnsavedChanges) {
+      if (false) {
+        // TODO: Check for unsafed changed
         const message = 'Changes that you made may not be saved'
         e.returnValue = message
         return message

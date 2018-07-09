@@ -1,6 +1,6 @@
 import * as shortid from 'shortid'
 
-import {MetaField, keyPathToString} from '../api/karma'
+import {MetaField, keyPathToString} from '../api/model'
 
 import {
   ConditionType,
@@ -15,13 +15,13 @@ import {
 } from '@karma.run/editor-common'
 
 import {
-  ViewContext,
-  Field,
-  findRootKeyPath,
-  findChildrenOfKeyPath,
-  findKeyPath,
-  findAncestorsOfKeyPath
-} from '../api/karmafe/viewContext'
+  ViewContext
+  // Field,
+  // findRootKeyPath,
+  // findChildrenOfKeyPath,
+  // findKeyPath,
+  // findAncestorsOfKeyPath
+} from '../api/viewContext'
 
 import {lastItem} from '@karma.run/editor-common'
 import {Select} from '../ui/common'
@@ -81,17 +81,17 @@ export type ConditionConfiguration =
 export interface FilterFieldGroup {
   id: string
   label: string
-  fields: FilterField[]
+  fields: FilterConfiguration[]
 }
 
-export interface FilterField {
+export interface FilterConfiguration {
   id: string
   label: string
   depth: number
   conditionGroups: ConditionGroup[]
 }
 
-export interface SortConfigration {
+export interface SortConfiguration {
   key: string
   path: ValuePath
   type: SortType
@@ -214,7 +214,7 @@ export function objectPathForField(field: Field, fields: Field[]) {
 export function sortConfigurationForField(
   field: Field,
   fields: Field[]
-): SortConfigration | undefined {
+): SortConfiguration | undefined {
   switch (field.type) {
     case 'text':
       return {
@@ -232,8 +232,8 @@ export function sortConfigurationForField(
   }
 }
 
-export function sortConfigurationsForViewContext(viewContext: ViewContext): SortConfigration[] {
-  const defaultConfigurations: SortConfigration[] = [
+export function sortConfigurationsForViewContext(viewContext: ViewContext): SortConfiguration[] {
+  const defaultConfigurations: SortConfiguration[] = [
     {
       key: 'updatedMeta',
       label: labelForMetaField('updated'),
@@ -256,7 +256,7 @@ export function sortConfigurationsForViewContext(viewContext: ViewContext): Sort
 
   const configurations = descriptionFields
     .map(field => field && sortConfigurationForField(field, fields))
-    .filter(config => config != undefined) as SortConfigration[]
+    .filter(config => config != undefined) as SortConfiguration[]
 
   return [...defaultConfigurations, ...configurations]
 }
@@ -266,10 +266,10 @@ export function filterConfigurationsForField(
   fields: Field[],
   path: ValuePath = [],
   depth: number = 0
-): FilterField[] {
+): FilterConfiguration[] {
   const label = field.label || (depth === 0 ? 'Root' : 'Undefined')
   const conditionGroups: ConditionGroup[] = []
-  const childFields: FilterField[] = []
+  const childFields: FilterConfiguration[] = []
 
   if (field.modifiers) {
     for (const modifier of field.modifiers) {
@@ -327,7 +327,7 @@ export function filterConfigurationsForField(
               ...filterConfigurationsForField(childField, fields, [...path, pathSegment], depth + 1)
             ]
           },
-          [] as FilterField[]
+          [] as FilterConfiguration[]
         )
       )
 

@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import {ViewContext} from '../../../api/newViewContext'
+import {ViewContext} from '../../../api/viewContext'
 import {Markdown} from '../../common/markdown'
 import {PanelHeader} from '../../common/panel/header'
 

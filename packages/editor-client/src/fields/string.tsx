@@ -11,10 +11,10 @@ import {
   Field,
   ListRenderProps
 } from './interface'
-import {Field as FieldComponent, FieldLabel} from '../ui/fields/field'
+import {Field as FieldComponent, FieldLabel} from '../ui/common/field'
 import {TextAreaInput, TextInput, TextInputType} from '../ui/common/input'
 import {CardSection} from '../ui/common/card'
-import {SortConfigration} from '../filter/configuration'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
 import {SortType} from '@karma.run/editor-common'
 import {convertKeyToLabel} from '../util/string'
 
@@ -73,12 +73,21 @@ export class StringField implements Field<string> {
   public readonly maxLength?: number
   public readonly multiline?: boolean
 
+  public parent?: Field
+  public readonly defaultValue: string = ''
+  public readonly sortConfigurations: SortConfiguration[]
+  public readonly filterConfigurations: FilterConfiguration[] = []
+
   public constructor(opts: StringFieldOptions) {
     this.label = opts.label
     this.description = opts.description
     this.minLength = opts.minLength
     this.maxLength = opts.maxLength
     this.multiline = opts.multiline
+
+    this.sortConfigurations = [
+      {key: shortid.generate(), type: SortType.String, label: this.label || '', path: []}
+    ]
   }
 
   public renderListComponent(props: ListRenderProps<string>) {
@@ -87,10 +96,6 @@ export class StringField implements Field<string> {
 
   public renderEditComponent(props: EditRenderProps<string>) {
     return <StringFieldEditComponent {...props} field={this} />
-  }
-
-  public defaultValue() {
-    return ''
   }
 
   public transformRawValue(value: any) {
@@ -124,10 +129,6 @@ export class StringField implements Field<string> {
 
   public valuePathForKeyPath() {
     return []
-  }
-
-  public sortConfigurations(): SortConfigration[] {
-    return [{key: shortid.generate(), type: SortType.String, label: this.label || '', path: []}]
   }
 
   public static type = 'string'

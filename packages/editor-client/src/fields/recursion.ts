@@ -10,7 +10,7 @@ import {
   ListRenderProps
 } from './interface'
 
-import {SortConfigration} from '../filter/configuration'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
 import {reduceToMap} from '@karma.run/editor-common'
 
 export interface RecursionContext {
@@ -28,9 +28,8 @@ export class RecursiveField implements Field<any> {
   public readonly fields: ReadonlyMap<string, Field>
   public parent?: Field
 
-  public get label(): string | undefined {
-    return this.topField.label
-  }
+  public readonly sortConfigurations: SortConfiguration[] = []
+  public readonly filterConfigurations: FilterConfiguration[] = []
 
   public constructor(options: RecursiveFieldOptions) {
     const topField = options.fields.get(options.topRecursionLabel)
@@ -50,8 +49,8 @@ export class RecursiveField implements Field<any> {
     return this.topField.renderEditComponent(props)
   }
 
-  public defaultValue() {
-    return this.topField.defaultValue()
+  public get defaultValue(): any {
+    return this.topField.defaultValue
   }
 
   public transformRawValue(value: any) {
@@ -83,10 +82,6 @@ export class RecursiveField implements Field<any> {
 
   public valuePathForKeyPath(keyPath: KeyPath) {
     return this.topField.valuePathForKeyPath(keyPath)
-  }
-
-  public sortConfigurations(): SortConfigration[] {
-    return []
   }
 
   public async onSave(value: any) {
@@ -167,9 +162,8 @@ export class RecursionField implements Field<any> {
   public readonly field: Field
   public parent?: Field
 
-  public get label(): string | undefined {
-    return this.field.label
-  }
+  public readonly sortConfigurations: SortConfiguration[] = []
+  public readonly filterConfigurations: FilterConfiguration[] = []
 
   public constructor(options: RecursionFieldOptions) {
     this.recursionLabel = options.recursionLabel
@@ -185,8 +179,8 @@ export class RecursionField implements Field<any> {
     return this.field.renderEditComponent(props)
   }
 
-  public defaultValue() {
-    return this.field.defaultValue()
+  public get defaultValue(): any {
+    return this.field.defaultValue
   }
 
   public transformRawValue(value: any) {
@@ -215,10 +209,6 @@ export class RecursionField implements Field<any> {
 
   public valuePathForKeyPath(keyPath: KeyPath) {
     return this.field.valuePathForKeyPath(keyPath)
-  }
-
-  public sortConfigurations(): SortConfigration[] {
-    return []
   }
 
   public async onSave(value: any) {
@@ -272,9 +262,8 @@ export class RecurseField implements Field<any> {
   public readonly recursionLabel: string
   public parent?: Field
 
-  public get label(): string | undefined {
-    return this.field ? this.field.label : undefined
-  }
+  public readonly sortConfigurations: SortConfiguration[] = []
+  public readonly filterConfigurations: FilterConfiguration[] = []
 
   public constructor(label: string) {
     this.recursionLabel = label
@@ -315,9 +304,9 @@ export class RecurseField implements Field<any> {
     return this.field.renderEditComponent(props)
   }
 
-  public defaultValue() {
+  public get defaultValue() {
     if (!this.field) return null
-    return this.field.defaultValue()
+    return this.field.defaultValue
   }
 
   public transformRawValue(value: any) {
@@ -350,10 +339,6 @@ export class RecurseField implements Field<any> {
   public valuePathForKeyPath(keyPath: KeyPath) {
     if (!this.field) return []
     return this.field.valuePathForKeyPath(keyPath)
-  }
-
-  public sortConfigurations(): SortConfigration[] {
-    return []
   }
 
   public async onSave(value: any) {

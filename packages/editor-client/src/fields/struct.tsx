@@ -5,7 +5,8 @@ import {
   reduceToMap,
   ValuePath,
   ValuePathSegmentType,
-  mapObjectAsync
+  mapObjectAsync,
+  StructPathSegment
 } from '@karma.run/editor-common'
 
 import {
@@ -19,8 +20,9 @@ import {
 
 import {KeyPath, Model} from '../api/model'
 import {ErrorField} from './error'
-import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/fields/field'
+import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/common/field'
 import {convertKeyToLabel} from '../util/string'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
 
 export type StructFieldChildTuple = [string, Field]
 
@@ -43,6 +45,7 @@ export class StructFieldEditComponent extends React.PureComponent<
           value: this.props.value[key],
           onValueChange: this.handleValueChange,
           onEditRecord: this.props.onEditRecord,
+          onSelectRecord: this.props.onSelectRecord,
           changeKey: key
         })}
       </React.Fragment>
@@ -85,6 +88,9 @@ export class StructField implements Field<StructFieldValue> {
   public readonly fields: StructFieldChildTuple[]
 
   public parent?: Field
+  public readonly defaultValue: StructFieldValue
+  public readonly sortConfigurations: SortConfiguration[]
+  public readonly filterConfigurations: FilterConfiguration[]
 
   public constructor(opts: StructFieldOptions) {
     this.label = opts.label
@@ -92,6 +98,23 @@ export class StructField implements Field<StructFieldValue> {
     this.fields = opts.fields
     this.fieldMap = new Map(this.fields)
     this.fields.forEach(([_, field]) => (field.parent = this))
+
+    this.defaultValue = reduceToMap(this.fields, ([key, field]) => [key, field.defaultValue])
+
+    this.sortConfigurations = [
+      ...this.fields.reduce(
+        (acc, [key, field]) => [
+          ...acc,
+          ...field.sortConfigurations.map(config => ({
+            ...config,
+            path: [StructPathSegment(key), ...config.path]
+          }))
+        ],
+        [] as SortConfiguration[]
+      )
+    ]
+
+    this.filterConfigurations = []
   }
 
   public renderListComponent() {
@@ -100,10 +123,6 @@ export class StructField implements Field<StructFieldValue> {
 
   public renderEditComponent(props: EditRenderProps) {
     return <StructFieldEditComponent {...props} field={this} />
-  }
-
-  public defaultValue() {
-    return reduceToMap(this.fields, ([key, field]) => [key, field.defaultValue()])
   }
 
   public transformRawValue(value: any) {
@@ -134,7 +153,7 @@ export class StructField implements Field<StructFieldValue> {
     }
   }
 
-  public traverse(keyPath: KeyPath) {
+  public traverse(keyPath: KeyPath): Field | undefined {
     if (keyPath.length === 0) return this
 
     const key = keyPath[0]

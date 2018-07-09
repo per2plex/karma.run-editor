@@ -1,16 +1,23 @@
 import React from 'react'
-import * as shortid from 'shortid'
 import {style} from 'typestyle'
-import {expression as e, data as d, Ref, MetarializedRecord} from '@karma.run/sdk'
+import {expression as e, data as d, Ref} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
-import {SerializedField, EditComponentRenderProps, EditRenderProps, Field} from './interface'
-import {Field as FieldComponent, FieldLabel} from '../ui/fields/field'
+
+import {
+  SerializedField,
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps
+} from './interface'
+
+import {Field as FieldComponent, FieldLabel} from '../ui/common/field'
 import {CardSection, Card, CardFooter} from '../ui/common/card'
-import {SortConfigration} from '../filter/configuration'
-import {SortType} from '@karma.run/editor-common'
-import {withSession, SessionContext} from '../context/session'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
+import {withSession, SessionContext, ModelRecord} from '../context/session'
+import {LocaleContext, withLocale} from '../context/locale'
 import {LoadingIndicator, LoadingIndicatorStyle} from '../ui/common/loader'
 import {DescriptionView} from '../ui/common/descriptionView'
 import {Button, ButtonType} from '../ui/common/button'
@@ -21,11 +28,12 @@ import {convertKeyToLabel} from '../util/string'
 export interface RefFieldEditComponentProps
   extends EditComponentRenderProps<RefField, RefFieldValue> {
   sessionContext: SessionContext
+  localeContext: LocaleContext
 }
 
 export interface RefFieldEditComponentState {
   isLoadingRecord?: boolean
-  record?: MetarializedRecord
+  record?: ModelRecord
 }
 
 export class RefFieldEditComponent extends React.PureComponent<
@@ -34,19 +42,32 @@ export class RefFieldEditComponent extends React.PureComponent<
 > {
   public state: RefFieldEditComponentState = {}
 
-  private handleChange = (value: any) => {
-    this.props.onValueChange(value, this.props.changeKey)
+  private handleEditRecord = async () => {
+    const record = await this.props.onEditRecord(this.props.field.model, this.props.value)
+
+    if (record) {
+      this.setState({record})
+      this.props.onValueChange(record.id, this.props.changeKey)
+    }
   }
 
-  private handleEditRecord = () => {
-    this.props.onEditRecord(this.props.field.model, this.props.value)
+  private handleNewRecord = async () => {
+    const record = await this.props.onEditRecord(this.props.field.model)
+
+    if (record) {
+      this.setState({record})
+      this.props.onValueChange(record.id, this.props.changeKey)
+    }
   }
 
-  private handleNewRecord = () => {
-    this.props.onEditRecord(this.props.field.model)
-  }
+  private handleSelectRecord = async () => {
+    const record = await this.props.onSelectRecord(this.props.field.model)
 
-  private handleChooseRecord = () => {}
+    if (record) {
+      this.setState({record})
+      this.props.onValueChange(record.id, this.props.changeKey)
+    }
+  }
 
   private async loadRecord(id: Ref) {
     this.setState({
@@ -69,6 +90,7 @@ export class RefFieldEditComponent extends React.PureComponent<
 
     const record = this.state.record
     const viewContext = this.props.sessionContext.viewContextMap.get(this.props.field.model)
+    const _ = this.props.localeContext.get
 
     if (!viewContext) {
       return <div /> // TODO: Error
@@ -84,25 +106,30 @@ export class RefFieldEditComponent extends React.PureComponent<
         </CardSection>
       )
     } else if (record) {
-      const updatedDateString = new Date(record.updated).toLocaleDateString()
-      const createdDateString = new Date(record.created).toLocaleDateString()
+      const updatedDateString = record.updated.toLocaleDateString(this.props.localeContext.locale, {
+        hour: 'numeric',
+        minute: 'numeric'
+      })
 
-      content = (
-        <DescriptionView
-          viewContext={viewContext}
-          record={record as any}
-          reverseTagMap={this.props.sessionContext.reverseTagMap}
-        />
-      )
+      const createdDateString = record.created.toLocaleDateString(this.props.localeContext.locale, {
+        hour: 'numeric',
+        minute: 'numeric'
+      })
+
+      content = <DescriptionView viewContext={viewContext} record={record} />
 
       leftFooterContent = (
         <>
-          <div>Updated: {updatedDateString}</div>
-          <div>Created: {createdDateString}</div>
+          <div>
+            {_('recordUpdated')}: {updatedDateString}
+          </div>
+          <div>
+            {_('recordCreated')}: {createdDateString}
+          </div>
         </>
       )
     } else {
-      content = <CardSection>Select entry!</CardSection>
+      content = <CardSection>{_('noRecordSelected')}</CardSection>
     }
 
     let errorContent: React.ReactNode
@@ -128,7 +155,7 @@ export class RefFieldEditComponent extends React.PureComponent<
           <Button
             type={ButtonType.Icon}
             key="new"
-            label="New"
+            label={_('newRecord')}
             icon={IconName.NewDocument}
             onTrigger={this.handleNewRecord}
             disabled={this.props.disabled}
@@ -137,7 +164,7 @@ export class RefFieldEditComponent extends React.PureComponent<
             <Button
               type={ButtonType.Icon}
               key="edit"
-              label="Edit"
+              label={_('editRecord')}
               icon={IconName.EditDocument}
               onTrigger={this.handleEditRecord}
               disabled={this.props.disabled}
@@ -169,9 +196,9 @@ export class RefFieldEditComponent extends React.PureComponent<
                 {editButtons}
                 <Button
                   type={ButtonType.Icon}
-                  label="Choose"
-                  icon={IconName.ChooseDocument}
-                  onTrigger={this.handleChooseRecord}
+                  label={_('selectRecord')}
+                  icon={IconName.SelectDocument}
+                  onTrigger={this.handleSelectRecord}
                   disabled={this.props.disabled}
                 />
               </>
@@ -207,7 +234,7 @@ export const RefFieldEditComponentStyle = style({
   }
 })
 
-export const RefFieldEditComponentContainer = withSession(RefFieldEditComponent)
+export const RefFieldEditComponentContainer = withLocale(withSession(RefFieldEditComponent))
 
 export interface RefFieldOptions {
   readonly label?: string
@@ -222,22 +249,22 @@ export class RefField implements Field<RefFieldValue> {
   public readonly description?: string
   public readonly model: Ref
 
+  public readonly defaultValue: RefFieldValue = undefined
+  public readonly sortConfigurations: SortConfiguration[] = []
+  public readonly filterConfigurations: FilterConfiguration[] = []
+
   public constructor(opts: RefFieldOptions) {
     this.label = opts.label
     this.description = opts.description
     this.model = opts.model
   }
 
-  public renderListComponent(value: Ref) {
-    return <CardSection>{value}</CardSection>
+  public renderListComponent(props: ListRenderProps<RefFieldValue>) {
+    return <CardSection>{props.value}</CardSection>
   }
 
   public renderEditComponent(props: EditRenderProps<RefFieldValue>) {
     return <RefFieldEditComponentContainer {...props} field={this} />
-  }
-
-  public defaultValue() {
-    return undefined
   }
 
   public transformRawValue(value: any) {
@@ -267,10 +294,6 @@ export class RefField implements Field<RefFieldValue> {
 
   public valuePathForKeyPath() {
     return []
-  }
-
-  public sortConfigurations(): SortConfigration[] {
-    return [{key: shortid.generate(), type: SortType.String, label: this.label || '', path: []}]
   }
 
   public static type = 'ref'

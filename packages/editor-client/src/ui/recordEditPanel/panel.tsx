@@ -1,9 +1,9 @@
 import React from 'react'
-import {Ref, MetarializedRecord} from '@karma.run/sdk'
+import {Ref} from '@karma.run/sdk'
 
 import {Panel} from '../common/panel'
 import {ViewContextPanelHeader} from '../common/panel/viewContextHeader'
-import {SessionContext, withSession} from '../../context/session'
+import {SessionContext, withSession, ModelRecord} from '../../context/session'
 import {PanelContent} from '../common/panel/content'
 import {withLocale, LocaleContext} from '../../context/locale'
 import {PanelToolbar} from '../common/panel/toolbar'
@@ -19,13 +19,13 @@ export interface RecordEditPanelProps {
   sessionContext: SessionContext
   localeContext: LocaleContext
   disabled: boolean
-  onCancel: (model: Ref, id?: Ref) => void
-  onEditRecord: (model: Ref, id?: Ref) => Promise<Ref | undefined>
-  onChooseRecord: (model: Ref, id?: Ref) => Promise<Ref | undefined>
+  onBack: (model: Ref, record?: ModelRecord) => void
+  onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
+  onSelectRecord: (model: Ref) => Promise<ModelRecord | undefined>
 }
 
 export interface RecordEditPanelState {
-  record?: MetarializedRecord
+  record?: ModelRecord
   isSaving: boolean
   isLoadingRecord: boolean
   hasUnsavedChanges: boolean
@@ -57,14 +57,17 @@ export class RecordEditPanel extends React.PureComponent<
     this.setState({value})
   }
 
-  private handleCancel = () => {
-    this.props.onCancel(this.props.model, this.props.recordID)
+  private handleBack = () => {
+    this.props.onBack(this.props.model, this.state.record)
   }
-
-  private handleEditRecord = () => {}
 
   private handleSave = async () => {
     this.setState({
+      isSaving: true
+    })
+
+    this.setState({
+      isSaving: false,
       value: undefined,
       record: await this.props.sessionContext.saveRecord(
         this.props.model,
@@ -76,6 +79,11 @@ export class RecordEditPanel extends React.PureComponent<
 
   private handleSaveAsCopy = async () => {
     this.setState({
+      isSaving: true
+    })
+
+    this.setState({
+      isSaving: false,
       value: undefined,
       record: await this.props.sessionContext.saveRecord(
         this.props.model,
@@ -97,7 +105,7 @@ export class RecordEditPanel extends React.PureComponent<
         <Button
           type={ButtonType.Icon}
           icon={IconName.Back}
-          onTrigger={this.handleCancel}
+          onTrigger={this.handleBack}
           disabled={disabled}
           label="Back"
         />
@@ -132,9 +140,9 @@ export class RecordEditPanel extends React.PureComponent<
   })
 
   public render() {
-    const viewContext = this.props.sessionContext.viewContextMap.get(this.props.model)
-    const disabled = this.props.disabled
     const _ = this.props.localeContext.get
+    const disabled = this.state.isSaving || this.props.disabled
+    const viewContext = this.props.sessionContext.viewContextMap.get(this.props.model)
 
     // TODO: Error panel
     if (!viewContext) return <div>Not Found</div>
@@ -143,10 +151,12 @@ export class RecordEditPanel extends React.PureComponent<
       <Panel>
         <ViewContextPanelHeader
           viewContext={viewContext}
-          prefix={this.props.recordID ? _('editRecordPrefix') : _('newRecordPrefix')}
+          prefix={
+            this.props.recordID || this.state.record ? _('editRecordPrefix') : _('newRecordPrefix')
+          }
         />
         <PanelToolbar
-          left={this.getToolbarButtons(this.props.disabled, this.state.value != undefined)}
+          left={this.getToolbarButtons(disabled, this.state.value != undefined)}
           right={this.getDeveloperButtons(true)} // TODO: Developer mode
         />
         <PanelContent>
@@ -157,12 +167,13 @@ export class RecordEditPanel extends React.PureComponent<
               depth: 0,
               index: 0,
               isWrapped: true,
-              disabled: this.props.disabled,
+              disabled: disabled,
               value:
                 this.state.value ||
-                (this.state.record ? this.state.record.value : viewContext.field.defaultValue()),
+                (this.state.record ? this.state.record.value : viewContext.field.defaultValue),
               onValueChange: this.handleValueChange,
-              onEditRecord: this.props.onEditRecord
+              onEditRecord: this.props.onEditRecord,
+              onSelectRecord: this.props.onSelectRecord
             })
           )}
         </PanelContent>

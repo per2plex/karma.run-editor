@@ -1,12 +1,12 @@
 import {observable, runInAction, action, reaction, IObservableArray} from 'mobx'
-import {Entry} from '../../api/karma'
+
 import {filterAndSortObjects} from '../'
 import {debounce} from '../../util/functional'
-import {ViewContext} from '../../api/karmafe/viewContext'
+import {ViewContext} from '../../api/viewContext'
 import {IReactionDisposer} from 'mobx/lib/core/reaction'
 
 import {
-  SortConfigration,
+  SortConfiguration,
   FilterFieldGroup,
   sortConfigurationsForViewContext,
   filterConfigurationsForViewContext
@@ -14,13 +14,16 @@ import {
 
 import {Filter, CompositeFilter, FullTextFilter} from '@karma.run/editor-common'
 import {FilterStore} from './filterStore'
+import {ModelRecord} from '../../context/session'
 
 export {IObservableArray}
+
+export type Entry = ModelRecord
 
 export class EntryFilterStore {
   public filterStores = observable.shallowArray<FilterStore>()
 
-  public sortConfigurations: SortConfigration[]
+  public sortConfigurations: SortConfiguration[]
   public filterConfigurations: FilterFieldGroup[]
 
   @observable.ref public searchText: string = ''

@@ -15,9 +15,10 @@ import {
 
 import {KeyPath, Model} from '../api/model'
 import {ErrorField} from './error'
-import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/fields/field'
+import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/common/field'
 import {convertKeyToLabel} from '../util/string'
 import {EditableTabList} from '../ui/common/tabList'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
 
 export interface MapFieldEditComponentState {
   activeTabIndex: number
@@ -33,7 +34,9 @@ export class MapFieldEditComponent extends React.PureComponent<
   private focusTabAtIndex?: number
 
   private handleValueChange = (value: any, index: number) => {
-    if (!index) throw new Error('Child field did not call onValueChange with changeKey!')
+    if (index == undefined) {
+      throw new Error('Child field did not call onValueChange with changeKey!')
+    }
 
     this.props.onValueChange(
       Object.assign([...this.props.value], {[index]: {...this.props.value[index], value}}),
@@ -58,7 +61,7 @@ export class MapFieldEditComponent extends React.PureComponent<
     newValue.splice(index, 0, {
       id: shortid.generate(),
       key: key,
-      value: this.props.field.field.defaultValue()
+      value: this.props.field.field.defaultValue
     })
 
     this.focusTabAtIndex = index
@@ -135,6 +138,7 @@ export class MapFieldEditComponent extends React.PureComponent<
               value: value[this.state.activeTabIndex].value,
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
+              onSelectRecord: this.props.onSelectRecord,
               changeKey: this.state.activeTabIndex
             })}
           </FieldInset>
@@ -165,6 +169,10 @@ export class MapField implements Field<MapFieldValue> {
 
   public parent?: Field
 
+  public readonly defaultValue: MapFieldValue = []
+  public readonly sortConfigurations: SortConfiguration[] = []
+  public readonly filterConfigurations: FilterConfiguration[] = []
+
   public constructor(opts: MapFieldOptions) {
     this.label = opts.label
     this.description = opts.description
@@ -179,10 +187,6 @@ export class MapField implements Field<MapFieldValue> {
 
   public renderEditComponent(props: EditRenderProps) {
     return <MapFieldEditComponent {...props} field={this} />
-  }
-
-  public defaultValue(): MapFieldValue {
-    return []
   }
 
   public transformRawValue(value: any): MapFieldValue {

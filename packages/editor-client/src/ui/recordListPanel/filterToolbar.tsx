@@ -1,11 +1,11 @@
 import React from 'react'
 
 import {style} from 'typestyle'
-import {ViewContext} from '../../api/newViewContext'
+import {ViewContext} from '../../api/viewContext'
 import {Spacing} from '../../ui/style'
 import {QuickSearchFieldStyle, QuickSearchField} from '../../filter/ui/searchField'
 import {SortFieldStyle, SortField} from '../../filter/ui/sortField'
-import {SortConfigration, FilterFieldGroup} from '../../filter/configuration'
+import {SortConfiguration, FilterFieldGroup} from '../../filter/configuration'
 // import {Filter, Sort} from '../../api/karma'
 
 export const ToolbarFilterStyle = style({
@@ -24,11 +24,12 @@ export const ToolbarFilterStyle = style({
 })
 
 export interface ToolbarProps {
+  disableQuickSearch: boolean
   viewContext: ViewContext
-  sortConfigurations: SortConfigration[]
-  sortValue: SortConfigration
+  sortConfigurations: SortConfiguration[]
+  sortValue: SortConfiguration
   sortDescending: boolean
-  onSortChange: (value: SortConfigration, descending: boolean) => void
+  onSortChange: (value: SortConfiguration, descending: boolean) => void
   filterConfigurations: FilterFieldGroup[]
   quickSearchValue: string
   onQuickSearchChange: (value: string) => void
@@ -48,10 +49,12 @@ export class ToolbarFilter extends React.Component<ToolbarProps> {
   public render() {
     return (
       <div className={ToolbarFilterStyle}>
-        <QuickSearchField
-          value={this.props.quickSearchValue}
-          onChange={this.props.onQuickSearchChange}
-        />
+        {!this.props.disableQuickSearch && (
+          <QuickSearchField
+            value={this.props.quickSearchValue}
+            onChange={this.props.onQuickSearchChange}
+          />
+        )}
         <SortField
           configurations={this.props.sortConfigurations}
           value={this.props.sortValue}

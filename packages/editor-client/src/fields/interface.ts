@@ -2,7 +2,8 @@ import {Expression, Ref} from '@karma.run/sdk'
 import {ValuePath} from '@karma.run/editor-common'
 
 import {KeyPath, Model} from '../api/model'
-import {SortConfigration, FilterField} from '../filter/configuration'
+import {ModelRecord} from '../context/session'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
 
 export type InferFieldFunction = (model: Model, key?: string) => Field
 export type UnserializeFieldFunction = (rawField: any, model: Model) => Field
@@ -24,7 +25,8 @@ export interface EditRenderProps<V = any> {
   value: V
   changeKey?: any
   onValueChange: (value: V, key: any) => void
-  onEditRecord: (model: Ref, id?: Ref) => Promise<Ref | undefined>
+  onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
+  onSelectRecord: (model: Ref) => Promise<ModelRecord | undefined>
 }
 
 export interface ListComponentRenderProps<F extends Field = Field, V = any>
@@ -38,14 +40,12 @@ export interface EditComponentRenderProps<F extends Field = Field, V = any>
 }
 
 export interface Field<V = any> {
-  readonly label?: string
   parent?: Field
 
   renderListComponent(props: ListRenderProps<V>): React.ReactNode
   renderEditComponent(props: EditRenderProps<V>): React.ReactNode
 
   serialize(): SerializedField
-  defaultValue(): V
 
   transformRawValue(value: any): V
   transformValueToExpression(value: V): Expression
@@ -55,11 +55,12 @@ export interface Field<V = any> {
   traverse(keyPath: KeyPath): Field | undefined
   valuePathForKeyPath(keyPath: KeyPath): ValuePath
 
-  sortConfigurations?(): SortConfigration[]
-  filterConfigurations?(): FilterField[]
-
   onSave?(value: V): Promise<V>
   onDelete?(value: V): Promise<V>
+
+  readonly defaultValue: V
+  readonly sortConfigurations: SortConfiguration[]
+  readonly filterConfigurations: FilterConfiguration[]
 }
 
 export interface FieldClass<V = any> {

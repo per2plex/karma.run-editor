@@ -52,7 +52,6 @@ export namespace CardFooter {
         alignItems: 'center',
         flexGrow: 1,
 
-        fontStyle: 'italic',
         width: '100%',
         opacity: 0.75,
 
@@ -184,7 +183,6 @@ export const CardDescriptionStyle = style({
 
   color: Color.primary.base,
   fontSize: FontSize.small,
-  fontStyle: 'italic',
 
   $nest: {
     'p:first-child': {marginTop: 0},

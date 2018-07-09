@@ -14,9 +14,10 @@ import {
 
 import {KeyPath, Model} from '../api/model'
 import {ErrorField} from './error'
-import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/fields/field'
+import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/common/field'
 import {convertKeyToLabel} from '../util/string'
 import {Select, SelectType} from '../ui/common/select'
+import {FilterConfiguration, SortConfiguration} from '../filter/configuration'
 
 export type UnionFieldChildTuple = [string, string, Field]
 
@@ -31,7 +32,7 @@ export class UnionFieldEditComponent extends React.PureComponent<
     }
 
     let selectedValue = value.values[selectedKey]
-    if (!selectedValue) selectedValue = this.props.field.fieldForKey(selectedKey).defaultValue()
+    if (!selectedValue) selectedValue = this.props.field.fieldForKey(selectedKey).defaultValue
 
     this.props.onValueChange(
       {selectedKey, values: {...value.values, [selectedKey]: selectedValue}},
@@ -80,6 +81,7 @@ export class UnionFieldEditComponent extends React.PureComponent<
               value: this.props.value.values[this.props.value.selectedKey!],
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
+              onSelectRecord: this.props.onSelectRecord,
               changeKey: this.props.value!.selectedKey
             })}
         </FieldInset>
@@ -104,6 +106,10 @@ export class UnionField implements Field<UnionFieldValue> {
 
   public parent?: Field
 
+  public readonly defaultValue: UnionFieldValue = {values: {}}
+  public readonly sortConfigurations: SortConfiguration[] = []
+  public readonly filterConfigurations: FilterConfiguration[] = []
+
   public constructor(opts: UnionFieldOptions) {
     this.label = opts.label
     this.description = opts.description
@@ -118,10 +124,6 @@ export class UnionField implements Field<UnionFieldValue> {
 
   public renderEditComponent(props: EditRenderProps) {
     return <UnionFieldEditComponent {...props} field={this} />
-  }
-
-  public defaultValue(): UnionFieldValue {
-    return {values: {}}
   }
 
   public fieldForKey(key: string): Field {
@@ -164,7 +166,7 @@ export class UnionField implements Field<UnionFieldValue> {
     }
   }
 
-  public traverse(keyPath: KeyPath) {
+  public traverse(keyPath: KeyPath): Field | undefined {
     if (keyPath.length === 0) return this
 
     const key = keyPath[0]

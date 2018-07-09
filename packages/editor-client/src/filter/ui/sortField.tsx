@@ -3,7 +3,7 @@ import {style} from 'typestyle'
 import {Select, SelectStyle, Button, ButtonType, SelectType} from '../../ui/common'
 import {Color, FontWeight, Spacing} from '../../ui/style'
 import {IconName} from '../../ui/common/icon'
-import {SortConfigration} from '../configuration'
+import {SortConfiguration} from '../configuration'
 
 export const SortFieldStyle = style({
   $debugName: 'SortFieldStyle',
@@ -26,10 +26,10 @@ export const SortFieldStyle = style({
 })
 
 export interface SortFieldProps {
-  value: SortConfigration
+  value: SortConfiguration
   descending: boolean
-  configurations: SortConfigration[]
-  onChange: (sort: SortConfigration, descending: boolean) => void
+  configurations: SortConfiguration[]
+  onChange: (sort: SortConfiguration, descending: boolean) => void
 }
 
 export class SortField extends React.Component<SortFieldProps> {

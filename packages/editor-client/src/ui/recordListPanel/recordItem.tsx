@@ -1,15 +1,15 @@
 import * as React from 'react'
 import {style} from 'typestyle'
 
-import {ViewContext} from '../../api/newViewContext'
+import {ViewContext} from '../../api/viewContext'
 import {Spacing} from '../../ui/style'
 import {DescriptionView, Card, CardFooter} from '../../ui/common'
 import {LocaleContext} from '../../context/locale'
 import {ReadonlyRefMap} from '../../util/ref'
-import {MetarializedRecord} from '@karma.run/sdk'
+import {ModelRecord} from '../../context/session'
 
 export interface RecordItemProps {
-  record: MetarializedRecord
+  record: ModelRecord
   viewContext: ViewContext
   reverseTagMap: ReadonlyRefMap<string>
   localeContext: LocaleContext
@@ -17,30 +17,30 @@ export interface RecordItemProps {
 
 export class RecordItem extends React.Component<RecordItemProps> {
   public render() {
-    const updatedDateString = new Date(this.props.record.updated).toLocaleDateString(
-      this.props.localeContext.locale
+    const _ = this.props.localeContext.get
+
+    const updatedDateString = this.props.record.updated.toLocaleDateString(
+      this.props.localeContext.locale,
+      {hour: 'numeric', minute: 'numeric'}
     )
 
-    const createdDateString = new Date(this.props.record.created).toLocaleDateString(
-      this.props.localeContext.locale
+    const createdDateString = this.props.record.created.toLocaleDateString(
+      this.props.localeContext.locale,
+      {hour: 'numeric', minute: 'numeric'}
     )
 
     return (
       <div className={RecordItemPropsStyle}>
         <Card>
-          <DescriptionView
-            viewContext={this.props.viewContext}
-            record={this.props.record}
-            reverseTagMap={this.props.reverseTagMap}
-          />
+          <DescriptionView viewContext={this.props.viewContext} record={this.props.record} />
           <CardFooter
             contentLeft={
               <>
                 <div>
-                  {this.props.localeContext.get('recordUpdated')}: {updatedDateString}
+                  {_('recordUpdated')}: {updatedDateString}
                 </div>
                 <div>
-                  {this.props.localeContext.get('recordCreated')}: {createdDateString}
+                  {_('recordCreated')}: {createdDateString}
                 </div>
               </>
             }

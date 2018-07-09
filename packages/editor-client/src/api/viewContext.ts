@@ -1,10 +1,10 @@
 import {Ref} from '@karma.run/sdk'
-import {SortType, ValuePathSegmentType} from '@karma.run/editor-common'
+import {SortType, StructPathSegment} from '@karma.run/editor-common'
 
 import {Model, KeyPath} from './model'
 import {stringToColor, convertKeyToLabel, slugify} from '../util/string'
 import {refToString} from '../util/ref'
-import {SortConfigration, labelForMetaField} from '../filter/configuration'
+import {SortConfiguration, labelForMetaField} from '../filter/configuration'
 import {Field, FieldRegistry, ErrorField} from '../fields'
 
 export interface ViewContextOptions {
@@ -26,7 +26,7 @@ export class ViewContext {
   public readonly field: Field
   public readonly displayKeyPaths: KeyPath[]
 
-  private _sortConfigurations?: SortConfigration[]
+  public readonly sortConfigurations: SortConfiguration[]
 
   public constructor(opts: ViewContextOptions) {
     this.model = opts.model
@@ -36,28 +36,25 @@ export class ViewContext {
     this.color = opts.color
     this.field = opts.field
     this.displayKeyPaths = opts.displayKeyPaths
-  }
 
-  public get sortConfigurations() {
-    if (this._sortConfigurations) return this._sortConfigurations
-
-    const sortConfigurations: SortConfigration[] = [
+    this.sortConfigurations = [
       {
         key: 'updatedMeta',
         label: labelForMetaField('updated'),
         type: SortType.Date,
-        path: [{type: ValuePathSegmentType.Struct, key: 'updated'}]
+        path: [StructPathSegment('updated')]
       },
       {
         key: 'createdMeta',
         label: labelForMetaField('created'),
         type: SortType.Date,
-        path: [{type: ValuePathSegmentType.Struct, key: 'created'}]
-      }
+        path: [StructPathSegment('created')]
+      },
+      ...this.field.sortConfigurations.map(config => ({
+        ...config,
+        path: [StructPathSegment('value'), ...config.path]
+      }))
     ]
-
-    this._sortConfigurations = sortConfigurations
-    return sortConfigurations
   }
 
   public serialize() {

@@ -5,7 +5,8 @@ import {
   ValuePathSegment,
   Condition,
   ValuePath,
-  StructPathSegment
+  StructPathSegment,
+  ConditionType
 } from '@karma.run/editor-common'
 
 import {
@@ -18,27 +19,28 @@ import {
   buildFunction,
   getTags,
   getModels,
-  MetarializedRecord,
   buildExpression,
   Expression,
-  expression as e
+  expression as e,
+  MetarializedRecord
 } from '@karma.run/sdk'
 
 import * as storage from '../util/storage'
-import {SessionStorageKey} from '../store/editorStore'
 import {Config, withConfig} from '../context/config'
-import {EditorContext} from '../api/karmafe/editorContext'
-import {ModelGroup} from '../api/karmafe/modelGroup'
+import {EditorContext} from '../api/editorContext'
+import {ModelGroup} from '../api/modelGroup'
 import {RefMap} from '../util/ref'
-// import {inferViewContextFromModel, ViewContext} from '../api/karmafe/viewContext'
+
 import {unserializeModel} from '../api/model'
-import {ViewContext} from '../api/newViewContext'
-import {SessionContext, initialEditorData, EditorData} from '../context/session'
+import {ViewContext} from '../api/viewContext'
+import {SessionContext, initialEditorData, EditorData, ModelRecord} from '../context/session'
 import {defaultFieldRegistry} from '../fields/registry'
+import {escapeRegExp} from '../util/string'
 
-export const developmentModelGroupID: Ref = ['_editorModelGroup', 'development']
-export const developmentEditorContextID: Ref = ['_editorEditorContext', 'development']
+export const defaultModelGroupID: string = 'default'
+export const defaultEditorContextID: string = 'default'
 
+export const sessionStorageKey = 'session'
 export const sessionRenewalInterval = 5 * (60 * 1000) // 5min
 
 export interface SessionProviderProps {
@@ -53,7 +55,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
     this.state = {
       ...initialEditorData,
-      canRestoreSessionFromStorage: storage.get(SessionStorageKey) != undefined,
+      canRestoreSessionFromStorage: storage.get(sessionStorageKey) != undefined,
       restoreSessionFromLocalStorage: this.restoreSessionFromLocalStorage,
       restoreSession: this.restoreSession,
       authenticate: this.authenticate,
@@ -65,7 +67,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   }
 
   public restoreSessionFromLocalStorage = async () => {
-    const session = storage.get(SessionStorageKey)
+    const session = storage.get(sessionStorageKey)
 
     if (!session) {
       throw new Error('No session to restore!')
@@ -101,27 +103,27 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
   public invalidate = async () => {
     this.setState({...initialEditorData, session: undefined, canRestoreSessionFromStorage: false})
-    storage.remove(SessionStorageKey)
+    storage.remove(sessionStorageKey)
   }
 
-  public getRecord = async (model: Ref, id: Ref): Promise<MetarializedRecord> => {
+  private transformMetarializedRecord(
+    record: MetarializedRecord,
+    viewContext: ViewContext
+  ): ModelRecord {
+    return {
+      id: record.id,
+      model: record.model,
+      created: new Date(record.created),
+      updated: new Date(record.updated),
+      value: viewContext.field.transformRawValue(record.value)
+    }
+  }
+
+  public getRecord = async (model: Ref, id: Ref): Promise<ModelRecord> => {
     if (!this.state.session) throw new Error('No session!')
 
     const viewContext = this.state.viewContextMap.get(model)
     if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
-
-    // return {
-    //   id: ['test', 'bar'],
-    //   model: ['test', 'foo'],
-    //   created: 'now',
-    //   updated: 'now',
-    //   value: viewContext.field.transformRawValue({
-    //     test: '1234',
-    //     recurse: {
-    //       test: 'abcd'
-    //     }
-    //   })
-    // }
 
     const record: MetarializedRecord = await query(
       this.props.config.karmaURL,
@@ -129,8 +131,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       buildFunction(e => () => e.metarialize(e.get(e.data(d => d.ref(id)))))
     )
 
-    record.value = viewContext.field.transformRawValue(record.value)
-    return record
+    return this.transformMetarializedRecord(record, viewContext)
   }
 
   public getRecordList = async (
@@ -139,17 +140,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     offset: number,
     sort: Sort,
     filters: Condition[]
-  ): Promise<MetarializedRecord[]> => {
-    // return [
-    //   {
-    //     id: ['test', 'bar'],
-    //     model: ['test', 'foo'],
-    //     created: 'now',
-    //     updated: 'now',
-    //     value: {}
-    //   }
-    // ]
-
+  ): Promise<ModelRecord[]> => {
     if (!this.state.session) throw new Error('No session!')
 
     const viewContext = this.state.viewContextMap.get(model)
@@ -161,14 +152,16 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
     if (filters.length > 0) {
       for (const filter of filters) {
-        listExpression = buildExpression(e =>
-          e.filterList(listExpression, (_, value) =>
-            e.matchRegex(
-              filter.value,
-              filterValueExpression(value, [StructPathSegment('value'), ...filter.path])
+        if (filter.type === ConditionType.StringIncludes) {
+          listExpression = buildExpression(e =>
+            e.filterList(listExpression, (_, value) =>
+              e.matchRegex(
+                escapeRegExp(filter.value),
+                filterValueExpression(value, [StructPathSegment('value'), ...filter.path])
+              )
             )
           )
-        )
+        }
       }
     }
 
@@ -215,18 +208,10 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       buildFunction(e => () => e.slice(listExpression, offset, limit))
     )
 
-    records.forEach(record => {
-      record.value = viewContext.field.transformRawValue(record.value)
-    })
-
-    return records
+    return records.map(record => this.transformMetarializedRecord(record, viewContext))
   }
 
-  public saveRecord = async (
-    model: Ref,
-    id: Ref | undefined,
-    value: any
-  ): Promise<MetarializedRecord> => {
+  public saveRecord = async (model: Ref, id: Ref | undefined, value: any): Promise<ModelRecord> => {
     if (!this.state.session) throw new Error('No session!')
 
     const viewContext = this.state.viewContextMap.get(model)
@@ -237,7 +222,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     }
 
     const expressionValue = viewContext.field.transformValueToExpression(value)
-    const result = await query(
+    const record = await query(
       this.props.config.karmaURL,
       this.state.session,
       buildFunction(e => () => [
@@ -251,11 +236,11 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       ])
     )
 
-    return result
+    return this.transformMetarializedRecord(record, viewContext)
   }
 
   private storeSession() {
-    storage.set(SessionStorageKey, this.state.session)
+    storage.set(sessionStorageKey, this.state.session)
   }
 
   private async getEditorData(session: Session): Promise<EditorData> {
@@ -279,30 +264,33 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
     // TODO: Check development mode
     if (true) {
-      const developmentModelGroup: ModelGroup = {
-        id: developmentModelGroupID,
+      const defaultModelGroup: ModelGroup = {
+        id: defaultModelGroupID,
         name: 'Models',
         models: models.map(model => model.id)
       }
 
-      const developmentEditorContext: EditorContext = {
-        id: developmentEditorContextID,
+      const defaultEditorContext: EditorContext = {
+        id: defaultEditorContextID,
         name: 'Development',
-        modelGroups: [developmentModelGroupID]
+        modelGroups: [defaultModelGroupID],
+        privileges: []
       }
 
-      modelGroups.push(developmentModelGroup)
-      editorContexts.push(developmentEditorContext)
+      modelGroups.push(defaultModelGroup)
+      editorContexts.push(defaultEditorContext)
     }
 
     viewContexts.push(...inferedViewContexts)
 
-    const modelGroupMap = new RefMap(
-      modelGroups.map(modelGroup => [modelGroup.id, modelGroup] as [Ref, any])
+    const modelGroupMap = new Map(
+      modelGroups.map(modelGroup => [modelGroup.id, modelGroup] as [string, ModelGroup])
     )
 
-    const editorContextMap = new RefMap(
-      editorContexts.map(editorContext => [editorContext.id, editorContext] as [Ref, any])
+    const editorContextMap = new Map(
+      editorContexts.map(
+        editorContext => [editorContext.id, editorContext] as [string, EditorContext]
+      )
     )
 
     const viewContextMap = new RefMap(
@@ -334,50 +322,6 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   private async getTagsAndModels(
     session: Session
   ): Promise<{tags: Tag[]; models: MetarializedRecord[]}> {
-    // return {
-    //   tags: [{model: ['test', 'foo'], tag: 'test'}],
-    //   models: [
-    //     {
-    //       id: ['test', 'foo'],
-    //       model: ['test', 'model'],
-    //       created: 'now',
-    //       updated: 'now',
-    //       value: {
-    //         recursion: {
-    //           label: 'test',
-    //           model: {
-    //             struct: {
-    //               test: {string: {}},
-    //               password: {string: {}},
-    //               ref: {ref: ['test', 'foo']},
-    //               recurse: {
-    //                 recursion: {
-    //                   label: 'test2',
-    //                   model: {
-    //                     struct: {
-    //                       test: {string: {}},
-    //                       test2: {
-    //                         optional: {
-    //                           recurse: 'test2'
-    //                         }
-    //                       },
-    //                       test3: {
-    //                         optional: {
-    //                           recurse: 'test'
-    //                         }
-    //                       }
-    //                     }
-    //                   }
-    //                 }
-    //               }
-    //             }
-    //           }
-    //         }
-    //       }
-    //     }
-    //   ]
-    // }
-
     return query(
       this.props.config.karmaURL,
       session,

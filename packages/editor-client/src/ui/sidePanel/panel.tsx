@@ -17,11 +17,11 @@ import {convertKeyToLabel} from '../../util/string'
 import {version} from '../../version'
 import {withSession, SessionContext} from '../../context/session'
 import {refToString, ReadonlyRefMap} from '../../util/ref'
-import {EditorContext} from '../../api/karmafe/editorContext'
-import {ModelGroup} from '../../api/karmafe/modelGroup'
+import {EditorContext} from '../../api/editorContext'
+import {ModelGroup} from '../../api/modelGroup'
 import {SidePanelFooterContainer} from './footer'
 import {SidePanelSection, SidePanelSectionItem} from './section'
-import {ViewContext} from '../../api/newViewContext'
+import {ViewContext} from '../../api/viewContext'
 import memoizeOne from 'memoize-one'
 
 export const GroupStateStorageKey = 'sidePanelGroupState_v1'
@@ -170,9 +170,9 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
 
       return (
         <SidePanelSection
-          key={refToString(group.id)}
-          id={refToString(group.id)}
-          isOpen={this.state.groupState[refToString(group.id)]}
+          key={group.id}
+          id={group.id}
+          isOpen={this.state.groupState[group.id]}
           onClick={this.handleGroupClick}
           onItemClick={this.handleViewContextClick}
           items={items}
@@ -186,7 +186,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
 
     if (sessionContext.editorContexts.length > 1) {
       const editorContextOptions = sessionContext.editorContexts.map(context => ({
-        key: refToString(context.id),
+        key: context.id,
         label: context.name
       }))
 
@@ -194,7 +194,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
         <Select
           options={editorContextOptions}
           type={SelectType.Light}
-          value={refToString(this.state.editorContext.id)}
+          value={this.state.editorContext.id}
           disableUnselectedOption
           onChange={this.handleEditorContextChange}
         />

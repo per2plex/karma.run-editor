@@ -7,7 +7,7 @@ import {
   labelForCondition,
   FilterFieldGroup,
   ConditionConfiguration,
-  FilterField
+  FilterConfiguration
 } from '../../filter/configuration'
 
 export type FilterValueStore =
@@ -166,7 +166,7 @@ export class FilterStore {
     }))
   }
 
-  public fieldForID(id: string): FilterField | undefined {
+  public fieldForID(id: string): FilterConfiguration | undefined {
     for (const group of this.filterConfigurations) {
       const field = group.fields.find(field => field.id === id)
       if (field) return field

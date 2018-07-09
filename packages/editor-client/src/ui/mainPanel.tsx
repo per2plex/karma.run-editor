@@ -1,17 +1,17 @@
 import React from 'react'
 import shortid from 'shortid'
+import {Ref} from '@karma.run/sdk'
 
 import {withLocation, LocationContext, AppLocation, LocationType} from '../context/location'
-import {withSession, SessionContext} from '../context/session'
+import {withSession, SessionContext, ModelRecord} from '../context/session'
 import {StackView} from './common/stackView'
-import {RootRecordListPanelContainer} from './recordListPanel'
-import {Ref} from '@karma.run/sdk'
+import {RootRecordListPanelContainer, SelectRecordListPanelContainer} from './recordListPanel'
 import {Deferred, lastItemThrow} from '@karma.run/editor-common'
 import {RecordEditPanelContainer} from './recordEditPanel'
 
 export const enum PanelType {
   RootList = 'rootList',
-  List = 'list',
+  SelectList = 'selectList',
   Edit = 'edit',
   Delete = 'delete',
   Editor = 'editor',
@@ -44,20 +44,24 @@ export function RootListPanelContext(
   return {type: PanelType.RootList, id, model}
 }
 
-export interface ListPanelContext extends BasePanelContext {
-  type: PanelType.List
+export interface SelectListPanelContext extends BasePanelContext {
+  type: PanelType.SelectList
   model: Ref
+  resultRecord: Deferred<ModelRecord | undefined>
 }
 
-export function ListPanelContext(model: Ref, id: string = shortid.generate()): ListPanelContext {
-  return {type: PanelType.List, id, model}
+export function SelectListPanelContext(
+  model: Ref,
+  id: string = shortid.generate()
+): SelectListPanelContext {
+  return {type: PanelType.SelectList, id, model, resultRecord: new Deferred()}
 }
 
 export interface EditPanelContext extends BasePanelContext {
   type: PanelType.Edit
   model: Ref
   recordID?: Ref
-  result: Deferred<Ref | undefined>
+  resultRecord: Deferred<ModelRecord | undefined>
 }
 
 export function EditPanelContext(
@@ -67,7 +71,7 @@ export function EditPanelContext(
 ): EditPanelContext {
   return {
     type: PanelType.Edit,
-    result: new Deferred(),
+    resultRecord: new Deferred(),
     recordID,
     model,
     id
@@ -116,7 +120,7 @@ export function EditPanelContext(
 
 export type PanelContext =
   | RootListPanelContext
-  | ListPanelContext
+  | SelectListPanelContext
   | EditPanelContext
   // | DeletePanelContext
   // | EditorPanelContext
@@ -157,21 +161,29 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     const context = EditPanelContext(model, id)
     this.pushPanelContext(context)
 
-    return await context.result
+    return await context.resultRecord
   }
 
-  private handleEditCancel = (_model: Ref, id?: Ref) => {
+  private handleBack = (_model: Ref, record?: ModelRecord) => {
     const context = this.popPanelContext()
 
     switch (context.type) {
+      case PanelType.SelectList:
       case PanelType.Edit:
-        return context.result.resolve(id)
+        return context.resultRecord.resolve(record)
     }
   }
 
   private handleDeleteRecord = (_model: Ref, _id: Ref) => {
     // TODO
     // this.pushPanelContext(EditPanelContext(model, id))
+  }
+
+  private handleSelectRecord = async (model: Ref) => {
+    const context = SelectListPanelContext(model)
+    this.pushPanelContext(context)
+
+    return await context.resultRecord
   }
 
   private pushPanelContext(context: PanelContext) {
@@ -202,15 +214,25 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
           />
         )
 
+      case PanelType.SelectList:
+        return (
+          <SelectRecordListPanelContainer
+            model={context.model}
+            disabled={disabled}
+            onBack={this.handleBack}
+            onRecordSelected={this.handleBack}
+          />
+        )
+
       case PanelType.Edit:
         return (
           <RecordEditPanelContainer
             model={context.model}
             recordID={context.recordID}
             disabled={disabled}
-            onCancel={this.handleEditCancel}
+            onBack={this.handleBack}
             onEditRecord={this.handleEditRecord}
-            onChooseRecord={this.handleEditRecord}
+            onSelectRecord={this.handleSelectRecord}
           />
         )
 

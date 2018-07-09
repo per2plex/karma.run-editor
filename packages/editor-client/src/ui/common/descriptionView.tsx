@@ -1,23 +1,20 @@
 import * as React from 'react'
-import {MetarializedRecord} from '@karma.run/sdk'
 
-import {keyPathToString} from '../../api/karma'
-import {ViewContext} from '../../api/newViewContext'
+import {keyPathToString} from '../../api/model'
+import {ViewContext} from '../../api/viewContext'
 import {CardSection} from '../common'
-import {ObjectMap, getValuesForValuePath} from '@karma.run/editor-common'
-import {ReadonlyRefMap} from '../../util/ref'
+import {getValuesForValuePath} from '@karma.run/editor-common'
+import {ModelRecord} from '../../context/session'
 
 export namespace DescriptionView {
   export interface Props {
-    reverseTags?: ObjectMap<string>
-    reverseTagMap: ReadonlyRefMap<string>
     viewContext: ViewContext
-    record: MetarializedRecord
+    record: ModelRecord
   }
 }
 
 export function contentForViewContext(
-  record: MetarializedRecord,
+  record: ModelRecord,
   viewContext: ViewContext
 ): React.ReactNode[] {
   if (!viewContext.displayKeyPaths) return []
@@ -28,7 +25,7 @@ export function contentForViewContext(
 
     if (field) {
       const objectPath = viewContext.field.valuePathForKeyPath(keyPath)
-      const value = getValuesForValuePath(record.value, objectPath)
+      const value = getValuesForValuePath(record.value, objectPath) // TODO: Add into Field interface
 
       return <React.Fragment key={key}>{field.renderListComponent({value})}</React.Fragment>
     } else {
@@ -36,23 +33,6 @@ export function contentForViewContext(
     }
   })
 }
-
-// export function contentForField(value: any, field: Field) {
-//   switch (field.type) {
-//     case 'media': {
-//       const media = unserializeMedia(value)
-
-//       if (media.mediaType === MediaType.Image || media.mediaType === MediaType.Video) {
-//         return <CardImage src={thumbnailURL(Env.mediaAPIBasePath, media.id)} />
-//       } else {
-//         return <CardDocument extension={value.extension} />
-//       }
-//     }
-
-//     default:
-//       return <CardSection>{value}</CardSection>
-//   }
-// }
 
 export class DescriptionView extends React.Component<DescriptionView.Props> {
   public render() {

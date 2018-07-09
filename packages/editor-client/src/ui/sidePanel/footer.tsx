@@ -15,9 +15,10 @@ export interface SidePanelFooterProps {
 }
 
 export class SidePanelFooter extends React.Component<SidePanelFooterProps> {
-  private handleLocaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    this.props.localeContext.setLocale(e.currentTarget.value)
-  }
+  // TODO
+  // private handleLocaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   this.props.localeContext.setLocale(e.currentTarget.value)
+  // }
 
   public render() {
     const imageStyle: React.CSSProperties = {

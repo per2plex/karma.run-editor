@@ -13,9 +13,9 @@ import {
   UnserializeFieldFunction
 } from './interface'
 
-import {Field as FieldComponent, FieldLabel, FieldWrapper, FieldInset} from '../ui/fields/field'
+import {Field as FieldComponent, FieldLabel, FieldWrapper, FieldInset} from '../ui/common/field'
 import {CardSection} from '../ui/common/card'
-import {SortConfigration} from '../filter/configuration'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
 import {convertKeyToLabel} from '../util/string'
 import {CheckboxInput} from '../ui/common'
 
@@ -26,7 +26,7 @@ export class OptionalFieldEditComponent extends React.PureComponent<
     this.props.onValueChange(
       {
         isPresent: value,
-        value: this.props.value.value || this.props.field.field.defaultValue()
+        value: this.props.value.value || this.props.field.field.defaultValue
       },
       this.props.changeKey
     )
@@ -69,7 +69,8 @@ export class OptionalFieldEditComponent extends React.PureComponent<
               disabled: this.props.disabled,
               value: this.props.value.value,
               onValueChange: this.handleValueChange,
-              onEditRecord: this.props.onEditRecord
+              onEditRecord: this.props.onEditRecord,
+              onSelectRecord: this.props.onSelectRecord
             })}
           </FieldInset>
         )}
@@ -94,6 +95,16 @@ export class OptionalField implements Field<OptionalFieldValue> {
   public readonly description?: string
   public readonly field: Field
 
+  public parent?: Field
+
+  public readonly defaultValue: OptionalFieldValue = {
+    isPresent: false,
+    value: undefined
+  }
+
+  public readonly sortConfigurations: SortConfiguration[] = []
+  public readonly filterConfigurations: FilterConfiguration[] = []
+
   public constructor(options: OptionalFieldOptions) {
     this.label = options.label
     this.description = options.description
@@ -107,13 +118,6 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   public renderEditComponent(props: EditRenderProps<OptionalFieldValue>) {
     return <OptionalFieldEditComponent {...props} field={this} />
-  }
-
-  public defaultValue() {
-    return {
-      isPresent: false,
-      value: undefined
-    }
   }
 
   public transformRawValue(value: any) {
@@ -153,10 +157,6 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   public valuePathForKeyPath(keyPath: KeyPath) {
     return this.field.valuePathForKeyPath(keyPath)
-  }
-
-  public sortConfigurations(): SortConfigration[] {
-    return []
   }
 
   public async onSave(value: OptionalFieldValue): Promise<OptionalFieldValue> {

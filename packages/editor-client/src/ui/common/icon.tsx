@@ -200,7 +200,7 @@ const CopyDocumentIcon: StatelessComponent = () => (
   </svg>
 )
 
-const ChooseDocumentIcon: StatelessComponent = () => (
+const SelectDocumentIcon: StatelessComponent = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21">
     <path d="M18.412 11.543c0-.5-.386-.904-.861-.904s-.861.404-.861.904v6.429H4.31V3.028h4.293c.491 0 .89-.392.89-.875s-.399-.875-.89-.875H3.478a.882.882 0 0 0-.89.875c0 .033.016.06.02.093-.004.034-.02.064-.02.099V18.62c0 .041.018.077.023.117-.005.038-.023.071-.023.11 0 .483.398.875.89.875h14.044l.015-.003c.005 0 .009.003.014.003a.823.823 0 0 0 .542-.218c.02-.016.044-.026.062-.043.017-.018.026-.043.042-.063a.852.852 0 0 0 .215-.551c0-.005-.003-.01-.003-.014 0-.006.003-.01.003-.015v-7.275z" />
     <ellipse cx="13.656" cy="6.084" rx="2.993" ry="2.993" />
@@ -217,7 +217,7 @@ export const enum IconName {
   NewDocument = 'newDocument',
   SaveDocument = 'saveDocument',
   CopyDocument = 'copyDocument',
-  ChooseDocument = 'chooseDocument',
+  SelectDocument = 'selectDocument',
   Back = 'back',
   Close = 'close',
   FilterList = 'filterList',
@@ -312,8 +312,8 @@ function nodeForIconName(name: IconName): React.ReactNode {
       return <SaveDocumentIcon />
     case IconName.CopyDocument:
       return <CopyDocumentIcon />
-    case IconName.ChooseDocument:
-      return <ChooseDocumentIcon />
+    case IconName.SelectDocument:
+      return <SelectDocumentIcon />
   }
 }
 

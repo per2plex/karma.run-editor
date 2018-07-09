@@ -1,5 +1,4 @@
 import React from 'react'
-import * as shortid from 'shortid'
 import {expression as e, Expression} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
@@ -11,11 +10,11 @@ import {
   Field,
   ListRenderProps
 } from './interface'
-import {Field as FieldComponent, FieldLabel} from '../ui/fields/field'
+
+import {Field as FieldComponent, FieldLabel} from '../ui/common/field'
 import {TextInput} from '../ui/common/input'
 import {CardSection} from '../ui/common/card'
-import {SortConfigration} from '../filter/configuration'
-import {SortType} from '@karma.run/editor-common'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
 import {convertKeyToLabel} from '../util/string'
 import {generateHash} from '../util/bcrypt'
 import {FlexList} from '../ui/common'
@@ -92,6 +91,14 @@ export class PasswordField implements Field<PasswordFieldValue> {
   public readonly description?: string
   public readonly costFactor?: number
 
+  public readonly defaultValue: PasswordFieldValue = {
+    password: '',
+    passwordConfirm: ''
+  }
+
+  public readonly sortConfigurations: SortConfiguration[] = []
+  public readonly filterConfigurations: FilterConfiguration[] = []
+
   public constructor(opts: PasswordFieldOptions) {
     this.label = opts.label
     this.description = opts.description
@@ -104,13 +111,6 @@ export class PasswordField implements Field<PasswordFieldValue> {
 
   public renderEditComponent(props: EditRenderProps<PasswordFieldValue>) {
     return <PasswordFieldEditComponent {...props} field={this} />
-  }
-
-  public defaultValue(): PasswordFieldValue {
-    return {
-      password: '',
-      passwordConfirm: ''
-    }
   }
 
   public transformRawValue(value: any): PasswordFieldValue {
@@ -158,10 +158,6 @@ export class PasswordField implements Field<PasswordFieldValue> {
 
   public valuePathForKeyPath() {
     return []
-  }
-
-  public sortConfigurations(): SortConfigration[] {
-    return [{key: shortid.generate(), type: SortType.String, label: this.label || '', path: []}]
   }
 
   public static type = 'password'

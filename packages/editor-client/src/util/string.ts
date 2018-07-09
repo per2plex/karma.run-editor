@@ -55,3 +55,9 @@ export function stringToColor(str: string, saturation: number = 0.5, lightness: 
   const hue = ((Math.abs(hashString(str)) % 0xffffff) / 0xffffff) * 360
   return hsl(hue, saturation, lightness).toHexString()
 }
+
+const escapeRegExpRegExp = /[-\/\\^$*+?.()|[\]{}]/g
+
+export function escapeRegExp(str: string) {
+  return str.replace(escapeRegExpRegExp, '\\$&')
+}

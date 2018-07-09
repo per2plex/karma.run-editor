@@ -3,11 +3,19 @@ import {Sort, Condition} from '@karma.run/editor-common'
 
 import {Ref, Tag, Session, MetarializedRecord} from '@karma.run/sdk'
 
-import {EditorContext} from '../api/karmafe/editorContext'
-import {ModelGroup} from '../api/karmafe/modelGroup'
+import {EditorContext} from '../api/editorContext'
+import {ModelGroup} from '../api/modelGroup'
 import {createContextHOC} from './helper'
 import {ReadonlyRefMap, RefMap} from '../util/ref'
-import {ViewContext} from '../api/newViewContext'
+import {ViewContext} from '../api/viewContext'
+
+export interface ModelRecord<T = any> {
+  id: Ref
+  model: Ref
+  created: Date
+  updated: Date
+  value: T
+}
 
 export interface EditorData {
   models: MetarializedRecord[]
@@ -16,9 +24,9 @@ export interface EditorData {
   tagMap: ReadonlyMap<string, Ref>
   reverseTagMap: ReadonlyRefMap<string>
   editorContexts: EditorContext[]
-  editorContextMap: ReadonlyRefMap<EditorContext>
+  editorContextMap: ReadonlyMap<string, EditorContext>
   modelGroups: ModelGroup[]
-  modelGroupMap: ReadonlyRefMap<ModelGroup>
+  modelGroupMap: ReadonlyMap<string, ModelGroup>
   viewContexts: ViewContext[]
   viewContextMap: ReadonlyRefMap<ViewContext>
   viewContextSlugMap: ReadonlyMap<string, ViewContext>
@@ -46,15 +54,15 @@ export interface SessionContext extends EditorData {
   restoreSession(session: Session): Promise<Session>
   authenticate(username: string, password: string): Promise<Session>
   invalidate(): Promise<void>
-  getRecord(model: Ref, id: Ref): Promise<MetarializedRecord>
+  getRecord(model: Ref, id: Ref): Promise<ModelRecord>
   getRecordList(
     model: Ref,
     limit: number,
     offset: number,
     sort: Sort,
     filter: Condition[]
-  ): Promise<MetarializedRecord[]>
-  saveRecord(model: Ref, id: Ref | undefined, value: any): Promise<MetarializedRecord>
+  ): Promise<ModelRecord[]>
+  saveRecord(model: Ref, id: Ref | undefined, value: any): Promise<ModelRecord>
 }
 
 export const SessionContext = React.createContext<SessionContext>({

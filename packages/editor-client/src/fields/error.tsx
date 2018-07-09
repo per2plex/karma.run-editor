@@ -1,8 +1,9 @@
 import React from 'react'
 import {expression as e} from '@karma.run/sdk'
 import {Field, SerializedField, EditComponentRenderProps, EditRenderProps} from './interface'
-import {FieldErrors, Field as FieldComponent, FieldLabel} from '../ui/fields/field'
+import {FieldErrors, Field as FieldComponent, FieldLabel} from '../ui/common/field'
 import {CardError} from '../ui/common/card'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
 
 export class ErrorEditComponent extends React.PureComponent<EditComponentRenderProps<ErrorField>> {
   public render() {
@@ -33,6 +34,10 @@ export class ErrorField implements Field<null> {
   public readonly description?: string
   public readonly message: string
 
+  public readonly defaultValue = null
+  public readonly sortConfigurations: SortConfiguration[] = []
+  public readonly filterConfigurations: FilterConfiguration[] = []
+
   public constructor(opts: ErrorFieldOptions) {
     this.label = opts.label
     this.description = opts.description
@@ -45,10 +50,6 @@ export class ErrorField implements Field<null> {
 
   public renderEditComponent(props: EditRenderProps<null>) {
     return <ErrorEditComponent {...props} field={this} />
-  }
-
-  public defaultValue() {
-    return null
   }
 
   public serialize(): SerializedField {
