@@ -6,11 +6,9 @@ import {CardSection} from '../common'
 import {getValuesForValuePath} from '@karma.run/editor-common'
 import {ModelRecord} from '../../context/session'
 
-export namespace DescriptionView {
-  export interface Props {
-    viewContext: ViewContext
-    record: ModelRecord
-  }
+export interface DescriptionViewProps {
+  viewContext: ViewContext
+  record: ModelRecord
 }
 
 export function contentForViewContext(
@@ -34,7 +32,7 @@ export function contentForViewContext(
   })
 }
 
-export class DescriptionView extends React.Component<DescriptionView.Props> {
+export class DescriptionView extends React.Component<DescriptionViewProps> {
   public render() {
     const content: React.ReactNode[] = contentForViewContext(
       this.props.record,

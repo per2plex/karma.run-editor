@@ -19,7 +19,7 @@ export const LocaleContext = React.createContext<LocaleContext>({
   localeMap: new Map(),
   locale: defaultLocale,
   get(key: MessageKey): string {
-    return key
+    return key.toString()
   },
   setLocale(): void {}
 })

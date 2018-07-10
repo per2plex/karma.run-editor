@@ -16,9 +16,9 @@ import {
 import {KeyPath, Model} from '../api/model'
 import {ErrorField} from './error'
 import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/common/field'
-import {convertKeyToLabel} from '../util/string'
 import {EditableTabList} from '../ui/common/tabList'
 import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
+import {WorkerContext} from '../context/worker'
 
 export interface MapFieldEditComponentState {
   activeTabIndex: number
@@ -111,8 +111,8 @@ export class MapFieldEditComponent extends React.PureComponent<
           index={this.props.index}>
           {!this.props.isWrapped && (
             <FieldLabel
-              label={this.props.field.label}
-              description={this.props.field.description}
+              label={this.props.label}
+              description={this.props.description}
               depth={this.props.depth}
               index={this.props.index}
             />
@@ -132,8 +132,8 @@ export class MapFieldEditComponent extends React.PureComponent<
           <FieldInset>
             {this.props.field.field.renderEditComponent({
               index: 0,
-              depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
-              isWrapped: false,
+              depth: this.props.depth + 1,
+              isWrapped: true,
               disabled: this.props.disabled,
               value: value[this.state.activeTabIndex].value,
               onValueChange: this.handleValueChange,
@@ -164,21 +164,24 @@ export type MapFieldValue = {id: string; key: string; value: any}[]
 export class MapField implements Field<MapFieldValue> {
   public readonly label?: string
   public readonly description?: string
-  public readonly field: Field
   public readonly restrictedToKeys?: string[]
-
-  public parent?: Field
 
   public readonly defaultValue: MapFieldValue = []
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
+
+  public readonly field: Field
 
   public constructor(opts: MapFieldOptions) {
     this.label = opts.label
     this.description = opts.description
     this.restrictedToKeys = opts.restrictedToKeys
     this.field = opts.field
-    this.field.parent = this
+  }
+
+  public initialize(recursions: ReadonlyMap<string, Field>) {
+    this.field.initialize(recursions)
+    return this
   }
 
   public renderListComponent() {
@@ -186,7 +189,14 @@ export class MapField implements Field<MapFieldValue> {
   }
 
   public renderEditComponent(props: EditRenderProps) {
-    return <MapFieldEditComponent {...props} field={this} />
+    return (
+      <MapFieldEditComponent
+        label={this.label}
+        description={this.description}
+        field={this}
+        {...props}
+      />
+    )
   }
 
   public transformRawValue(value: any): MapFieldValue {
@@ -230,23 +240,23 @@ export class MapField implements Field<MapFieldValue> {
     return [{type: ValuePathSegmentType.Map}, ...this.field.valuePathForKeyPath(keyPath.slice(1))]
   }
 
-  public async onSave(value: MapFieldValue): Promise<MapFieldValue> {
+  public async onSave(value: MapFieldValue, worker: WorkerContext): Promise<MapFieldValue> {
     if (!this.field.onSave) return value
     let newValue = []
 
     for (const {id, key, value: mapValue} of value) {
-      newValue.push({id, key, value: await this.field.onSave(mapValue)})
+      newValue.push({id, key, value: await this.field.onSave(mapValue, worker)})
     }
 
     return newValue
   }
 
-  public async onDelete(value: MapFieldValue): Promise<MapFieldValue> {
+  public async onDelete(value: MapFieldValue, worker: WorkerContext): Promise<MapFieldValue> {
     if (!this.field.onDelete) return value
     let newValue = []
 
     for (const {id, key, value: mapValue} of value) {
-      newValue.push({id, key: key, value: await this.field.onDelete(mapValue)})
+      newValue.push({id, key: key, value: await this.field.onDelete(mapValue, worker)})
     }
 
     return newValue
@@ -274,12 +284,8 @@ export class MapField implements Field<MapFieldValue> {
     })
   }
 
-  static inferFromModel(model: Model, key: string | undefined, inferField: InferFieldFunction) {
+  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'map') return null
-
-    return new MapField({
-      label: key && convertKeyToLabel(key),
-      field: inferField(model.model, key)
-    })
+    return new MapField({label, field: inferField(model.model)})
   }
 }

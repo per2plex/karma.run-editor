@@ -8,11 +8,11 @@ import {Icon, IconName} from '../common/icon'
 import {LoadingIndicator} from './loader'
 import {AppLocation, LocationActionContext, withLocationAction} from '../../context/location'
 
-export interface ButtonBaseProps {
+export interface ButtonBaseProps<D = any> {
   icon?: IconName
   type?: ButtonType
   label?: string
-  data?: any
+  data?: D
   selected?: boolean
   disabled?: boolean
   loading?: boolean
@@ -26,21 +26,21 @@ export const enum ButtonType {
 }
 
 export namespace Button {
-  export interface Props extends ButtonBaseProps {
-    onTrigger?: (data?: any) => void
-    onMouseDown?: (data?: any) => void
+  export interface Props<D = any> extends ButtonBaseProps<D> {
+    onTrigger?: (data: D) => void
+    onMouseDown?: (data: D) => void
   }
 }
 
-export class Button extends React.Component<Button.Props> {
+export class Button<D = any> extends React.Component<Button.Props<D>> {
   private handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
-    if (this.props.onTrigger) this.props.onTrigger(this.props.data)
+    if (this.props.onTrigger) this.props.onTrigger(this.props.data!)
   }
 
   private handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
-    if (this.props.onMouseDown) this.props.onMouseDown(this.props.data)
+    if (this.props.onMouseDown) this.props.onMouseDown(this.props.data!)
   }
 
   public render() {

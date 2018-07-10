@@ -1,35 +1,8 @@
 import React from 'react'
-import * as shortid from 'shortid'
-import {createContextHOC} from './helper'
-
-export enum NotificationType {
-  Info = 'neutral',
-  Success = 'success',
-  Error = 'error'
-}
-
-export interface Notification {
-  message: string
-  type: NotificationType
-}
-
-export interface NotificationItem extends Notification {
-  id: string
-}
+import shortid from 'shortid'
+import {Notification, NotificationContext} from '../context/notification'
 
 export const notificationDisplayTime = 5000
-
-export interface NotificationContext {
-  notifications: NotificationItem[]
-  notify(notification: Notification): void
-}
-
-export const NotificationContext = React.createContext<NotificationContext>({
-  notifications: [],
-  notify() {
-    console.warn('No NotificationProvider found!')
-  }
-})
 
 export class NotificationProvider extends React.Component<{}, NotificationContext> {
   constructor(props: {}) {
@@ -65,9 +38,3 @@ export class NotificationProvider extends React.Component<{}, NotificationContex
     )
   }
 }
-
-export const withNotification = createContextHOC(
-  NotificationContext,
-  'notificationContext',
-  'withNotification'
-)

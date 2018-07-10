@@ -3,6 +3,7 @@ import {expression as e, Expression} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
+
 import {
   SerializedField,
   EditComponentRenderProps,
@@ -15,9 +16,8 @@ import {Field as FieldComponent, FieldLabel} from '../ui/common/field'
 import {TextInput} from '../ui/common/input'
 import {CardSection} from '../ui/common/card'
 import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
-import {convertKeyToLabel} from '../util/string'
-import {generateHash} from '../util/bcrypt'
 import {FlexList} from '../ui/common'
+import {WorkerContext} from '../context/worker'
 
 export class PasswordFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<PasswordField, PasswordFieldValue>
@@ -47,8 +47,8 @@ export class PasswordFieldEditComponent extends React.PureComponent<
       <FieldComponent depth={this.props.depth} index={this.props.index}>
         {!this.props.isWrapped && (
           <FieldLabel
-            label={this.props.field.label}
-            description={this.props.field.description}
+            label={this.props.label}
+            description={this.props.description}
             depth={this.props.depth}
             index={this.props.index || 0}
           />
@@ -105,12 +105,23 @@ export class PasswordField implements Field<PasswordFieldValue> {
     this.costFactor = opts.costFactor
   }
 
+  public initialize() {
+    return this
+  }
+
   public renderListComponent(props: ListRenderProps<PasswordFieldValue>) {
     return <CardSection>{props.value}</CardSection>
   }
 
   public renderEditComponent(props: EditRenderProps<PasswordFieldValue>) {
-    return <PasswordFieldEditComponent {...props} field={this} />
+    return (
+      <PasswordFieldEditComponent
+        label={this.label}
+        description={this.description}
+        field={this}
+        {...props}
+      />
+    )
   }
 
   public transformRawValue(value: any): PasswordFieldValue {
@@ -126,10 +137,13 @@ export class PasswordField implements Field<PasswordFieldValue> {
     return e.string(value.hash)
   }
 
-  public async onSave(value: PasswordFieldValue): Promise<PasswordFieldValue> {
+  public async onSave(
+    value: PasswordFieldValue,
+    worker: WorkerContext
+  ): Promise<PasswordFieldValue> {
     if (value.password && value.passwordConfirm && value.password === value.passwordConfirm) {
       return {
-        hash: await generateHash(value.password, this.costFactor),
+        hash: await worker.generateHash(value.password, this.costFactor),
         password: '',
         passwordConfirm: ''
       }
@@ -162,11 +176,8 @@ export class PasswordField implements Field<PasswordFieldValue> {
 
   public static type = 'password'
 
-  static inferFromModel(model: Model, key: string | undefined) {
-    if (key !== 'password') return null
-    if (model.type !== 'string') return null
-
-    return new PasswordField({label: convertKeyToLabel(key)})
+  static inferFromModel() {
+    return null
   }
 
   static unserialize(rawField: SerializedField, model: Model) {

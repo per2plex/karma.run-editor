@@ -108,7 +108,7 @@ export namespace Select {
   }
 }
 
-export class Select extends React.Component<Select.Props> {
+export class Select extends React.PureComponent<Select.Props> {
   private handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (e.currentTarget.value === '') {
       this.props.onChange(undefined, this.props.id)

@@ -121,7 +121,8 @@ export function inferFieldFromModel(
     })
   }
 
-  return inferField(model)
+  const field = inferField(model)
+  return field.initialize(new Map())
 }
 
 export const preferredFieldKeys = ['tag', 'label', 'title', 'key', 'description', 'name']

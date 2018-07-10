@@ -6,7 +6,11 @@ import {PasswordField} from './password'
 import {RecursionField, RecurseField, RecursiveField} from './recursion'
 import {OptionalField} from './optional'
 import {UnionField} from './union'
+import {TupleField} from './tuple'
 import {MapField} from './map'
+import {ListField} from './list'
+import {BoolField} from './bool'
+import {NumberField} from './number'
 
 export type FieldRegistry = ReadonlyMap<string, FieldClass>
 
@@ -27,10 +31,14 @@ export function mergeFieldRegistries(...registries: FieldRegistry[]): FieldRegis
 
 export const defaultFieldRegistry = createFieldRegistry(
   PasswordField,
+  BoolField,
   StringField,
+  NumberField,
   StructField,
   UnionField,
+  TupleField,
   MapField,
+  ListField,
   RefField,
   RecursionField,
   RecursiveField,

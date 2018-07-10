@@ -1,5 +1,5 @@
 import React from 'react'
-import * as shortid from 'shortid'
+import shortid from 'shortid'
 import {expression as e} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
@@ -16,7 +16,6 @@ import {TextAreaInput, TextInput, TextInputType} from '../ui/common/input'
 import {CardSection} from '../ui/common/card'
 import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
 import {SortType} from '@karma.run/editor-common'
-import {convertKeyToLabel} from '../util/string'
 
 export class StringFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StringField, string>
@@ -30,8 +29,8 @@ export class StringFieldEditComponent extends React.PureComponent<
       <FieldComponent depth={this.props.depth} index={this.props.index}>
         {!this.props.isWrapped && (
           <FieldLabel
-            label={this.props.field.label}
-            description={this.props.field.description}
+            label={this.props.label}
+            description={this.props.description}
             depth={this.props.depth}
             index={this.props.index}
           />
@@ -73,7 +72,6 @@ export class StringField implements Field<string> {
   public readonly maxLength?: number
   public readonly multiline?: boolean
 
-  public parent?: Field
   public readonly defaultValue: string = ''
   public readonly sortConfigurations: SortConfiguration[]
   public readonly filterConfigurations: FilterConfiguration[] = []
@@ -90,12 +88,23 @@ export class StringField implements Field<string> {
     ]
   }
 
+  public initialize() {
+    return this
+  }
+
   public renderListComponent(props: ListRenderProps<string>) {
     return <CardSection>{props.value}</CardSection>
   }
 
   public renderEditComponent(props: EditRenderProps<string>) {
-    return <StringFieldEditComponent {...props} field={this} />
+    return (
+      <StringFieldEditComponent
+        label={this.label}
+        description={this.description}
+        field={this}
+        {...props}
+      />
+    )
   }
 
   public transformRawValue(value: any) {
@@ -133,9 +142,9 @@ export class StringField implements Field<string> {
 
   public static type = 'string'
 
-  static inferFromModel(model: Model, key: string | undefined) {
+  static inferFromModel(model: Model, label: string | undefined) {
     if (model.type !== 'string') return null
-    return new StringField({label: key && convertKeyToLabel(key)})
+    return new StringField({label})
   }
 
   static unserialize(rawField: SerializedField, model: Model) {

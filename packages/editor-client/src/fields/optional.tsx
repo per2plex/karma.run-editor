@@ -16,8 +16,8 @@ import {
 import {Field as FieldComponent, FieldLabel, FieldWrapper, FieldInset} from '../ui/common/field'
 import {CardSection} from '../ui/common/card'
 import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
-import {convertKeyToLabel} from '../util/string'
 import {CheckboxInput} from '../ui/common'
+import {WorkerContext} from '../context/worker'
 
 export class OptionalFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<OptionalField, OptionalFieldValue>
@@ -47,8 +47,8 @@ export class OptionalFieldEditComponent extends React.PureComponent<
       <FieldWrapper depth={this.props.depth} index={this.props.index}>
         <FieldComponent depth={this.props.depth} index={this.props.index}>
           <FieldLabel
-            label={this.props.field.label}
-            description={this.props.field.description}
+            label={this.props.label}
+            description={this.props.description}
             depth={this.props.depth}
             index={this.props.index || 0}
             leftContent={
@@ -64,7 +64,7 @@ export class OptionalFieldEditComponent extends React.PureComponent<
           <FieldInset>
             {this.props.field.field.renderEditComponent({
               index: 0,
-              depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
+              depth: this.props.depth + 1,
               isWrapped: true,
               disabled: this.props.disabled,
               value: this.props.value.value,
@@ -91,25 +91,28 @@ export interface OptionalFieldOptions {
 }
 
 export class OptionalField implements Field<OptionalFieldValue> {
-  public readonly label?: string
-  public readonly description?: string
-  public readonly field: Field
+  public label?: string
+  public description?: string
 
-  public parent?: Field
-
-  public readonly defaultValue: OptionalFieldValue = {
+  public defaultValue: OptionalFieldValue = {
     isPresent: false,
     value: undefined
   }
 
-  public readonly sortConfigurations: SortConfiguration[] = []
-  public readonly filterConfigurations: FilterConfiguration[] = []
+  public sortConfigurations: SortConfiguration[] = []
+  public filterConfigurations: FilterConfiguration[] = []
+
+  public field: Field
 
   public constructor(options: OptionalFieldOptions) {
     this.label = options.label
     this.description = options.description
     this.field = options.field
-    this.field.parent = this
+  }
+
+  public initialize(recursions: ReadonlyMap<string, Field>) {
+    this.field.initialize(recursions)
+    return this
   }
 
   public renderListComponent(value: OptionalFieldValue) {
@@ -117,7 +120,14 @@ export class OptionalField implements Field<OptionalFieldValue> {
   }
 
   public renderEditComponent(props: EditRenderProps<OptionalFieldValue>) {
-    return <OptionalFieldEditComponent {...props} field={this} />
+    return (
+      <OptionalFieldEditComponent
+        label={this.label}
+        description={this.description}
+        field={this}
+        {...props}
+      />
+    )
   }
 
   public transformRawValue(value: any) {
@@ -159,17 +169,23 @@ export class OptionalField implements Field<OptionalFieldValue> {
     return this.field.valuePathForKeyPath(keyPath)
   }
 
-  public async onSave(value: OptionalFieldValue): Promise<OptionalFieldValue> {
+  public async onSave(
+    value: OptionalFieldValue,
+    worker: WorkerContext
+  ): Promise<OptionalFieldValue> {
     if (this.field.onSave && value.isPresent) {
-      return {isPresent: value.isPresent, value: await this.field.onSave(value.value)}
+      return {isPresent: value.isPresent, value: await this.field.onSave(value.value, worker)}
     }
 
     return value
   }
 
-  public async onDelete(value: OptionalFieldValue): Promise<OptionalFieldValue> {
+  public async onDelete(
+    value: OptionalFieldValue,
+    worker: WorkerContext
+  ): Promise<OptionalFieldValue> {
     if (this.field.onDelete && value.isPresent) {
-      return {isPresent: value.isPresent, value: await this.field.onDelete(value.value)}
+      return {isPresent: value.isPresent, value: await this.field.onDelete(value.value, worker)}
     }
 
     return value
@@ -177,13 +193,9 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   public static type = 'optional'
 
-  static inferFromModel(model: Model, key: string | undefined, inferField: InferFieldFunction) {
+  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'optional') return null
-
-    return new OptionalField({
-      label: key && convertKeyToLabel(key),
-      field: inferField(model.model)
-    })
+    return new OptionalField({label, field: inferField(model.model)})
   }
 
   static unserialize(

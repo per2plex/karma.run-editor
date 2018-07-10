@@ -1,6 +1,6 @@
 import React from 'react'
 import {expression as e, data as d} from '@karma.run/sdk'
-import {reduceToMap, ValuePath, mapObjectAsync, StructPathSegment} from '@karma.run/editor-common'
+import {ValuePath, TuplePathSegment} from '@karma.run/editor-common'
 
 import {
   EditComponentRenderProps,
@@ -11,17 +11,16 @@ import {
   InferFieldFunction
 } from './interface'
 
-import {KeyPath, Model} from '../api/model'
 import {ErrorField} from './error'
-import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/common/field'
-import {convertKeyToLabel} from '../util/string'
-import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
+import {KeyPath, Model} from '../api/model'
 import {WorkerContext} from '../context/worker'
+import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
+import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../ui/common/field'
 
-export type StructFieldChildTuple = [string, Field]
+export type TupleFieldChildTuple = [number, Field]
 
-export class StructFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<StructField>
+export class TupleFieldEditComponent extends React.PureComponent<
+  EditComponentRenderProps<TupleField, TupleFieldValue>
 > {
   private handleValueChange = (value: any, key: string | undefined) => {
     if (key == undefined) {
@@ -32,18 +31,18 @@ export class StructFieldEditComponent extends React.PureComponent<
   }
 
   public render() {
-    const fields = this.props.field.fields.map(([key, field], index) => (
-      <React.Fragment key={key}>
+    const fields = this.props.field.fields.map(([tupleIndex, field], index) => (
+      <React.Fragment key={tupleIndex}>
         {field.renderEditComponent({
           index: index,
           depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
           isWrapped: false,
           disabled: this.props.disabled,
-          value: this.props.value[key],
+          value: this.props.value[tupleIndex],
           onValueChange: this.handleValueChange,
           onEditRecord: this.props.onEditRecord,
           onSelectRecord: this.props.onSelectRecord,
-          changeKey: key
+          changeKey: tupleIndex
         })}
       </React.Fragment>
     ))
@@ -70,26 +69,26 @@ export class StructFieldEditComponent extends React.PureComponent<
   }
 }
 
-export interface StructFieldOptions {
+export interface TupleFieldOptions {
   readonly label?: string
   readonly description?: string
-  readonly fields: StructFieldChildTuple[]
+  readonly fields: TupleFieldChildTuple[]
 }
 
-export type StructFieldValue = {[key: string]: any}
+export type TupleFieldValue = any[]
 
-export class StructField implements Field<StructFieldValue> {
+export class TupleField implements Field<TupleFieldValue> {
   public label?: string
   public description?: string
 
-  public fields: StructFieldChildTuple[]
-  public fieldMap!: ReadonlyMap<string, Field>
+  public fields: TupleFieldChildTuple[]
+  public fieldMap!: ReadonlyMap<number, Field>
 
-  public defaultValue!: StructFieldValue
+  public defaultValue!: TupleFieldValue
   public sortConfigurations!: SortConfiguration[]
   public filterConfigurations!: FilterConfiguration[]
 
-  public constructor(opts: StructFieldOptions) {
+  public constructor(opts: TupleFieldOptions) {
     this.label = opts.label
     this.description = opts.description
     this.fields = opts.fields
@@ -97,17 +96,23 @@ export class StructField implements Field<StructFieldValue> {
 
   public initialize(recursions: ReadonlyMap<string, Field>) {
     this.fields.forEach(([_, field]) => field.initialize(recursions))
-
     this.fieldMap = new Map(this.fields)
-    this.defaultValue = reduceToMap(this.fields, ([key, field]) => [key, field.defaultValue])
+
+    this.defaultValue = this.fields.reduce(
+      (acc, [index, field]) => {
+        acc[index] = field.defaultValue
+        return acc
+      },
+      [] as any[]
+    )
 
     this.sortConfigurations = [
       ...this.fields.reduce(
-        (acc, [key, field]) => [
+        (acc, [index, field]) => [
           ...acc,
           ...field.sortConfigurations.map(config => ({
             ...config,
-            path: [StructPathSegment(key), ...config.path]
+            path: [TuplePathSegment(index), ...config.path]
           }))
         ],
         [] as SortConfiguration[]
@@ -125,7 +130,7 @@ export class StructField implements Field<StructFieldValue> {
 
   public renderEditComponent(props: EditRenderProps) {
     return (
-      <StructFieldEditComponent
+      <TupleFieldEditComponent
         label={this.label}
         description={this.description}
         field={this}
@@ -134,19 +139,20 @@ export class StructField implements Field<StructFieldValue> {
     )
   }
 
-  public transformRawValue(value: any) {
-    return reduceToMap(this.fields, ([key, field]) => [key, field.transformRawValue(value[key])])
+  public transformRawValue(value: any[]): TupleFieldValue {
+    return value.map((value, index) => this.fieldMap.get(index)!.transformRawValue(value))
   }
 
-  public transformValueToExpression(value: StructFieldValue) {
-    return e.data(
-      d.struct(
-        reduceToMap(this.fields, ([key, field]) => [
-          key,
-          d.expr(field.transformValueToExpression(value[key]))
-        ])
-      )
+  public transformValueToExpression(value: TupleFieldValue) {
+    const tupleValues = this.fields.reduce(
+      (acc, [key, field]) => {
+        acc[key] = field.transformValueToExpression(value[key])
+        return acc
+      },
+      [] as any[]
     )
+
+    return e.data(d.tuple(...tupleValues))
   }
 
   public isValidValue() {
@@ -155,7 +161,7 @@ export class StructField implements Field<StructFieldValue> {
 
   public serialize() {
     return {
-      type: StructField.type,
+      type: TupleField.type,
       label: this.label || null,
       description: this.description || null,
       fields: this.fields.map(([key, field]) => [key, field.serialize()])
@@ -166,7 +172,7 @@ export class StructField implements Field<StructFieldValue> {
     if (keyPath.length === 0) return this
 
     const key = keyPath[0]
-    const field = this.fieldMap.get(key.toString())
+    const field = this.fieldMap.get(Number(key))
 
     if (!field) return undefined
 
@@ -175,40 +181,51 @@ export class StructField implements Field<StructFieldValue> {
 
   public valuePathForKeyPath(keyPath: KeyPath): ValuePath {
     const key = keyPath[0]
-    const field = this.fieldMap.get(key.toString())
+    const field = this.fieldMap.get(Number(key))
 
     if (!field) throw new Error('Invalid KeyPath!')
 
-    return [StructPathSegment(key.toString()), ...field.valuePathForKeyPath(keyPath.slice(1))]
+    return [TuplePathSegment(Number(key)), ...field.valuePathForKeyPath(keyPath.slice(1))]
   }
 
-  public async onSave(value: StructFieldValue, worker: WorkerContext) {
-    return mapObjectAsync(value, async (value, key) => {
-      const field = this.fieldMap.get(key)
+  public async onSave(value: TupleFieldValue, worker: WorkerContext) {
+    const newValues: any[] = []
 
-      if (!field) throw new Error(`Couln't find field for key: ${key}`)
+    for (const [index, tupleValue] of value.entries()) {
+      const field = this.fieldMap.get(index)
+
+      if (!field) throw new Error(`Couln't find field for index: ${index}`)
       if (!field.onSave) return value
-      return await field.onSave(value, worker)
-    })
+
+      newValues.push(await field.onSave(tupleValue, worker))
+    }
+
+    return newValues
   }
 
-  public async onDelete(value: StructFieldValue, worker: WorkerContext) {
-    return mapObjectAsync(value, async (value, key) => {
-      const field = this.fieldMap.get(key)
-      if (!field) throw new Error(`Couln't find field for key: ${key}`)
+  public async onDelete(value: TupleFieldValue, worker: WorkerContext) {
+    const newValues: any[] = []
+
+    for (const [index, tupleValue] of value.entries()) {
+      const field = this.fieldMap.get(index)
+
+      if (!field) throw new Error(`Couln't find field for index: ${index}`)
       if (!field.onDelete) return value
-      return await field.onDelete(value, worker)
-    })
+
+      newValues.push(await field.onDelete(tupleValue, worker))
+    }
+
+    return newValues
   }
 
-  public static type = 'struct'
+  public static type = 'tuple'
 
   static unserialize(
     rawField: SerializedField,
     model: Model,
     unserializeField: UnserializeFieldFunction
   ) {
-    if (model.type !== 'struct') {
+    if (model.type !== 'tuple') {
       return new ErrorField({
         label: rawField.label,
         description: rawField.description,
@@ -225,22 +242,22 @@ export class StructField implements Field<StructFieldValue> {
     }
 
     // TODO: Check all keys in model
-
-    return new StructField({
+    return new TupleField({
       label: rawField.label,
       description: rawField.description,
       fields: rawField.fields.map(
-        ([key, field]) => [key, unserializeField(field, model.fields[key])] as StructFieldChildTuple
+        ([key, field]) => [key, unserializeField(field, model.fields[key])] as TupleFieldChildTuple
       )
     })
   }
 
   static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'struct') return null
-    return new StructField({
-      label,
-      fields: Object.entries(model.fields).map(
-        ([key, model]) => [key, inferField(model, convertKeyToLabel(key))] as StructFieldChildTuple
+    if (model.type !== 'tuple') return null
+
+    return new TupleField({
+      label: label,
+      fields: model.fields.map(
+        (model, index) => [index, inferField(model, `Index ${index}`)] as TupleFieldChildTuple
       )
     })
   }

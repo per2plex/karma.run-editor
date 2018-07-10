@@ -47,7 +47,7 @@ export class RecordList extends React.Component<RecordListProps> {
     if (this.props.records.length === 0) return <>No results</>
 
     return (
-      <>
+      <FlexList direction="column" spacing="medium">
         {this.props.records.map(record => (
           <RecordItem
             key={refToString(record.id)}
@@ -67,7 +67,7 @@ export class RecordList extends React.Component<RecordListProps> {
             ))}
           </RecordItem>
         ))}
-      </>
+      </FlexList>
     )
   }
 }

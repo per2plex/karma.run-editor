@@ -204,7 +204,12 @@ export class FieldWrapper extends React.Component<FieldWrapper.Props> {
 
 export namespace FieldWrapper {
   export const Style = style({
-    $debugName: 'FieldWrapper'
+    $debugName: 'FieldWrapper',
+    $nest: {
+      [`&:last-child > .${FieldInset.Style}::after`]: {
+        content: 'none'
+      }
+    }
   })
 
   export const RootStyle = style({

@@ -33,9 +33,11 @@ import {RefMap} from '../util/ref'
 
 import {unserializeModel} from '../api/model'
 import {ViewContext} from '../api/viewContext'
-import {SessionContext, initialEditorData, EditorData, ModelRecord} from '../context/session'
 import {defaultFieldRegistry} from '../fields/registry'
 import {escapeRegExp} from '../util/string'
+
+import {WorkerContext, withWorker} from '../context/worker'
+import {SessionContext, initialEditorData, EditorData, ModelRecord} from '../context/session'
 
 export const defaultModelGroupID: string = 'default'
 export const defaultEditorContextID: string = 'default'
@@ -45,6 +47,7 @@ export const sessionRenewalInterval = 5 * (60 * 1000) // 5min
 
 export interface SessionProviderProps {
   config: Config
+  workerContext: WorkerContext
 }
 
 export class SessionProvider extends React.Component<SessionProviderProps, SessionContext> {
@@ -218,7 +221,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
 
     if (viewContext.field.onSave) {
-      value = await viewContext.field.onSave(value)
+      value = await viewContext.field.onSave(value, this.props.workerContext)
     }
 
     const expressionValue = viewContext.field.transformValueToExpression(value)
@@ -358,4 +361,4 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   }
 }
 
-export const SessionProviderContainer = withConfig(SessionProvider)
+export const SessionProviderContainer = withWorker(withConfig(SessionProvider))

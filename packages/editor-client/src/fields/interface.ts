@@ -4,8 +4,9 @@ import {ValuePath} from '@karma.run/editor-common'
 import {KeyPath, Model} from '../api/model'
 import {ModelRecord} from '../context/session'
 import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
+import {WorkerContext} from '../context/worker'
 
-export type InferFieldFunction = (model: Model, key?: string) => Field
+export type InferFieldFunction = (model: Model, inferredLabel?: string) => Field
 export type UnserializeFieldFunction = (rawField: any, model: Model) => Field
 
 export interface SerializedField {
@@ -14,33 +15,41 @@ export interface SerializedField {
 }
 
 export interface ListRenderProps<V = any> {
-  value: V
+  readonly value: V
 }
 
 export interface EditRenderProps<V = any> {
-  disabled: boolean
-  isWrapped: boolean
-  depth: number
-  index: number
-  value: V
-  changeKey?: any
-  onValueChange: (value: V, key: any) => void
-  onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
-  onSelectRecord: (model: Ref) => Promise<ModelRecord | undefined>
+  readonly label?: string
+  readonly description?: string
+
+  readonly disabled: boolean
+  readonly isWrapped: boolean
+  readonly depth: number
+  readonly index: number
+  readonly value: V
+  readonly changeKey?: any
+
+  onValueChange(value: V, key: any): void
+  onEditRecord(model: Ref, id?: Ref): Promise<ModelRecord | undefined>
+  onSelectRecord(model: Ref): Promise<ModelRecord | undefined>
 }
 
 export interface ListComponentRenderProps<F extends Field = Field, V = any>
   extends ListRenderProps<V> {
-  field: F
+  readonly field: F
 }
 
 export interface EditComponentRenderProps<F extends Field = Field, V = any>
   extends EditRenderProps<V> {
-  field: F
+  readonly field: F
 }
 
 export interface Field<V = any> {
-  parent?: Field
+  readonly defaultValue: V
+  readonly sortConfigurations: SortConfiguration[]
+  readonly filterConfigurations: FilterConfiguration[]
+
+  initialize(recursions: ReadonlyMap<string, Field>): Field
 
   renderListComponent(props: ListRenderProps<V>): React.ReactNode
   renderEditComponent(props: EditRenderProps<V>): React.ReactNode
@@ -55,12 +64,8 @@ export interface Field<V = any> {
   traverse(keyPath: KeyPath): Field | undefined
   valuePathForKeyPath(keyPath: KeyPath): ValuePath
 
-  onSave?(value: V): Promise<V>
-  onDelete?(value: V): Promise<V>
-
-  readonly defaultValue: V
-  readonly sortConfigurations: SortConfiguration[]
-  readonly filterConfigurations: FilterConfiguration[]
+  onSave?(value: V, worker: WorkerContext): Promise<V>
+  onDelete?(value: V, worker: WorkerContext): Promise<V>
 }
 
 export interface FieldClass<V = any> {
@@ -70,11 +75,11 @@ export interface FieldClass<V = any> {
     rawField: SerializedField,
     model: Model,
     unserializeField: UnserializeFieldFunction
-  ): Field<V>
+  ): Readonly<Field<V>>
 
   inferFromModel?(
     model: Model,
-    key: string | undefined,
+    inferredLabel: string | undefined,
     inferField: InferFieldFunction
-  ): Field<V> | null
+  ): Readonly<Field<V>> | null
 }

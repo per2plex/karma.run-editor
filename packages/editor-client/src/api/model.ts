@@ -1,7 +1,7 @@
 import {Ref as ModelRef} from '@karma.run/sdk'
 import {firstKey, mapObject, ObjectMap} from '@karma.run/editor-common'
 
-export type KeyPath = string[]
+export type KeyPath = (string | number)[]
 export function keyPathToString(keyPath: KeyPath) {
   return ['root', ...keyPath].join('.')
 }
@@ -101,9 +101,6 @@ function UnknownModelConstructor<T extends ModelType>(type: T) {
 }
 
 // Primitive
-export interface Int extends BaseModel<'int'> {}
-export const Int = BaseModelConstructor('int')
-
 export interface Int8 extends BaseModel<'int8'> {}
 export const Int8 = BaseModelConstructor('int8')
 
@@ -115,9 +112,6 @@ export const Int32 = BaseModelConstructor('int32')
 
 export interface Int64 extends BaseModel<'int64'> {}
 export const Int64 = BaseModelConstructor('int64')
-
-export interface Uint extends BaseModel<'uint'> {}
-export const UInt = BaseModelConstructor('uint')
 
 export interface Uint8 extends BaseModel<'uint8'> {}
 export const UInt8 = BaseModelConstructor('uint8')
@@ -197,12 +191,10 @@ export const Unknown = UnknownModelConstructor('unknown')
 
 export type Model =
   // Primitive
-  | Int
   | Int8
   | Int16
   | Int32
   | Int64
-  | Uint
   | Uint8
   | Uint16
   | Uint32
@@ -247,13 +239,11 @@ export function unserializeModel(rawModel: any): Model {
   const value = rawModel[type]
 
   switch (type) {
-    // BaseModel
-    case 'int':
+    // BaseModel=
     case 'int8':
     case 'int16':
     case 'int32':
     case 'int64':
-    case 'uint':
     case 'uint8':
     case 'uint16':
     case 'uint32':
@@ -389,12 +379,10 @@ export function serializeModel(model: Model): any {
 
   switch (model.type) {
     // BaseModel
-    case 'int':
     case 'int8':
     case 'int16':
     case 'int32':
     case 'int64':
-    case 'uint':
     case 'uint8':
     case 'uint16':
     case 'uint32':

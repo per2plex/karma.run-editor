@@ -49,7 +49,8 @@ export const enum ValuePathSegmentType {
   Map = 'map',
   Optional = 'optional',
   Struct = 'struct',
-  Union = 'union'
+  Union = 'union',
+  Tuple = 'tuple'
 }
 
 export const TypeCompatibilityMap = {
@@ -104,6 +105,15 @@ export function StructPathSegment(key: string): StructPathSegment {
   return {type: ValuePathSegmentType.Struct, key}
 }
 
+export interface TuplePathSegment {
+  type: ValuePathSegmentType.Tuple
+  index: number
+}
+
+export function TuplePathSegment(index: number): TuplePathSegment {
+  return {type: ValuePathSegmentType.Tuple, index}
+}
+
 export interface UnionPathSegment {
   type: ValuePathSegmentType.Union
   key: string
@@ -124,6 +134,7 @@ export type ValuePathSegment =
   | MapPathSegment
   | StructPathSegment
   | UnionPathSegment
+  | TuplePathSegment
   | OptionalPathSegment
 
 export type ValuePath = ValuePathSegment[]
@@ -159,6 +170,9 @@ export function getValuesForValuePath(value: any, path: ValuePath, index: number
     case ValuePathSegmentType.Union:
     case ValuePathSegmentType.Struct:
       return getValuesForValuePath(value[pathSegment.key], path, index + 1)
+
+    case ValuePathSegmentType.Tuple:
+      return getValuesForValuePath(value[pathSegment.index], path, index + 1)
 
     case ValuePathSegmentType.Optional:
       return [value]

@@ -1,6 +1,9 @@
 import {expression as e} from '@karma.run/sdk'
+import {reduceToMap} from '@karma.run/editor-common'
+
 import {Model, KeyPath} from '../api/model'
 import {ErrorField} from './error'
+
 import {
   SerializedField,
   EditRenderProps,
@@ -11,7 +14,7 @@ import {
 } from './interface'
 
 import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
-import {reduceToMap} from '@karma.run/editor-common'
+import {WorkerContext} from '../context/worker'
 
 export interface RecursionContext {
   readonly recursions?: {[key: string]: Field}
@@ -26,8 +29,8 @@ export class RecursiveField implements Field<any> {
   public readonly topField: Field
   public readonly topRecursionLabel: string
   public readonly fields: ReadonlyMap<string, Field>
-  public parent?: Field
 
+  public defaultValue: any
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -38,7 +41,13 @@ export class RecursiveField implements Field<any> {
     this.topRecursionLabel = options.topRecursionLabel
     this.topField = topField
     this.fields = options.fields
-    this.fields.forEach(field => (field.parent = this))
+  }
+
+  public initialize(recursions: ReadonlyMap<string, Field>) {
+    this.fields.forEach(field => field.initialize(new Map([...recursions, ...this.fields])))
+    this.defaultValue = this.topField.defaultValue
+
+    return this
   }
 
   public renderListComponent(props: ListRenderProps<any>) {
@@ -47,10 +56,6 @@ export class RecursiveField implements Field<any> {
 
   public renderEditComponent(props: EditRenderProps<any>) {
     return this.topField.renderEditComponent(props)
-  }
-
-  public get defaultValue(): any {
-    return this.topField.defaultValue
   }
 
   public transformRawValue(value: any) {
@@ -84,17 +89,17 @@ export class RecursiveField implements Field<any> {
     return this.topField.valuePathForKeyPath(keyPath)
   }
 
-  public async onSave(value: any) {
+  public async onSave(value: any, worker: WorkerContext) {
     if (this.topField.onSave) {
-      return this.topField.onSave(value)
+      return this.topField.onSave(value, worker)
     }
 
     return value
   }
 
-  public async onDelete(value: any) {
+  public async onDelete(value: any, worker: WorkerContext) {
     if (this.topField.onDelete) {
-      return this.topField.onDelete(value)
+      return this.topField.onDelete(value, worker)
     }
 
     return value
@@ -102,14 +107,14 @@ export class RecursiveField implements Field<any> {
 
   public static type = 'recursive'
 
-  static inferFromModel(model: Model, key: string | undefined, inferField: InferFieldFunction) {
+  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'recursive') return null
 
     return new RecursiveField({
       topRecursionLabel: model.top,
       fields: new Map(
         Object.entries(model.models).map(
-          ([recursionKey, model]) => [recursionKey, inferField(model, key)] as [string, Field]
+          ([recursionKey, model]) => [recursionKey, inferField(model, label)] as [string, Field]
         )
       )
     })
@@ -160,15 +165,21 @@ export interface RecursionFieldOptions {
 export class RecursionField implements Field<any> {
   public readonly recursionLabel: string
   public readonly field: Field
-  public parent?: Field
 
+  public defaultValue: any
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
   public constructor(options: RecursionFieldOptions) {
     this.recursionLabel = options.recursionLabel
     this.field = options.field
-    this.field.parent = this
+  }
+
+  public initialize(recursions: ReadonlyMap<string, Field>) {
+    this.field.initialize(new Map([...recursions, [this.recursionLabel, this.field]]))
+    this.defaultValue = this.field.defaultValue
+
+    return this
   }
 
   public renderListComponent(props: ListRenderProps<any>) {
@@ -177,10 +188,6 @@ export class RecursionField implements Field<any> {
 
   public renderEditComponent(props: EditRenderProps<string>) {
     return this.field.renderEditComponent(props)
-  }
-
-  public get defaultValue(): any {
-    return this.field.defaultValue
   }
 
   public transformRawValue(value: any) {
@@ -211,17 +218,17 @@ export class RecursionField implements Field<any> {
     return this.field.valuePathForKeyPath(keyPath)
   }
 
-  public async onSave(value: any) {
+  public async onSave(value: any, worker: WorkerContext) {
     if (this.field.onSave) {
-      return this.field.onSave(value)
+      return this.field.onSave(value, worker)
     }
 
     return value
   }
 
-  public async onDelete(value: any) {
+  public async onDelete(value: any, worker: WorkerContext) {
     if (this.field.onDelete) {
-      return this.field.onDelete(value)
+      return this.field.onDelete(value, worker)
     }
 
     return value
@@ -229,12 +236,12 @@ export class RecursionField implements Field<any> {
 
   public static type = 'recursion'
 
-  static inferFromModel(model: Model, key: string | undefined, inferField: InferFieldFunction) {
+  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'recursion') return null
 
     return new RecursionField({
       recursionLabel: model.label,
-      field: inferField(model.model, key)
+      field: inferField(model.model, label)
     })
   }
 
@@ -258,55 +265,60 @@ export class RecursionField implements Field<any> {
   }
 }
 
+export interface RecurseFieldOptions {
+  readonly label?: string
+  readonly description?: string
+  readonly recursionLabel: string
+}
+
 export class RecurseField implements Field<any> {
   public readonly recursionLabel: string
-  public parent?: Field
 
+  public readonly label?: string
+  public readonly description?: string
+
+  public defaultValue: any
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(label: string) {
-    this.recursionLabel = label
+  public constructor(opts: RecurseFieldOptions) {
+    this.label = opts.label
+    this.description = opts.description
+    this.recursionLabel = opts.recursionLabel
   }
 
-  private _field?: Field
-  public get field() {
-    if (this._field) return this._field
+  private field?: Field
 
-    let ancestor: Field | undefined = this.parent
+  public initialize(recursions: ReadonlyMap<string, Field>) {
+    const field = recursions.get(this.recursionLabel)!
 
-    while (ancestor) {
-      if (ancestor instanceof RecursionField && ancestor.recursionLabel === this.recursionLabel) {
-        this._field = ancestor.field
-        break
-      }
-
-      if (ancestor instanceof RecursiveField && ancestor.fields.get(this.recursionLabel)) {
-        this._field = ancestor.fields.get(this.recursionLabel)!
-        break
-      }
-
-      ancestor = ancestor.parent
+    if (!field) {
+      return new ErrorField({
+        label: this.label,
+        description: this.description,
+        message: `Couldn't find recursion for label: ${this.recursionLabel}`
+      })
     }
 
-    return this._field
+    this.field = field
+    this.defaultValue = field.defaultValue
+
+    return this
   }
 
   public renderListComponent(props: ListRenderProps<any>) {
-    // TODO: Show error
     if (!this.field) return null
     return this.field.renderListComponent(props)
   }
 
   public renderEditComponent(props: EditRenderProps<any>) {
-    // TODO: Show error
     if (!this.field) return null
-    return this.field.renderEditComponent(props)
-  }
 
-  public get defaultValue() {
-    if (!this.field) return null
-    return this.field.defaultValue
+    return this.field.renderEditComponent({
+      ...props,
+      label: this.label,
+      description: this.description
+    })
   }
 
   public transformRawValue(value: any) {
@@ -327,7 +339,8 @@ export class RecurseField implements Field<any> {
   public serialize() {
     return {
       type: RecursionField.type,
-      recursionLabel: this.recursionLabel
+      label: this.label,
+      description: this.description
     }
   }
 
@@ -341,17 +354,17 @@ export class RecurseField implements Field<any> {
     return this.field.valuePathForKeyPath(keyPath)
   }
 
-  public async onSave(value: any) {
+  public async onSave(value: any, worker: WorkerContext) {
     if (this.field && this.field.onSave) {
-      return this.field.onSave(value)
+      return this.field.onSave(value, worker)
     }
 
     return value
   }
 
-  public async onDelete(value: any) {
+  public async onDelete(value: any, worker: WorkerContext) {
     if (this.field && this.field.onDelete) {
-      return this.field.onDelete(value)
+      return this.field.onDelete(value, worker)
     }
 
     return value
@@ -359,20 +372,18 @@ export class RecurseField implements Field<any> {
 
   public static type = 'recurse'
 
-  public static inferFromModel(model: Model) {
+  public static inferFromModel(model: Model, label: string | undefined) {
     if (model.type !== 'recurse') return null
-    return new RecurseField(model.label)
+    return new RecurseField({label, recursionLabel: model.label})
   }
 
   public static unserialize(rawField: SerializedField, model: Model) {
     if (model.type !== 'recurse') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
         message: 'Invalid model!'
       })
     }
 
-    return new RecursionField(rawField.recursionLabel)
+    return new RecurseField({label: rawField.label, recursionLabel: model.label})
   }
 }

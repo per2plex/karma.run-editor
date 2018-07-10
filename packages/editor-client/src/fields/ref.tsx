@@ -23,7 +23,6 @@ import {DescriptionView} from '../ui/common/descriptionView'
 import {Button, ButtonType} from '../ui/common/button'
 import {IconName} from '../ui/common/icon'
 import {Spacing} from '../ui/style'
-import {convertKeyToLabel} from '../util/string'
 
 export interface RefFieldEditComponentProps
   extends EditComponentRenderProps<RefField, RefFieldValue> {
@@ -181,8 +180,8 @@ export class RefFieldEditComponent extends React.PureComponent<
         index={this.props.index}>
         {!this.props.isWrapped && (
           <FieldLabel
-            label={this.props.field.label}
-            description={this.props.field.description}
+            label={this.props.label}
+            description={this.props.description}
             depth={this.props.depth}
             index={this.props.index || 0}
           />
@@ -259,12 +258,23 @@ export class RefField implements Field<RefFieldValue> {
     this.model = opts.model
   }
 
+  public initialize() {
+    return this
+  }
+
   public renderListComponent(props: ListRenderProps<RefFieldValue>) {
     return <CardSection>{props.value}</CardSection>
   }
 
   public renderEditComponent(props: EditRenderProps<RefFieldValue>) {
-    return <RefFieldEditComponentContainer {...props} field={this} />
+    return (
+      <RefFieldEditComponentContainer
+        label={this.label}
+        description={this.description}
+        field={this}
+        {...props}
+      />
+    )
   }
 
   public transformRawValue(value: any) {
@@ -298,9 +308,9 @@ export class RefField implements Field<RefFieldValue> {
 
   public static type = 'ref'
 
-  static inferFromModel(model: Model, key: string | undefined) {
+  static inferFromModel(model: Model, label: string | undefined) {
     if (model.type !== 'ref') return null
-    return new RefField({label: key && convertKeyToLabel(key), model: model.model})
+    return new RefField({label, model: model.model})
   }
 
   static unserialize(rawField: SerializedField, model: Model) {

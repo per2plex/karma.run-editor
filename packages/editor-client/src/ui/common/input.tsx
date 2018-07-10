@@ -225,7 +225,7 @@ export class TextAreaInput extends React.Component<TextAreaInput.Props> {
 export namespace NumberInput {
   export interface Props {
     onChange: (value: number) => void
-    value: number
+    value: string
     placeholder?: string
     disabled?: boolean
     step?: number

@@ -1,12 +1,12 @@
 import * as React from 'react'
-import {style} from 'typestyle'
 
 import {ViewContext} from '../../api/viewContext'
-import {Spacing} from '../../ui/style'
-import {DescriptionView, Card, CardFooter} from '../../ui/common'
 import {LocaleContext} from '../../context/locale'
 import {ReadonlyRefMap} from '../../util/ref'
 import {ModelRecord} from '../../context/session'
+
+import {Card, CardFooter} from '../../ui/common/card'
+import {DescriptionView} from '../../ui/common/descriptionView'
 
 export interface RecordItemProps {
   record: ModelRecord
@@ -30,29 +30,22 @@ export class RecordItem extends React.Component<RecordItemProps> {
     )
 
     return (
-      <div className={RecordItemPropsStyle}>
-        <Card>
-          <DescriptionView viewContext={this.props.viewContext} record={this.props.record} />
-          <CardFooter
-            contentLeft={
-              <>
-                <div>
-                  {_('recordUpdated')}: {updatedDateString}
-                </div>
-                <div>
-                  {_('recordCreated')}: {createdDateString}
-                </div>
-              </>
-            }
-            contentRight={this.props.children}
-          />
-        </Card>
-      </div>
+      <Card>
+        <DescriptionView viewContext={this.props.viewContext} record={this.props.record} />
+        <CardFooter
+          contentLeft={
+            <>
+              <div>
+                {_('recordUpdated')}: {updatedDateString}
+              </div>
+              <div>
+                {_('recordCreated')}: {createdDateString}
+              </div>
+            </>
+          }
+          contentRight={this.props.children}
+        />
+      </Card>
     )
   }
 }
-
-export const RecordItemPropsStyle = style({
-  $debugName: 'RecordItem',
-  marginBottom: Spacing.medium
-})

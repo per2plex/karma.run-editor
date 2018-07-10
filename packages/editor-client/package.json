@@ -31,8 +31,6 @@
     "fuse.js": "^3.2.0",
     "intersection-observer-polyfill": "^0.1.0",
     "memoize-one": "^3.1.1",
-    "mobx": "^3.3.1",
-    "mobx-react": "^4.3.3",
     "moment": "^2.19.1",
     "qs": "^6.5.1",
     "react": "^16.4.0",

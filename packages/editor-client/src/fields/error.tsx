@@ -11,8 +11,8 @@ export class ErrorEditComponent extends React.PureComponent<EditComponentRenderP
       <FieldComponent depth={this.props.depth} index={this.props.index}>
         {!this.props.isWrapped && (
           <FieldLabel
-            label={this.props.field.label}
-            description={this.props.field.description}
+            label={this.props.label}
+            description={this.props.description}
             depth={this.props.depth}
             index={this.props.index}
           />
@@ -44,12 +44,23 @@ export class ErrorField implements Field<null> {
     this.message = opts.message
   }
 
+  public initialize() {
+    return this
+  }
+
   public renderListComponent() {
     return <CardError>{this.message}</CardError>
   }
 
   public renderEditComponent(props: EditRenderProps<null>) {
-    return <ErrorEditComponent {...props} field={this} />
+    return (
+      <ErrorEditComponent
+        label={this.label}
+        description={this.description}
+        field={this}
+        {...props}
+      />
+    )
   }
 
   public serialize(): SerializedField {

@@ -1,23 +1,23 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import {useStrict} from 'mobx'
-import {forceRenderStyles} from 'typestyle'
 
-import {RootViewContainer} from './ui/rootView'
-import {ErrorBoundary} from './error/boundary'
-import {Theme, ThemeProvider, defaultTheme} from './context/theme'
+import {forceRenderStyles} from 'typestyle'
+import {deleteNullValues, EventDispatcher, ObjectMap} from '@karma.run/editor-common'
+
+import {Theme, defaultTheme} from './context/theme'
+import {ThemeProvider} from './provider/theme'
 
 import {Config, defaultConfig} from './context/config'
 import {ConfigProvider} from './provider/config'
 
-import {deleteNullValues, EventDispatcher} from '@karma.run/editor-common'
-import {Environment} from './util/env'
 import {SessionProviderContainer} from './provider/session'
 import {LocaleProvider} from './provider/locale'
-import {LocationProviderContainer} from './context/location'
-import {NotificationProvider} from './context/notification'
+import {LocationProviderContainer} from './provider/location'
+import {NotificationProvider} from './provider/notification'
 
-useStrict(true)
+import {RootViewContainer} from './ui/rootView'
+import {ErrorBoundary} from './error/boundary'
+import {Environment} from './util/env'
 
 export interface EditorProps {
   config?: Partial<Config>
@@ -107,9 +107,10 @@ export class Editor extends EventDispatcher<EditorEventMap> {
     }
 
     const serverConfigElement = document.getElementById('Config')
-    const serverConfig: Environment = serverConfigElement
-      ? JSON.parse(serverConfigElement.textContent || '{}')
-      : {}
+    const serverConfig: Config =
+      serverConfigElement && serverConfigElement.textContent
+        ? JSON.parse(serverConfigElement.textContent)
+        : {}
 
     this.dispatch('configLoaded', serverConfig)
 

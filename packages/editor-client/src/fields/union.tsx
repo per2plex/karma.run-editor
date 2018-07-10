@@ -18,6 +18,7 @@ import {FieldWrapper, Field as FieldComponent, FieldLabel, FieldInset} from '../
 import {convertKeyToLabel} from '../util/string'
 import {Select, SelectType} from '../ui/common/select'
 import {FilterConfiguration, SortConfiguration} from '../filter/configuration'
+import {WorkerContext} from '../context/worker'
 
 export type UnionFieldChildTuple = [string, string, Field]
 
@@ -41,7 +42,10 @@ export class UnionFieldEditComponent extends React.PureComponent<
   }
 
   private handleValueChange = (value: any, key: string | undefined) => {
-    if (!key) throw new Error('Child field did not call onValueChange with changeKey!')
+    if (key == undefined) {
+      throw new Error('Child field did not call onValueChange with changeKey!')
+    }
+
     this.props.onValueChange({...this.props.value, values: {[key]: value}}, this.props.changeKey)
   }
 
@@ -58,8 +62,8 @@ export class UnionFieldEditComponent extends React.PureComponent<
       <FieldWrapper depth={this.props.depth} index={this.props.index}>
         <FieldComponent depth={this.props.depth} index={this.props.index}>
           <FieldLabel
-            label={this.props.field.label}
-            description={this.props.field.description}
+            label={this.props.label}
+            description={this.props.description}
             depth={this.props.depth}
             index={this.props.index || 0}
           />
@@ -75,8 +79,8 @@ export class UnionFieldEditComponent extends React.PureComponent<
           {field &&
             field.renderEditComponent({
               index: 0,
-              depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
-              isWrapped: false,
+              depth: this.props.depth + 1,
+              isWrapped: true,
               disabled: this.props.disabled,
               value: this.props.value.values[this.props.value.selectedKey!],
               onValueChange: this.handleValueChange,
@@ -99,23 +103,26 @@ export interface UnionFieldOptions {
 export type UnionFieldValue = {selectedKey?: string; values: ObjectMap<any>}
 
 export class UnionField implements Field<UnionFieldValue> {
-  public readonly label?: string
-  public readonly description?: string
-  public readonly fieldMap: ReadonlyMap<string, Field>
-  public readonly fields: UnionFieldChildTuple[]
+  public label?: string
+  public description?: string
+  public fields: UnionFieldChildTuple[]
+  public fieldMap!: ReadonlyMap<string, Field>
 
-  public parent?: Field
-
-  public readonly defaultValue: UnionFieldValue = {values: {}}
-  public readonly sortConfigurations: SortConfiguration[] = []
-  public readonly filterConfigurations: FilterConfiguration[] = []
+  public defaultValue: UnionFieldValue = {values: {}}
+  public sortConfigurations: SortConfiguration[] = []
+  public filterConfigurations: FilterConfiguration[] = []
 
   public constructor(opts: UnionFieldOptions) {
     this.label = opts.label
     this.description = opts.description
     this.fields = opts.fields
+  }
+
+  public initialize(recursions: ReadonlyMap<string, Field>) {
+    this.fields.forEach(([_, __, field]) => field.initialize(recursions))
     this.fieldMap = new Map(this.fields.map(([key, _, field]) => [key, field] as [string, Field]))
-    this.fields.forEach(([_, __, field]) => (field.parent = this))
+
+    return this
   }
 
   public renderListComponent() {
@@ -123,7 +130,14 @@ export class UnionField implements Field<UnionFieldValue> {
   }
 
   public renderEditComponent(props: EditRenderProps) {
-    return <UnionFieldEditComponent {...props} field={this} />
+    return (
+      <UnionFieldEditComponent
+        label={this.label}
+        description={this.description}
+        field={this}
+        {...props}
+      />
+    )
   }
 
   public fieldForKey(key: string): Field {
@@ -170,7 +184,7 @@ export class UnionField implements Field<UnionFieldValue> {
     if (keyPath.length === 0) return this
 
     const key = keyPath[0]
-    const field = this.fieldMap.get(key)
+    const field = this.fieldMap.get(key.toString())
 
     if (!field) return undefined
 
@@ -179,17 +193,17 @@ export class UnionField implements Field<UnionFieldValue> {
 
   public valuePathForKeyPath(keyPath: KeyPath): ValuePath {
     const key = keyPath[0]
-    const field = this.fieldMap.get(key)
+    const field = this.fieldMap.get(key.toString())
 
     if (!field) throw new Error('Invalid KeyPath!')
 
     return [
-      {type: ValuePathSegmentType.Union, key: key},
+      {type: ValuePathSegmentType.Union, key: key.toString()},
       ...field.valuePathForKeyPath(keyPath.slice(1))
     ]
   }
 
-  public async onSave(value: UnionFieldValue): Promise<UnionFieldValue> {
+  public async onSave(value: UnionFieldValue, worker: WorkerContext): Promise<UnionFieldValue> {
     if (!value.selectedKey) return value
     const field = this.fieldForKey(value.selectedKey)
 
@@ -197,18 +211,18 @@ export class UnionField implements Field<UnionFieldValue> {
 
     return {
       selectedKey: value.selectedKey,
-      values: {[value.selectedKey]: await field.onSave(value.values[value.selectedKey])}
+      values: {[value.selectedKey]: await field.onSave(value.values[value.selectedKey], worker)}
     }
   }
 
-  public async onDelete(value: UnionFieldValue): Promise<UnionFieldValue> {
+  public async onDelete(value: UnionFieldValue, worker: WorkerContext): Promise<UnionFieldValue> {
     if (!value.selectedKey) return value
     const field = this.fieldForKey(value.selectedKey)
 
     if (!field.onDelete) return value
     return {
       selectedKey: value.selectedKey,
-      values: {[value.selectedKey]: await field.onDelete(value.values[value.selectedKey])}
+      values: {[value.selectedKey]: await field.onDelete(value.values[value.selectedKey], worker)}
     }
   }
 
@@ -247,15 +261,15 @@ export class UnionField implements Field<UnionFieldValue> {
     })
   }
 
-  static inferFromModel(model: Model, key: string | undefined, inferField: InferFieldFunction) {
+  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'union') return null
 
     return new UnionField({
-      label: key && convertKeyToLabel(key),
-      fields: Object.entries(model.fields).map(
-        ([key, model]) =>
-          [key, convertKeyToLabel(key), inferField(model, key)] as UnionFieldChildTuple
-      )
+      label,
+      fields: Object.entries(model.fields).map(([key, model]) => {
+        const label = convertKeyToLabel(key)
+        return [key, label, inferField(model, label)] as UnionFieldChildTuple
+      })
     })
   }
 }
