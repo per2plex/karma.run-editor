@@ -76,8 +76,7 @@ function renderOptionEntry(optionEntry: Select.OptionEntry) {
 
 export const enum SelectType {
   Light = 'light',
-  Transparent = 'transparent',
-  Test = 'test'
+  Transparent = 'transparent'
 }
 
 export namespace Select {
@@ -129,9 +128,6 @@ export class Select extends React.PureComponent<Select.Props> {
       case SelectType.Transparent:
         style = Select.TransparentStyle
         break
-      case SelectType.Test:
-        style = Select.TestStyle
-        break
     }
 
     return (
@@ -160,15 +156,6 @@ export namespace Select {
 
   export const TransparentStyle = style({
     $debugName: 'SelectTransparent',
-    backgroundColor: 'transparent',
-    color: Color.primary.base,
-    border: `1px solid ${Color.primary.base}`,
-    padding: '0.4rem 1rem',
-    paddingRight: '2.6rem'
-  })
-
-  export const TestStyle = style({
-    $debugName: 'SelectTest',
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     color: Color.primary.base,
     padding: '0.4rem 1rem',

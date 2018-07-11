@@ -11,6 +11,11 @@ import {MapField} from './map'
 import {ListField} from './list'
 import {BoolField} from './bool'
 import {NumberField} from './number'
+import {EnumField} from './enum'
+import {SetField} from './set'
+import {DateTimeField} from './dateTime'
+import {NullField} from './null'
+import {CurrentUserField} from './currentUser'
 
 export type FieldRegistry = ReadonlyMap<string, FieldClass>
 
@@ -30,6 +35,7 @@ export function mergeFieldRegistries(...registries: FieldRegistry[]): FieldRegis
 }
 
 export const defaultFieldRegistry = createFieldRegistry(
+  CurrentUserField,
   PasswordField,
   BoolField,
   StringField,
@@ -39,9 +45,13 @@ export const defaultFieldRegistry = createFieldRegistry(
   TupleField,
   MapField,
   ListField,
+  SetField,
   RefField,
   RecursionField,
   RecursiveField,
   RecurseField,
-  OptionalField
+  OptionalField,
+  EnumField,
+  DateTimeField,
+  NullField
 )

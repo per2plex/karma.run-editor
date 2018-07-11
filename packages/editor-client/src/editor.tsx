@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 
 import {forceRenderStyles} from 'typestyle'
-import {deleteNullValues, EventDispatcher, ObjectMap} from '@karma.run/editor-common'
+import {deleteNullValues, EventDispatcher} from '@karma.run/editor-common'
 
 import {Theme, defaultTheme} from './context/theme'
 import {ThemeProvider} from './provider/theme'
@@ -17,7 +17,6 @@ import {NotificationProvider} from './provider/notification'
 
 import {RootViewContainer} from './ui/rootView'
 import {ErrorBoundary} from './error/boundary'
-import {Environment} from './util/env'
 
 export interface EditorProps {
   config?: Partial<Config>
@@ -89,7 +88,7 @@ export interface EditorOptions {
 }
 
 export interface EditorEventMap {
-  configLoaded: Environment
+  configLoaded: Config
 }
 
 export class Editor extends EventDispatcher<EditorEventMap> {

@@ -242,7 +242,7 @@ export class TupleField implements Field<TupleFieldValue> {
     }
 
     // TODO: Check all keys in model
-    return new TupleField({
+    return new this({
       label: rawField.label,
       description: rawField.description,
       fields: rawField.fields.map(
@@ -254,7 +254,7 @@ export class TupleField implements Field<TupleFieldValue> {
   static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'tuple') return null
 
-    return new TupleField({
+    return new this({
       label: label,
       fields: model.fields.map(
         (model, index) => [index, inferField(model, `Index ${index}`)] as TupleFieldChildTuple

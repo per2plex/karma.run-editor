@@ -252,7 +252,6 @@ export interface ListFieldOptions {
   readonly label?: string
   readonly description?: string
   readonly field: Field
-  readonly restrictedToKeys?: string[]
 }
 
 export type ListFieldValue = {id: string; value: any}[]
@@ -260,7 +259,6 @@ export type ListFieldValue = {id: string; value: any}[]
 export class ListField implements Field<ListFieldValue> {
   public readonly label?: string
   public readonly description?: string
-  public readonly restrictedToKeys?: string[]
 
   public readonly defaultValue: ListFieldValue = []
   public readonly sortConfigurations: SortConfiguration[] = []
@@ -271,7 +269,6 @@ export class ListField implements Field<ListFieldValue> {
   public constructor(opts: ListFieldOptions) {
     this.label = opts.label
     this.description = opts.description
-    this.restrictedToKeys = opts.restrictedToKeys
     this.field = opts.field
   }
 
@@ -368,7 +365,7 @@ export class ListField implements Field<ListFieldValue> {
       })
     }
 
-    return new ListField({
+    return new this({
       label: rawField.label,
       description: rawField.description,
       field: unserializeField(rawField.field, model.model)
@@ -377,6 +374,6 @@ export class ListField implements Field<ListFieldValue> {
 
   static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'list') return null
-    return new ListField({label, field: inferField(model.model)})
+    return new this({label, field: inferField(model.model)})
   }
 }

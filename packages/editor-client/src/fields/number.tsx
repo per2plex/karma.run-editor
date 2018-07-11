@@ -188,7 +188,7 @@ export class NumberField implements Field<string> {
 
   static inferFromModel(model: Model, label: string | undefined) {
     if (!validModelTypes.includes(model.type)) return null
-    return new NumberField({label, storageType: model.type as StorageType})
+    return new this({label, storageType: model.type as StorageType})
   }
 
   static unserialize(rawField: SerializedField, model: Model) {
@@ -200,7 +200,7 @@ export class NumberField implements Field<string> {
       })
     }
 
-    return new NumberField({
+    return new this({
       label: rawField.label,
       description: rawField.description,
       storageType: model.type as StorageType

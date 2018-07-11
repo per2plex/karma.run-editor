@@ -1,14 +1,16 @@
 import * as React from 'react'
+import {getValuesForValuePath} from '@karma.run/editor-common'
 
+import {CardSection} from '../common'
+import {refToPrettyString, ReadonlyRefMap} from '../../util/ref'
 import {keyPathToString} from '../../api/model'
 import {ViewContext} from '../../api/viewContext'
-import {CardSection} from '../common'
-import {getValuesForValuePath} from '@karma.run/editor-common'
 import {ModelRecord} from '../../context/session'
 
 export interface DescriptionViewProps {
   viewContext: ViewContext
   record: ModelRecord
+  reverseTagMap: ReadonlyRefMap<string>
 }
 
 export function contentForViewContext(
@@ -43,9 +45,11 @@ export class DescriptionView extends React.Component<DescriptionViewProps> {
       return <>{content}</>
     }
 
+    const tag = this.props.reverseTagMap.get(this.props.record.id)
+
     return (
       <>
-        <CardSection>{this.props.record.id}</CardSection>
+        <CardSection>{tag || refToPrettyString(this.props.record.id)}</CardSection>
       </>
     )
   }

@@ -115,7 +115,13 @@ export class RefFieldEditComponent extends React.PureComponent<
         minute: 'numeric'
       })
 
-      content = <DescriptionView viewContext={viewContext} record={record} />
+      content = (
+        <DescriptionView
+          viewContext={viewContext}
+          record={record}
+          reverseTagMap={this.props.sessionContext.reverseTagMap}
+        />
+      )
 
       leftFooterContent = (
         <>
@@ -310,7 +316,7 @@ export class RefField implements Field<RefFieldValue> {
 
   static inferFromModel(model: Model, label: string | undefined) {
     if (model.type !== 'ref') return null
-    return new RefField({label, model: model.model})
+    return new this({label, model: model.model})
   }
 
   static unserialize(rawField: SerializedField, model: Model) {
@@ -322,7 +328,7 @@ export class RefField implements Field<RefFieldValue> {
       })
     }
 
-    return new RefField({
+    return new this({
       label: rawField.label,
       description: rawField.description,
       model: model.model

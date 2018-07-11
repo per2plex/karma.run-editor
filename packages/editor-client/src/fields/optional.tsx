@@ -195,7 +195,7 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'optional') return null
-    return new OptionalField({label, field: inferField(model.model)})
+    return new this({label, field: inferField(model.model)})
   }
 
   static unserialize(
@@ -211,7 +211,7 @@ export class OptionalField implements Field<OptionalFieldValue> {
       })
     }
 
-    return new OptionalField({
+    return new this({
       label: rawField.label,
       description: rawField.description,
       field: unserializeField(rawField.field, model.model)

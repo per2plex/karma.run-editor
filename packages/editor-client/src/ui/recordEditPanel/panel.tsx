@@ -29,7 +29,7 @@ export interface RecordEditPanelState {
   isSaving: boolean
   isLoadingRecord: boolean
   hasUnsavedChanges: boolean
-  value?: any
+  value: any
 }
 
 export class RecordEditPanel extends React.PureComponent<
@@ -39,7 +39,8 @@ export class RecordEditPanel extends React.PureComponent<
   public state: RecordEditPanelState = {
     isSaving: false,
     isLoadingRecord: false,
-    hasUnsavedChanges: false
+    hasUnsavedChanges: false,
+    value: undefined
   }
 
   private async loadRecord(id: Ref) {
@@ -47,14 +48,21 @@ export class RecordEditPanel extends React.PureComponent<
       isLoadingRecord: true
     })
 
+    const record = await this.props.sessionContext.getRecord(this.props.model, id)
+
     this.setState({
       isLoadingRecord: false,
-      record: await this.props.sessionContext.getRecord(this.props.model, id)
+      hasUnsavedChanges: false,
+      record,
+      value: record.value
     })
   }
 
   private handleValueChange = (value: any) => {
-    this.setState({value})
+    this.setState({
+      hasUnsavedChanges: true,
+      value
+    })
   }
 
   private handleBack = () => {
@@ -66,14 +74,17 @@ export class RecordEditPanel extends React.PureComponent<
       isSaving: true
     })
 
+    const record = await this.props.sessionContext.saveRecord(
+      this.props.model,
+      this.props.recordID,
+      this.state.value
+    )
+
     this.setState({
       isSaving: false,
-      value: undefined,
-      record: await this.props.sessionContext.saveRecord(
-        this.props.model,
-        this.props.recordID,
-        this.state.value
-      )
+      hasUnsavedChanges: false,
+      record: record,
+      value: record.value
     })
   }
 
@@ -82,14 +93,17 @@ export class RecordEditPanel extends React.PureComponent<
       isSaving: true
     })
 
+    const record = await this.props.sessionContext.saveRecord(
+      this.props.model,
+      undefined,
+      this.state.value
+    )
+
     this.setState({
       isSaving: false,
-      value: undefined,
-      record: await this.props.sessionContext.saveRecord(
-        this.props.model,
-        undefined,
-        this.state.value
-      )
+      hasUnsavedChanges: false,
+      record: record,
+      value: record.value
     })
   }
 
@@ -99,33 +113,37 @@ export class RecordEditPanel extends React.PureComponent<
     if (this.props.recordID) this.loadRecord(this.props.recordID)
   }
 
-  private getToolbarButtons = memoizeOne((disabled: boolean, hasChanges: boolean) => {
-    return (
-      <FlexList spacing="large">
-        <Button
-          type={ButtonType.Icon}
-          icon={IconName.Back}
-          onTrigger={this.handleBack}
-          disabled={disabled}
-          label="Back"
-        />
-        <Button
-          type={ButtonType.Icon}
-          icon={IconName.SaveDocument}
-          onTrigger={this.handleSave}
-          disabled={disabled || !hasChanges}
-          label="Save"
-        />
-        <Button
-          type={ButtonType.Icon}
-          icon={IconName.CopyDocument}
-          onTrigger={this.handleSaveAsCopy}
-          disabled={disabled}
-          label="Save as Copy"
-        />
-      </FlexList>
-    )
-  })
+  private getToolbarButtons = memoizeOne(
+    (disabled: boolean, hasChanges: boolean, isNewRecord: boolean) => {
+      return (
+        <FlexList spacing="large">
+          <Button
+            type={ButtonType.Icon}
+            icon={IconName.Back}
+            onTrigger={this.handleBack}
+            disabled={disabled}
+            label="Back"
+          />
+          <Button
+            type={ButtonType.Icon}
+            icon={IconName.SaveDocument}
+            onTrigger={this.handleSave}
+            disabled={disabled || !hasChanges}
+            label="Save"
+          />
+          {!isNewRecord && (
+            <Button
+              type={ButtonType.Icon}
+              icon={IconName.CopyDocument}
+              onTrigger={this.handleSaveAsCopy}
+              disabled={disabled}
+              label="Save as Copy"
+            />
+          )}
+        </FlexList>
+      )
+    }
+  )
 
   private getDeveloperButtons = memoizeOne((isDeveloper: boolean) => {
     if (!isDeveloper) return undefined
@@ -142,6 +160,8 @@ export class RecordEditPanel extends React.PureComponent<
   public render() {
     const _ = this.props.localeContext.get
     const disabled = this.state.isSaving || this.props.disabled
+    const isNewRecord = this.props.recordID == undefined && this.state.record == undefined
+    const hasUnsavedChanges = this.props.recordID == undefined || this.state.hasUnsavedChanges
     const viewContext = this.props.sessionContext.viewContextMap.get(this.props.model)
 
     // TODO: Error panel
@@ -156,7 +176,7 @@ export class RecordEditPanel extends React.PureComponent<
           }
         />
         <PanelToolbar
-          left={this.getToolbarButtons(disabled, this.state.value != undefined)}
+          left={this.getToolbarButtons(disabled, hasUnsavedChanges, isNewRecord)}
           right={this.getDeveloperButtons(true)} // TODO: Developer mode
         />
         <PanelContent>

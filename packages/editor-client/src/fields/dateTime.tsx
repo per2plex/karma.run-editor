@@ -12,15 +12,15 @@ import {
   ListRenderProps
 } from './interface'
 
-import {CheckboxInput} from '../ui/common/input'
+import {Field as FieldComponent, FieldLabel} from '../ui/common/field'
+import {DateTimeInput} from '../ui/common/input'
 import {CardSection} from '../ui/common/card'
 import {SortConfiguration, FilterConfiguration} from '../filter/configuration'
-import {Field as FieldComponent, FieldLabel} from '../ui/common/field'
 
-export class BoolFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<BoolField, boolean>
+export class DateTimeFieldEditComponent extends React.PureComponent<
+  EditComponentRenderProps<DateTimeField, string>
 > {
-  private handleChange = (value: boolean) => {
+  private handleChange = (value: any) => {
     this.props.onValueChange(value, this.props.changeKey)
   }
 
@@ -35,7 +35,7 @@ export class BoolFieldEditComponent extends React.PureComponent<
             index={this.props.index}
           />
         )}
-        <CheckboxInput
+        <DateTimeInput
           onChange={this.handleChange}
           value={this.props.value}
           disabled={this.props.disabled}
@@ -45,39 +45,37 @@ export class BoolFieldEditComponent extends React.PureComponent<
   }
 }
 
-export interface BoolFieldOptions {
+export interface DateTimeFieldOptions {
   readonly label?: string
   readonly description?: string
-  readonly minLength?: number
-  readonly maxLength?: number
-  readonly multiline?: boolean
 }
 
-export class BoolField implements Field<boolean> {
+export type DateTimeValue = string | Date | undefined
+
+export class DateTimeField implements Field<DateTimeValue> {
   public readonly label?: string
   public readonly description?: string
 
-  public readonly defaultValue: boolean = false
-  public readonly sortConfigurations: SortConfiguration[]
+  public readonly defaultValue: DateTimeValue = undefined
+  public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: BoolFieldOptions) {
+  public constructor(opts: DateTimeFieldOptions) {
     this.label = opts.label
     this.description = opts.description
-    this.sortConfigurations = []
   }
 
   public initialize() {
     return this
   }
 
-  public renderListComponent(props: ListRenderProps<boolean>) {
+  public renderListComponent(props: ListRenderProps<string>) {
     return <CardSection>{props.value}</CardSection>
   }
 
-  public renderEditComponent(props: EditRenderProps<boolean>) {
+  public renderEditComponent(props: EditRenderProps<string>) {
     return (
-      <BoolFieldEditComponent
+      <DateTimeFieldEditComponent
         label={this.label}
         description={this.description}
         field={this}
@@ -87,20 +85,21 @@ export class BoolField implements Field<boolean> {
   }
 
   public transformRawValue(value: any) {
-    return value
+    return new Date(value)
   }
 
-  public transformValueToExpression(value: boolean) {
-    return e.bool(value)
+  public transformValueToExpression(value: DateTimeValue) {
+    if (!value) return e.null()
+    return e.dateTime(value)
   }
 
   public isValidValue() {
-    return null
+    return []
   }
 
   public serialize() {
     return {
-      type: BoolField.type,
+      type: DateTimeField.type,
       label: this.label,
       description: this.description
     }
@@ -114,15 +113,15 @@ export class BoolField implements Field<boolean> {
     return []
   }
 
-  public static type = 'bool'
+  public static type = 'dateTime'
 
   static inferFromModel(model: Model, label: string | undefined) {
-    if (model.type !== 'bool') return null
+    if (model.type !== 'dateTime') return null
     return new this({label})
   }
 
   static unserialize(rawField: SerializedField, model: Model) {
-    if (model.type !== 'bool') {
+    if (model.type !== 'dateTime') {
       return new ErrorField({
         label: rawField.label,
         description: rawField.description,

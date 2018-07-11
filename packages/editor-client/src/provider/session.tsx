@@ -84,8 +84,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       const newSession = await refreshSession(this.props.config.karmaURL, session)
       const editorData = await this.getEditorData(session)
 
+      this.storeSession(newSession)
       this.setState({...editorData, session: newSession})
-      this.storeSession()
 
       return newSession
     } catch (err) {
@@ -98,8 +98,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     const session = await authenticate(this.props.config.karmaURL, username, password)
     const editorData = await this.getEditorData(session)
 
+    this.storeSession(session)
     this.setState({...editorData, session})
-    this.storeSession()
 
     return session
   }
@@ -242,8 +242,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     return this.transformMetarializedRecord(record, viewContext)
   }
 
-  private storeSession() {
-    storage.set(sessionStorageKey, this.state.session)
+  private storeSession(session: Session) {
+    storage.set(sessionStorageKey, session)
   }
 
   private async getEditorData(session: Session): Promise<EditorData> {
@@ -343,6 +343,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     if (!this.state.session) return
 
     const newSession = await refreshSession(this.props.config.karmaURL, this.state.session)
+
+    this.storeSession(newSession)
     this.setState({session: newSession})
   }
 

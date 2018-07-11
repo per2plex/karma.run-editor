@@ -110,7 +110,7 @@ export class RecursiveField implements Field<any> {
   static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'recursive') return null
 
-    return new RecursiveField({
+    return new this({
       topRecursionLabel: model.top,
       fields: new Map(
         Object.entries(model.models).map(
@@ -133,7 +133,7 @@ export class RecursiveField implements Field<any> {
       })
     }
 
-    return new RecursiveField({
+    return new this({
       topRecursionLabel: model.top,
       fields: new Map(
         Object.entries(rawField.fields).map(([key, field]) => {
@@ -239,7 +239,7 @@ export class RecursionField implements Field<any> {
   static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'recursion') return null
 
-    return new RecursionField({
+    return new this({
       recursionLabel: model.label,
       field: inferField(model.model, label)
     })
@@ -258,7 +258,7 @@ export class RecursionField implements Field<any> {
       })
     }
 
-    return new RecursionField({
+    return new this({
       recursionLabel: rawField.recursionLabel,
       field: unserializeField(rawField.field, model.model)
     })
@@ -374,7 +374,7 @@ export class RecurseField implements Field<any> {
 
   public static inferFromModel(model: Model, label: string | undefined) {
     if (model.type !== 'recurse') return null
-    return new RecurseField({label, recursionLabel: model.label})
+    return new this({label, recursionLabel: model.label})
   }
 
   public static unserialize(rawField: SerializedField, model: Model) {
@@ -384,6 +384,6 @@ export class RecurseField implements Field<any> {
       })
     }
 
-    return new RecurseField({label: rawField.label, recursionLabel: model.label})
+    return new this({label: rawField.label, recursionLabel: model.label})
   }
 }

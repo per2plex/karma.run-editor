@@ -226,7 +226,7 @@ export class StructField implements Field<StructFieldValue> {
 
     // TODO: Check all keys in model
 
-    return new StructField({
+    return new this({
       label: rawField.label,
       description: rawField.description,
       fields: rawField.fields.map(
@@ -237,7 +237,7 @@ export class StructField implements Field<StructFieldValue> {
 
   static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'struct') return null
-    return new StructField({
+    return new this({
       label,
       fields: Object.entries(model.fields).map(
         ([key, model]) => [key, inferField(model, convertKeyToLabel(key))] as StructFieldChildTuple

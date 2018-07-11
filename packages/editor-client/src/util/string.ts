@@ -44,13 +44,6 @@ export function hashString(str: string) {
   return hash
 }
 
-const ExtensionRegexp = /\.([^.]*)$/
-
-export function getFileExtension(str: string): string | undefined {
-  const match = str.match(ExtensionRegexp)
-  return match ? match[1] : undefined
-}
-
 export function stringToColor(str: string, saturation: number = 0.5, lightness: number = 0.8) {
   const hue = ((Math.abs(hashString(str)) % 0xffffff) / 0xffffff) * 360
   return hsl(hue, saturation, lightness).toHexString()

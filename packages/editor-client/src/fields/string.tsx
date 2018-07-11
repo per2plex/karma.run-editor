@@ -144,7 +144,7 @@ export class StringField implements Field<string> {
 
   static inferFromModel(model: Model, label: string | undefined) {
     if (model.type !== 'string') return null
-    return new StringField({label})
+    return new this({label})
   }
 
   static unserialize(rawField: SerializedField, model: Model) {
@@ -156,7 +156,7 @@ export class StringField implements Field<string> {
       })
     }
 
-    return new StringField({
+    return new this({
       label: rawField.label,
       description: rawField.description
     })

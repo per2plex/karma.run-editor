@@ -189,7 +189,7 @@ export class PasswordField implements Field<PasswordFieldValue> {
       })
     }
 
-    return new PasswordField({
+    return new this({
       label: rawField.label,
       description: rawField.description,
       costFactor: rawField.costFactor

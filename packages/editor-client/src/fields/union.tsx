@@ -251,7 +251,7 @@ export class UnionField implements Field<UnionFieldValue> {
 
     // TODO: Check all keys in model
 
-    return new UnionField({
+    return new this({
       label: rawField.label,
       description: rawField.description,
       fields: rawField.fields.map(
@@ -264,7 +264,7 @@ export class UnionField implements Field<UnionFieldValue> {
   static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
     if (model.type !== 'union') return null
 
-    return new UnionField({
+    return new this({
       label,
       fields: Object.entries(model.fields).map(([key, model]) => {
         const label = convertKeyToLabel(key)

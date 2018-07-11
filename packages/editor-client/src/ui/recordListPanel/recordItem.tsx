@@ -31,7 +31,11 @@ export class RecordItem extends React.Component<RecordItemProps> {
 
     return (
       <Card>
-        <DescriptionView viewContext={this.props.viewContext} record={this.props.record} />
+        <DescriptionView
+          viewContext={this.props.viewContext}
+          record={this.props.record}
+          reverseTagMap={this.props.reverseTagMap}
+        />
         <CardFooter
           contentLeft={
             <>
