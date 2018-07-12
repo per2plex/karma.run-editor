@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["./src/server/**/*"],
+  "compilerOptions": {
+    "lib": ["es2017"],
+    "module": "commonjs",
+    "outDir": "./dist/",
+    "declaration": true
+  }
+}

@@ -2,12 +2,12 @@
   "name": "@karma.run/editor",
   "version": "0.13.0",
   "main": "./dist/index.js",
-  "description": "Editor CLI for karma.run.",
+  "description": "Administrative editor for karma.data.",
   "bin": {
     "karma-editor": "./dist/index.js"
   },
   "license": "MIT",
-  "repository": "github:karmarun/karma.run-editor",
+  "repository": "github:karmarun/karma.tools",
   "scripts": {
     "start": "node ./dist/index.js run",
     "watch:server:run": "nodemon --watch ./dist/index.js --exec \"node ./dist/index.js run\"",
@@ -19,14 +19,12 @@
     "watch:client": "webpack --require ts-node/register --mode development --watch",
     "build:client": "webpack --require ts-node/register --mode production --progress",
     "copy:license": "shx cp ../../LICENSE ./",
-    "copy:favicon": "shx cp ./static/* ./dist/static",
     "clean": "run-p clean:*",
     "clean:dist": "shx rm -rf ./LICENSE ./dist",
     "clean:cache": "shx rm -rf ./.cache",
-    "prepare": "run-s clean copy:license build copy:favicon"
+    "prepare": "run-s clean copy:license build"
   },
   "dependencies": {
-    "@karma.run/editor-media-server": "^0.12.1",
     "@karma.run/editor-server": "^0.13.0",
     "commander": "^2.15.1",
     "compression": "^1.7.2",

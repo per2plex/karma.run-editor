@@ -6,33 +6,26 @@
  */
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
+import {ServerPlugin} from '@karma.run/editor-common'
 
 import express from 'express'
 import * as path from 'path'
 
 const cacheOptions = {maxAge: '1d'}
 
-export interface Options {
-  basePath?: string
-  mediaAPIBasePath?: string
-  staticPath: string
-  clientName?: string
-  workerName?: string
+export interface MiddlewareOptions {
   title?: string
-  karmaURL?: string
-  mediaServerURL?: string
-  customClientConfig?: {[name: string]: any}
+  basePath?: string
+  karmaDataURL: string
+  clientModule: string
+  workerModule: string
+  favicon: string
+  plugins?: ServerPlugin[]
 }
 
-export function editorMiddleware(opts: Options): express.Router {
-  const title = opts.title || 'karma.run'
+export function editorMiddleware(opts: MiddlewareOptions): express.Router {
+  const title = opts.title || 'karma.tools/editor'
   const basePath = opts.basePath || ''
-  const mediaAPIBasePath = opts.mediaAPIBasePath || ''
-  const customClientConfig = opts.customClientConfig || {}
-
-  const staticPath = opts.staticPath
-  const clientName = opts.clientName || 'main.js'
-  const workerName = opts.workerName || 'worker.js'
 
   const router = express.Router()
   const reactDateTimePath = require.resolve('react-datetime')
@@ -49,25 +42,23 @@ export function editorMiddleware(opts: Options): express.Router {
     res.sendFile(draftJSCSSPath, cacheOptions)
   })
 
-  router.use(
-    `${basePath}/static`,
-    express.static(staticPath, {
-      index: false
-    })
-  )
+  router.get(`${basePath}/static/client.js`, (_, res) => {
+    res.sendFile(opts.clientModule)
+  })
 
-  router.use(`${basePath}/static`, (_, res) => {
-    res.status(404).send()
+  router.get(`${basePath}/static/worker.js`, (_, res) => {
+    res.sendFile(opts.workerModule)
+  })
+
+  router.get(`${basePath}/static/favicon.ico`, (_, res) => {
+    res.sendFile(opts.favicon)
   })
 
   router.get(`${basePath}(/*)?`, (_, res) => {
     const configJSON = JSON.stringify({
-      custom: customClientConfig,
       title,
       basePath,
-      mediaAPIBasePath,
-      karmaURL: opts.karmaURL,
-      workerName
+      karmaDataURL: opts.karmaDataURL
     })
 
     const stream = ReactDOMServer.renderToStaticNodeStream(
@@ -89,7 +80,7 @@ export function editorMiddleware(opts: Options): express.Router {
             dangerouslySetInnerHTML={{__html: configJSON}}
           />
 
-          <script src={`${basePath}/static/${clientName}`} defer />
+          <script src={`${basePath}/static/client.js`} defer />
         </head>
         <body>
           <div id="EditorRoot" />
@@ -100,6 +91,12 @@ export function editorMiddleware(opts: Options): express.Router {
     res.write('<!DOCTYPE html>')
     stream.pipe(res)
   })
+
+  if (opts.plugins && opts.plugins.length) {
+    for (const plugin of opts.plugins) {
+      plugin.initialize({router})
+    }
+  }
 
   return router
 }

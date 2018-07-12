@@ -1,0 +1,12 @@
+{
+  "name": "@karma.run/editor-docker",
+  "version": "0.12.1",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "karma-editor"
+  },
+  "dependencies": {
+    "@karma.run/editor": "^0.12.1"
+  }
+}
