@@ -6,7 +6,7 @@
  */
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
-import {ServerPlugin} from '@karma.run/editor-common'
+import {ServerPlugin, PluginTuple} from '@karma.run/editor-common'
 
 import express from 'express'
 import * as path from 'path'
@@ -17,8 +17,11 @@ export interface MiddlewareOptions {
   title?: string
   basePath?: string
   karmaDataURL: string
+
+  modulesPath?: string
   clientModule: string
   workerModule: string
+
   favicon: string
   plugins?: ServerPlugin[]
 }
@@ -35,30 +38,54 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
   const draftJSCSSPath = path.join(path.dirname(draftJSPath), '../dist/Draft.css')
 
   router.get(`${basePath}/css/react-datetime.css`, (_, res) => {
-    res.sendFile(reactDateTimeCSSPath, cacheOptions)
+    return res.sendFile(reactDateTimeCSSPath, cacheOptions)
   })
 
   router.get(`${basePath}/css/draft-js.css`, (_, res) => {
-    res.sendFile(draftJSCSSPath, cacheOptions)
+    return res.sendFile(draftJSCSSPath, cacheOptions)
   })
 
   router.get(`${basePath}/static/client.js`, (_, res) => {
-    res.sendFile(opts.clientModule)
+    return res.sendFile(opts.clientModule, cacheOptions)
   })
 
   router.get(`${basePath}/static/worker.js`, (_, res) => {
-    res.sendFile(opts.workerModule)
+    return res.sendFile(opts.workerModule, cacheOptions)
   })
 
   router.get(`${basePath}/static/favicon.ico`, (_, res) => {
-    res.sendFile(opts.favicon)
+    return res.sendFile(opts.favicon, cacheOptions)
   })
+
+  const clientPlugins: PluginTuple[] = []
+
+  if (opts.plugins && opts.plugins.length) {
+    for (const plugin of opts.plugins) {
+      plugin.initialize({router})
+      console.info(`Initialized plugin: ${plugin.name}@${plugin.version}`)
+    }
+  }
+
+  if (opts.modulesPath) {
+    router.use(
+      `${basePath}/static`,
+      express.static(opts.modulesPath, {
+        index: false,
+        ...cacheOptions
+      })
+    )
+
+    router.use(`${basePath}/static`, (_, res) => {
+      return res.status(404).send()
+    })
+  }
 
   router.get(`${basePath}(/*)?`, (_, res) => {
     const configJSON = JSON.stringify({
       title,
       basePath,
-      karmaDataURL: opts.karmaDataURL
+      karmaDataURL: opts.karmaDataURL,
+      plugins: clientPlugins
     })
 
     const stream = ReactDOMServer.renderToStaticNodeStream(
@@ -69,6 +96,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
           <link href={`${basePath}/static/favicon.ico`} rel="icon" type="image/x-icon" />
           <link href={`${basePath}/css/draft-js.css`} rel="stylesheet" />
           <link href={`${basePath}/css/react-datetime.css`} rel="stylesheet" />
+
           <link
             href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i"
             rel="stylesheet"
@@ -89,14 +117,8 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
     )
 
     res.write('<!DOCTYPE html>')
-    stream.pipe(res)
+    return stream.pipe(res)
   })
-
-  if (opts.plugins && opts.plugins.length) {
-    for (const plugin of opts.plugins) {
-      plugin.initialize({router})
-    }
-  }
 
   return router
 }

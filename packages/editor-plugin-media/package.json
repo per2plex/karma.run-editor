@@ -1,17 +1,20 @@
 {
   "name": "@karma.run/editor-plugin-media",
   "version": "0.13.0",
-  "main": "./dist/server/index.js",
-  "types": "./dist/server/index.d.ts",
+  "main": "./lib/server/index.js",
+  "types": "./lib/server/index.d.ts",
   "license": "MIT",
   "repository": "github:karmarun/karma.tools",
   "scripts": {
-    "build": "tsc",
-    "watch": "run-s clean watch:dev",
-    "watch:dev": "tsc --watch --declarationMap",
+    "build": "run-s clean copy:license build:*",
+    "build:server": "tsc",
+    "//build:client": "webpack --require ts-node/register --mode development --progress",
+    "watch": "run-s clean watch:*",
+    "watch:server": "tsc --watch --declarationMap",
+    "watch:client": "webpack --require ts-node/register --mode development --watch",
     "copy:license": "shx cp ../../LICENSE ./",
     "clean": "shx rm -rf ./LICENSE ./lib",
-    "prepare": "run-s clean copy:license build"
+    "prepare": "run-s build"
   },
   "dependencies": {
     "@karma.run/editor-common": "^0.13.0",
@@ -34,7 +37,10 @@
     "hammerjs": "^2.0.8",
     "npm-run-all": "^4.1.3",
     "shx": "^0.3.0",
-    "typescript": "^2.9.1"
+    "ts-loader": "^4.4.2",
+    "typescript": "^3.0.0-rc",
+    "webpack": "^4.16.0",
+    "webpack-command": "^0.4.1"
   },
   "peerDependencies": {
     "@karma.run/editor": "^0.13.0"

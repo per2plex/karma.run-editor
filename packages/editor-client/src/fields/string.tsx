@@ -107,7 +107,8 @@ export class StringField implements Field<string> {
     )
   }
 
-  public transformRawValue(value: any) {
+  public transformRawValue(value: unknown): string {
+    if (typeof value !== 'string') throw new Error('StringField received invalid value!')
     return value
   }
 

@@ -1,21 +1,21 @@
 {
   "name": "@karma.run/editor",
   "version": "0.13.0",
-  "main": "./dist/index.js",
+  "main": "./dist/cli/index.js",
   "description": "Administrative editor for karma.data.",
   "bin": {
-    "karma-editor": "./dist/index.js"
+    "karma-editor": "./dist/cli/index.js"
   },
   "license": "MIT",
   "repository": "github:karmarun/karma.tools",
   "scripts": {
-    "start": "node ./dist/index.js run",
-    "watch:server:run": "nodemon --watch ./dist/index.js --exec \"node ./dist/index.js run\"",
-    "watch": "npm-run-all clean build:server --parallel watch:*",
-    "build": "run-p build:server build:client",
-    "build:server": "tsc",
-    "watch:server:build": "tsc --watch",
-    "watch:server": "run-p watch:server:build watch:server:run",
+    "cli": "node ./dist/cli/index.js run",
+    "watch:cli:run": "nodemon --watch ./dist/cli/**/* --exec \"node ./dist/cli/index.js run\"",
+    "watch": "npm-run-all clean build:cli --parallel watch:*",
+    "build": "run-p build:cli build:client",
+    "build:cli": "tsc",
+    "watch:cli:build": "tsc --watch",
+    "watch:cli": "run-p watch:cli:build watch:cli:run",
     "watch:client": "webpack --require ts-node/register --mode development --watch",
     "build:client": "webpack --require ts-node/register --mode production --progress",
     "copy:license": "shx cp ../../LICENSE ./",
@@ -45,7 +45,7 @@
     "shx": "^0.3.0",
     "ts-loader": "^4.4.1",
     "ts-node": "^6.1.1",
-    "typescript": "^2.9.1",
+    "typescript": "^3.0.0-rc",
     "webpack": "^4.12.0",
     "webpack-command": "^0.2.1"
   }

@@ -1,18 +1,21 @@
 import React from 'react'
 import {createContextHOC} from './helper'
+import {PluginTuple} from '@karma.run/editor-common'
 
 export interface Config {
-  karmaURL: string
+  karmaDataURL: string
   basePath: string
   mediaBasePath: string
   title: string
+  plugins: PluginTuple[]
 }
 
 export const defaultConfig: Config = Object.freeze({
-  karmaURL: '',
+  karmaDataURL: '',
   basePath: '',
   mediaBasePath: '',
-  title: 'karma.run'
+  title: 'karma.run',
+  plugins: []
 })
 
 export const ConfigContext = React.createContext<Config>(defaultConfig)

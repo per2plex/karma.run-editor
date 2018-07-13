@@ -81,7 +81,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
   public restoreSession = async (session: Session) => {
     try {
-      const newSession = await refreshSession(this.props.config.karmaURL, session)
+      const newSession = await refreshSession(this.props.config.karmaDataURL, session)
       const editorData = await this.getEditorData(session)
 
       this.storeSession(newSession)
@@ -95,7 +95,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   }
 
   public authenticate = async (username: string, password: string) => {
-    const session = await authenticate(this.props.config.karmaURL, username, password)
+    const session = await authenticate(this.props.config.karmaDataURL, username, password)
     const editorData = await this.getEditorData(session)
 
     this.storeSession(session)
@@ -129,7 +129,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
 
     const record: MetarializedRecord = await query(
-      this.props.config.karmaURL,
+      this.props.config.karmaDataURL,
       this.state.session,
       buildFunction(e => () => e.metarialize(e.get(e.data(d => d.ref(id)))))
     )
@@ -206,7 +206,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     }
 
     const records: MetarializedRecord[] = await query(
-      this.props.config.karmaURL,
+      this.props.config.karmaDataURL,
       this.state.session,
       buildFunction(e => () => e.slice(listExpression, offset, limit))
     )
@@ -226,7 +226,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
     const expressionValue = viewContext.field.transformValueToExpression(value)
     const record = await query(
-      this.props.config.karmaURL,
+      this.props.config.karmaDataURL,
       this.state.session,
       buildFunction(e => () => [
         e.define(
@@ -326,7 +326,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     session: Session
   ): Promise<{tags: Tag[]; models: MetarializedRecord[]}> {
     return query(
-      this.props.config.karmaURL,
+      this.props.config.karmaDataURL,
       session,
       buildFunction(e => () =>
         e.data(d =>
@@ -342,7 +342,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   private async refreshSession() {
     if (!this.state.session) return
 
-    const newSession = await refreshSession(this.props.config.karmaURL, this.state.session)
+    const newSession = await refreshSession(this.props.config.karmaDataURL, this.state.session)
 
     this.storeSession(newSession)
     this.setState({session: newSession})

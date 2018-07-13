@@ -56,7 +56,7 @@ export interface Field<V = any> {
 
   serialize(): SerializedField
 
-  transformRawValue(value: any): V
+  transformRawValue(value: unknown): V
   transformValueToExpression(value: V): Expression
 
   isValidValue(value: V): string[] | null

@@ -15,9 +15,12 @@
 // export * from '@karma.run/editor-media-common'
 
 import {ServerPlugin} from '@karma.run/editor-common'
+// import {name, version} from '../../package.json'
 
 export default class MediaPlugin implements ServerPlugin {
-  public name: string = 'media'
+  public name: string = '@karma.run/editor-plugin-media'
   public version: string = '0.13.0'
-  public setup() {}
+  public clientModule = '@karma.run/editor-plugin-media/lib/client'
+
+  public initialize() {}
 }

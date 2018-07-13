@@ -7,9 +7,10 @@ export default (env: any) => {
   const sharedConfig: webpack.Configuration = {
     devtool: isProductionBuild ? 'source-map' : 'cheap-module-eval-source-map',
     output: {
-      path: path.resolve(__dirname, './dist/static/'),
+      path: path.resolve(__dirname, './dist/client/'),
       publicPath: '/static/'
     },
+    resolve: {extensions: ['.ts', '.tsx', '.js']},
     module: {
       rules: [{test: /.tsx?$/, use: 'ts-loader'}]
     }
@@ -17,7 +18,12 @@ export default (env: any) => {
 
   const clientConfig: webpack.Configuration = {
     ...sharedConfig,
-    entry: './src/client/index.ts'
+    entry: './src/client/index.ts',
+    output: {
+      ...sharedConfig.output,
+      library: 'editor',
+      libraryTarget: 'umd'
+    }
   }
 
   const workerConfig: webpack.Configuration = {

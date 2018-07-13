@@ -1,7 +1,5 @@
 import axios from 'axios'
-
 import {DatabaseHeader, SignatureHeader, Session} from '@karma.run/editor-common'
-
 import {UploadResponse, CommitResponse, CopyResponse, DeleteResponse} from '../common'
 
 const httpClient = axios.create()

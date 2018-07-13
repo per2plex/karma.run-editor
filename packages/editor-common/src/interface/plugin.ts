@@ -7,14 +7,15 @@ export interface ServerPluginContext {
 export interface ServerPlugin {
   name: string
   version: string
-  clientModules?: string[]
+  clientModule?: string
   initialize(context: ServerPluginContext): void
 }
 
 export interface ClientPluginContext {}
+export type PluginTuple = [string, string]
 
 export interface ClientPlugin {
   name: string
   version: string
-  initialize(context: ServerPluginContext): void
+  initialize(): void
 }
