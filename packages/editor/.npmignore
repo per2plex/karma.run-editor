@@ -1,6 +1,4 @@
 /src/
-/static/
 .env
 .env.example
 tsconfig.json
-webpack.config.ts

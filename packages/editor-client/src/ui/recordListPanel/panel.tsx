@@ -162,6 +162,10 @@ export class RecordListPanel extends React.PureComponent<
     this.loadRecords(this.state.offset + this.state.limit)
   }
 
+  public async reload() {
+    await this.loadRecords(this.state.offset)
+  }
+
   private loadRecords = async (offset: number) => {
     if (!this.viewContext) return
 
@@ -277,21 +281,26 @@ export type SpecializedRecordListProps = Omit<
 >
 
 export interface RootRecordListPanelProps extends SpecializedRecordListProps {
-  onEditRecord: (model: Ref, id?: Ref) => void
-  onDeleteRecord: (model: Ref, id: Ref) => void
+  onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
+  onDeleteRecord: (model: Ref, id: Ref) => Promise<void>
 }
 
 export class RootRecordListPanel extends React.PureComponent<RootRecordListPanelProps> {
-  private handleNewRecord = () => {
-    this.props.onEditRecord(this.props.model)
+  private listRef = React.createRef<RecordListPanel>()
+
+  private handleNewRecord = async () => {
+    await this.props.onEditRecord(this.props.model)
+    this.listRef.current!.reload()
   }
 
-  private handleEditRecord = (record: ModelRecord) => {
-    this.props.onEditRecord(this.props.model, record.id)
+  private handleEditRecord = async (record: ModelRecord) => {
+    await this.props.onEditRecord(this.props.model, record.id)
+    this.listRef.current!.reload()
   }
 
-  private handleDeleteRecord = (record: ModelRecord) => {
-    this.props.onDeleteRecord(this.props.model, record.id)
+  private handleDeleteRecord = async (record: ModelRecord) => {
+    await this.props.onDeleteRecord(this.props.model, record.id)
+    this.listRef.current!.reload()
   }
 
   public render() {
@@ -300,6 +309,7 @@ export class RootRecordListPanel extends React.PureComponent<RootRecordListPanel
     return (
       <RecordListPanel
         {...this.props}
+        ref={this.listRef}
         headerPrefix={_('listRecordPrefix')}
         toolbarActions={[
           {

@@ -19,13 +19,13 @@ RUN mkdir ./libvips \
   && wget ${LIBVIPS_SOURCE_URL} \
   && tar -xzf ${LIBVIPS_SOURCE_TAR} --strip 1 \
   && ./configure \
-		--prefix=/usr \
-		--enable-debug=no \
-		--without-gsf \
-		--disable-static \
-		--mandir=/usr/share/man \
-		--infodir=/usr/share/info \
-		--docdir=/usr/share/doc \
+  --prefix=/usr \
+  --enable-debug=no \
+  --without-gsf \
+  --disable-static \
+  --mandir=/usr/share/man \
+  --infodir=/usr/share/info \
+  --docdir=/usr/share/doc \
   && make \
   && make install
 
@@ -43,7 +43,7 @@ ARG HOME_DIR=/home/node/karma.run-editor/
 COPY --from=builder $HOME_DIR $HOME_DIR
 COPY --from=builder /usr/lib/libvips* /usr/lib/
 
-# Install libvips
+# Install libvips dependencies
 RUN apk add libjpeg-turbo libexif lcms2 fftw giflib glib libpng libwebp expat orc tiff librsvg \
   --update-cache --repository https://dl-3.alpinelinux.org/alpine/edge/testing/
 

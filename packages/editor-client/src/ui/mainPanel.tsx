@@ -8,6 +8,7 @@ import {StackView} from './common/stackView'
 import {RootRecordListPanelContainer, SelectRecordListPanelContainer} from './recordListPanel'
 import {Deferred, lastItemThrow} from '@karma.run/editor-common'
 import {RecordEditPanelContainer} from './recordEditPanel'
+import {RecordDeletePanelContainer} from './recordDeletePanel'
 
 export const enum PanelType {
   RootList = 'rootList',
@@ -47,21 +48,21 @@ export function RootListPanelContext(
 export interface SelectListPanelContext extends BasePanelContext {
   type: PanelType.SelectList
   model: Ref
-  resultRecord: Deferred<ModelRecord | undefined>
+  result: Deferred<ModelRecord | undefined>
 }
 
 export function SelectListPanelContext(
   model: Ref,
   id: string = shortid.generate()
 ): SelectListPanelContext {
-  return {type: PanelType.SelectList, id, model, resultRecord: new Deferred()}
+  return {type: PanelType.SelectList, id, model, result: new Deferred()}
 }
 
 export interface EditPanelContext extends BasePanelContext {
   type: PanelType.Edit
   model: Ref
   recordID?: Ref
-  resultRecord: Deferred<ModelRecord | undefined>
+  result: Deferred<ModelRecord | undefined>
 }
 
 export function EditPanelContext(
@@ -71,7 +72,28 @@ export function EditPanelContext(
 ): EditPanelContext {
   return {
     type: PanelType.Edit,
-    resultRecord: new Deferred(),
+    result: new Deferred(),
+    recordID,
+    model,
+    id
+  }
+}
+
+export interface DeletePanelContext extends BasePanelContext {
+  type: PanelType.Delete
+  model: Ref
+  recordID: Ref
+  result: Deferred<void>
+}
+
+export function DeletePanelContext(
+  model: Ref,
+  recordID: Ref,
+  id: string = shortid.generate()
+): DeletePanelContext {
+  return {
+    type: PanelType.Delete,
+    result: new Deferred(),
     recordID,
     model,
     id
@@ -122,7 +144,7 @@ export type PanelContext =
   | RootListPanelContext
   | SelectListPanelContext
   | EditPanelContext
-  // | DeletePanelContext
+  | DeletePanelContext
   // | EditorPanelContext
   // | JSONEditorPanelContext
   | NotFoundContext
@@ -161,7 +183,7 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     const context = EditPanelContext(model, id)
     this.pushPanelContext(context)
 
-    return await context.resultRecord
+    return await context.result
   }
 
   private handleBack = (_model: Ref, record?: ModelRecord) => {
@@ -170,20 +192,22 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     switch (context.type) {
       case PanelType.SelectList:
       case PanelType.Edit:
-        return context.resultRecord.resolve(record)
+        return context.result.resolve(record)
     }
   }
 
-  private handleDeleteRecord = (_model: Ref, _id: Ref) => {
-    // TODO
-    // this.pushPanelContext(EditPanelContext(model, id))
+  private handleDeleteRecord = async (model: Ref, id: Ref) => {
+    const context = DeletePanelContext(model, id)
+    this.pushPanelContext(context)
+
+    return await context.result
   }
 
   private handleSelectRecord = async (model: Ref) => {
     const context = SelectListPanelContext(model)
     this.pushPanelContext(context)
 
-    return await context.resultRecord
+    return await context.result
   }
 
   private pushPanelContext(context: PanelContext) {
@@ -233,6 +257,18 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
             onBack={this.handleBack}
             onEditRecord={this.handleEditRecord}
             onSelectRecord={this.handleSelectRecord}
+          />
+        )
+
+      case PanelType.Delete:
+        return (
+          <RecordDeletePanelContainer
+            model={context.model}
+            recordID={context.recordID}
+            disabled={disabled}
+            onBack={this.handleBack}
+            onEditRecord={this.handleEditRecord}
+            onDeleteRecord={this.handleDeleteRecord}
           />
         )
 

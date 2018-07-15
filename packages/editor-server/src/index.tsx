@@ -6,10 +6,11 @@
  */
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
-import {ServerPlugin, PluginTuple} from '@karma.run/editor-common'
 
+import path from 'path'
 import express from 'express'
-import * as path from 'path'
+
+import {ServerPlugin, PluginTuple} from '@karma.run/editor-common'
 
 const cacheOptions = {maxAge: '1d'}
 
@@ -18,16 +19,16 @@ export interface MiddlewareOptions {
   basePath?: string
   karmaDataURL: string
 
-  modulesPath?: string
-  clientModule: string
-  workerModule: string
+  bundlePublicPath: string
+  clientName: string
+  workerName: string
 
   favicon: string
   plugins?: ServerPlugin[]
 }
 
 export function editorMiddleware(opts: MiddlewareOptions): express.Router {
-  const title = opts.title || 'karma.tools/editor'
+  const title = opts.title || 'karma.data - editor'
   const basePath = opts.basePath || ''
 
   const router = express.Router()
@@ -45,12 +46,16 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
     return res.sendFile(draftJSCSSPath, cacheOptions)
   })
 
-  router.get(`${basePath}/static/client.js`, (_, res) => {
-    return res.sendFile(opts.clientModule, cacheOptions)
-  })
+  router.use(
+    `${basePath}/static`,
+    express.static(opts.bundlePublicPath, {
+      index: false,
+      ...cacheOptions
+    })
+  )
 
-  router.get(`${basePath}/static/worker.js`, (_, res) => {
-    return res.sendFile(opts.workerModule, cacheOptions)
+  router.use(`${basePath}/static`, (_, res) => {
+    return res.status(404).send()
   })
 
   router.get(`${basePath}/static/favicon.ico`, (_, res) => {
@@ -66,18 +71,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
     }
   }
 
-  if (opts.modulesPath) {
-    router.use(
-      `${basePath}/static`,
-      express.static(opts.modulesPath, {
-        index: false,
-        ...cacheOptions
-      })
-    )
-
-    router.use(`${basePath}/static`, (_, res) => {
-      return res.status(404).send()
-    })
+  if (opts.bundlePublicPath) {
   }
 
   router.get(`${basePath}(/*)?`, (_, res) => {
@@ -85,6 +79,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
       title,
       basePath,
       karmaDataURL: opts.karmaDataURL,
+      workerURL: `/static/worker.js`,
       plugins: clientPlugins
     })
 
@@ -108,7 +103,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
             dangerouslySetInnerHTML={{__html: configJSON}}
           />
 
-          <script src={`${basePath}/static/client.js`} defer />
+          <script src={`${basePath}/static/${opts.clientName}`} defer />
         </head>
         <body>
           <div id="EditorRoot" />
