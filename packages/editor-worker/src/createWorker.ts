@@ -1,5 +1,4 @@
 import {InputMessage, OutputMessage, MessageMap} from '@karma.run/editor-common'
-import * as debug from '@karma.run/editor-common'
 
 export type MessageHandlerMap<T extends MessageMap> = {
   [K in keyof T]: (input: T[K]['input']) => T[K]['output']
@@ -21,5 +20,5 @@ export function createWorker<T extends MessageMap>(
     postMessage(outMsg)
   })
 
-  debug.info(`${name} worker started...`)
+  console.info(`${name} worker started...`)
 }

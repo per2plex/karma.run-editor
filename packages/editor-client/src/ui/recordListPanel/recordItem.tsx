@@ -1,12 +1,14 @@
 import * as React from 'react'
 
-import {ViewContext} from '../../api/viewContext'
-import {LocaleContext} from '../../context/locale'
-import {ReadonlyRefMap} from '../../util/ref'
-import {ModelRecord} from '../../context/session'
-
-import {Card, CardFooter} from '../../ui/common/card'
-import {DescriptionView} from '../../ui/common/descriptionView'
+import {
+  ViewContext,
+  LocaleContext,
+  ReadonlyRefMap,
+  ModelRecord,
+  Card,
+  CardFooter,
+  DescriptionView
+} from '@karma.run/editor-common'
 
 export interface RecordItemProps {
   record: ModelRecord

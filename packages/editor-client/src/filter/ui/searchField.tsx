@@ -1,7 +1,14 @@
 import * as React from 'react'
 import {style} from 'typestyle'
-import {Color, FontWeight, Spacing} from '../../ui/style'
-import {InputStyle, TextInput, TextInputType} from '../../ui/common'
+
+import {
+  Color,
+  FontWeight,
+  Spacing,
+  InputStyle,
+  TextInput,
+  TextInputType
+} from '@karma.run/editor-common'
 
 export const QuickSearchFieldStyle = style({
   $debugName: 'QuickSearchFieldStyle',

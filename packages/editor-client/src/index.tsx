@@ -11,4 +11,3 @@ import './ui/global'
 
 export * from './editor'
 export * from './version'
-export {Theme} from './context/theme'

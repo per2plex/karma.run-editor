@@ -1,12 +1,19 @@
 import * as React from 'react'
 
 import {style} from 'typestyle'
-import {Color, Spacing, FontSize, FontWeight} from '../../ui/style'
 
-import {Button, ButtonType} from '../../ui/common'
-import {IconName} from '../../ui/common/icon'
-import {stringToColor} from '../../util/string'
-import {LocaleContext, withLocale} from '../../context/locale'
+import {
+  Button,
+  ButtonType,
+  IconName,
+  stringToColor,
+  LocaleContext,
+  withLocale,
+  Color,
+  Spacing,
+  FontSize,
+  FontWeight
+} from '@karma.run/editor-common'
 
 export interface SidePanelFooterProps {
   username: string

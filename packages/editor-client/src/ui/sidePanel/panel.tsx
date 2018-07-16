@@ -1,28 +1,39 @@
 import * as React from 'react'
 import Fuse from 'fuse.js'
-import {uniqueFilter} from '@karma.run/editor-common'
 import {Ref} from '@karma.run/sdk'
 import {style} from 'typestyle'
+import memoizeOne from 'memoize-one'
+
+import {
+  Color,
+  Spacing,
+  FontWeight,
+  DefaultBorderRadiusPx,
+  Select,
+  SelectType,
+  Colors,
+  Theme,
+  withTheme,
+  EntryListLocation,
+  withLocationAction,
+  LocationActionContext,
+  uniqueFilter,
+  SearchInput,
+  convertKeyToLabel,
+  withSession,
+  SessionContext,
+  refToString,
+  ReadonlyRefMap,
+  EditorContext,
+  ModelGroup,
+  ViewContext
+} from '@karma.run/editor-common'
 
 import * as storage from '../../util/storage'
-import {Color, Spacing, FontWeight, DefaultBorderRadiusPx} from '../../ui/style'
 
-import {Select, SelectType} from '../../ui/common'
-import {Colors, Theme, withTheme} from '../../context/theme'
-
-import {EntryListLocation, withLocationAction, LocationActionContext} from '../../context/location'
-
-import {SearchInput} from '../../ui/common/searchInput'
-import {convertKeyToLabel} from '../../util/string'
 import {version} from '../../version'
-import {withSession, SessionContext} from '../../context/session'
-import {refToString, ReadonlyRefMap} from '../../util/ref'
-import {EditorContext} from '../../api/editorContext'
-import {ModelGroup} from '../../api/modelGroup'
 import {SidePanelFooterContainer} from './footer'
 import {SidePanelSection, SidePanelSectionItem} from './section'
-import {ViewContext} from '../../api/viewContext'
-import memoizeOne from 'memoize-one'
 
 export const GroupStateStorageKey = 'sidePanelGroupState_v1'
 

@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.json",
   "include": ["./src/**/*"],
   "compilerOptions": {
-    "lib": ["es2017", "dom"]
+    "lib": ["es2017", "dom"],
+    "resolveJsonModule": true
   }
 }

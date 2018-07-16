@@ -1,6 +1,5 @@
 import React from 'react'
-import {ConfigContext, Config} from '../context/config'
-import {CenteredLoadingIndicator} from '../ui/common/loader'
+import {ConfigContext, Config, CenteredLoadingIndicator} from '@karma.run/editor-common'
 
 export interface ConfigProviderState {
   isLoadingPlugins: boolean

@@ -37,11 +37,9 @@
     "react-dom": "^16.4.0",
     "react-markdown": "^3.1.4",
     "shortid": "^2.2.8",
-    "typestyle": "^2.0.1",
-    "vis": "^4.21.0"
+    "typestyle": "^2.0.1"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.1",
     "@types/classnames": "^2.2.3",
     "@types/draft-js": "^0.10.16",
     "@types/memoize-one": "^3.1.1",
@@ -49,7 +47,6 @@
     "@types/react": "^16.3.14",
     "@types/react-dom": "^16.0.5",
     "@types/shortid": "^0.0.29",
-    "@types/vis": "^4.21.0",
     "npm-run-all": "^4.1.3",
     "shx": "^0.3.0",
     "typescript": "^3.0.0-rc"

@@ -1,8 +1,7 @@
 import * as React from 'react'
 
 import {style} from 'typestyle'
-import {Color, Spacing, FontWeight} from '../../ui/style'
-import {Icon, IconName} from '../../ui/common/icon'
+import {Icon, IconName, Color, Spacing, FontWeight} from '@karma.run/editor-common'
 
 export interface SidePanelSectionItem {
   id: string

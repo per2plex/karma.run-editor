@@ -12,16 +12,18 @@
   "scripts": {
     "start": "node ./dist/index.js run",
     "cli": "node ./dist/index.js",
-    "watch": "npm-run-all clean --parallel watch:*",
+    "watch": "run-p watch:*",
     "build": "tsc",
     "watch:build": "tsc --watch",
-    "watch:run": "nodemon --watch ./dist/**/* --exec \"node ./dist/index.js run --watch\"",
+    "watch:run": "nodemon --watch ./dist --exec \"node ./dist/index.js run --watch\"",
     "copy:license": "shx cp ../../LICENSE ./",
     "clean": "shx rm -rf ./LICENSE ./dist",
     "prepare": "run-s clean copy:license build"
   },
   "dependencies": {
     "@karma.run/editor-server": "^0.13.0",
+    "@karma.run/editor-client": "^0.13.0",
+    "@karma.run/editor-worker": "^0.13.0",
     "commander": "^2.15.1",
     "compression": "^1.7.2",
     "dotenv": "^5.0.1",
@@ -32,9 +34,7 @@
     "rimraf": "^2.6.2"
   },
   "optionalDependencies": {
-    "webpack": "^4.12.0",
-    "@karma.run/editor-client": "^0.13.0",
-    "@karma.run/editor-worker": "^0.13.0"
+    "webpack": "^4.12.0"
   },
   "devDependencies": {
     "@types/compression": "^0.0.36",

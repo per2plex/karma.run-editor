@@ -2,8 +2,6 @@ import React from 'react'
 import memoizeOne from 'memoize-one'
 import qs from 'qs'
 
-import {SessionContext, withSession} from '../context/session'
-import {withConfig, Config} from '../context/config'
 import {
   LocationType,
   AppLocation,
@@ -16,8 +14,12 @@ import {
   EntryListLocation,
   DashboardLocation,
   LocationContext,
-  LocationActionContext
-} from '../context/location'
+  LocationActionContext,
+  SessionContext,
+  withSession,
+  withConfig,
+  Config
+} from '@karma.run/editor-common'
 
 export function urlPathForLocation(basePath: string, location: AppLocation): string {
   switch (location.type) {

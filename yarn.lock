@@ -360,19 +360,6 @@
     "@webassemblyjs/wast-parser" "1.5.13"
     long "^3.2.0"
 
-"@webpack-contrib/config-loader@^1.0.0":
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/@webpack-contrib/config-loader/-/config-loader-1.1.3.tgz#6cce904cabfd880203db600207fdbf64f4744fd7"
-  dependencies:
-    "@webpack-contrib/schema-utils" "^1.0.0-beta.0"
-    chalk "^2.1.0"
-    cosmiconfig "^5.0.2"
-    loud-rejection "^1.6.0"
-    merge-options "^1.0.1"
-    minimist "^1.2.0"
-    resolve "^1.6.0"
-    webpack-log "^1.1.2"
-
 "@webpack-contrib/config-loader@^1.2.0":
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@webpack-contrib/config-loader/-/config-loader-1.2.1.tgz#5b3dd474e207437939d294d200c68b7b00008e04"
@@ -4553,38 +4540,6 @@ wcwidth@^1.0.1:
   resolved "https://registry.yarnpkg.com/wcwidth/-/wcwidth-1.0.1.tgz#f0b0dcf915bc5ff1528afadb2c0e17b532da2fe8"
   dependencies:
     defaults "^1.0.3"
-
-webpack-command@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/webpack-command/-/webpack-command-0.2.1.tgz#67b741026807813947dfc0154fba9db27e3b42eb"
-  dependencies:
-    "@webpack-contrib/config-loader" "^1.0.0"
-    "@webpack-contrib/schema-utils" "^1.0.0-beta.0"
-    camelcase "^5.0.0"
-    chalk "^2.3.2"
-    debug "^3.1.0"
-    decamelize "^2.0.0"
-    enhanced-resolve "^4.0.0"
-    import-local "^1.0.0"
-    isobject "^3.0.1"
-    loader-utils "^1.1.0"
-    log-symbols "^2.2.0"
-    loud-rejection "^1.6.0"
-    meant "^1.0.1"
-    meow "^5.0.0"
-    merge-options "^1.0.0"
-    object.values "^1.0.4"
-    opn "^5.3.0"
-    ora "^2.1.0"
-    plur "^3.0.0"
-    pretty-bytes "^5.0.0"
-    strip-ansi "^4.0.0"
-    text-table "^0.2.0"
-    titleize "^1.0.1"
-    update-notifier "^2.3.0"
-    v8-compile-cache "^2.0.0"
-    webpack-log "^1.1.2"
-    wordwrap "^1.0.0"
 
 webpack-command@^0.4.1:
   version "0.4.1"

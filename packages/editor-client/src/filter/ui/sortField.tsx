@@ -1,9 +1,18 @@
 import * as React from 'react'
 import {style} from 'typestyle'
-import {Select, SelectStyle, Button, ButtonType, SelectType} from '../../ui/common'
-import {Color, FontWeight, Spacing} from '../../ui/style'
-import {IconName} from '../../ui/common/icon'
-import {SortConfiguration} from '../configuration'
+
+import {
+  Select,
+  SelectStyle,
+  Button,
+  ButtonType,
+  SelectType,
+  Color,
+  FontWeight,
+  Spacing,
+  IconName,
+  SortConfiguration
+} from '@karma.run/editor-common'
 
 export const SortFieldStyle = style({
   $debugName: 'SortFieldStyle',

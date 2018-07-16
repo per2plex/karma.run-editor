@@ -1,19 +1,15 @@
 import React from 'react'
-import {CenteredLoadingIndicator} from '../ui/common/loader'
-import {Locale, defaultLocale, LocaleContext, MessageMap, MessageKey} from '../context/locale'
+
+import {
+  CenteredLoadingIndicator,
+  Locale,
+  defaultLocale,
+  LocaleContext,
+  loadLocaleMessageMap,
+  LocaleMessageKey
+} from '@karma.run/editor-common'
 
 export const localeMap = new Map<Locale, string>([['en-US', 'English'], ['de-DE', 'Deutsch']])
-
-export async function loadLocaleMessageMap(locale: Locale): Promise<MessageMap> {
-  switch (locale) {
-    case 'en-US':
-      return (await import('../locale/en-US.json')).default
-
-    case 'de-DE':
-      // TODO: return (await import('../locale/de-DE.json')).default
-      return (await import('../locale/en-US.json')).default
-  }
-}
 
 export function getNavigatorLocale(): Locale {
   const languageCodes = window.navigator.languages || [window.navigator.language]
@@ -60,7 +56,7 @@ export class LocaleProvider extends React.Component<{}, LocaleContext> {
     })
   }
 
-  private get = (key: MessageKey) => {
+  private get = (key: LocaleMessageKey) => {
     if (!this.state.messageMap) return key
     return this.state.messageMap[key] || key
   }

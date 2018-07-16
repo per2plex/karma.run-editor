@@ -1,4 +1,5 @@
 import React from 'react'
+
 import {
   Sort,
   ValuePathSegmentType,
@@ -6,7 +7,22 @@ import {
   Condition,
   ValuePath,
   StructPathSegment,
-  ConditionType
+  ConditionType,
+  Config,
+  withConfig,
+  EditorContext,
+  ModelGroup,
+  RefMap,
+  unserializeModel,
+  ViewContext,
+  defaultFieldRegistry,
+  escapeRegExp,
+  WorkerContext,
+  withWorker,
+  SessionContext,
+  initialEditorData,
+  EditorData,
+  ModelRecord
 } from '@karma.run/editor-common'
 
 import {
@@ -26,18 +42,6 @@ import {
 } from '@karma.run/sdk'
 
 import * as storage from '../util/storage'
-import {Config, withConfig} from '../context/config'
-import {EditorContext} from '../api/editorContext'
-import {ModelGroup} from '../api/modelGroup'
-import {RefMap} from '../util/ref'
-
-import {unserializeModel} from '../api/model'
-import {ViewContext} from '../api/viewContext'
-import {defaultFieldRegistry} from '../fields/registry'
-import {escapeRegExp} from '../util/string'
-
-import {WorkerContext, withWorker} from '../context/worker'
-import {SessionContext, initialEditorData, EditorData, ModelRecord} from '../context/session'
 
 export const defaultModelGroupID: string = 'default'
 export const defaultEditorContextID: string = 'default'
@@ -51,7 +55,7 @@ export interface SessionProviderProps {
 }
 
 export class SessionProvider extends React.Component<SessionProviderProps, SessionContext> {
-  private refreshSessionIntervalID?: number
+  private refreshSessionIntervalID?: any
 
   constructor(props: SessionProviderProps) {
     super(props)
@@ -65,6 +69,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       invalidate: this.invalidate,
       getRecord: this.getRecord,
       getRecordList: this.getRecordList,
+      getReferrers: this.getReferrers,
       saveRecord: this.saveRecord
     }
   }
@@ -151,6 +156,84 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
     let listExpression = buildExpression(e =>
       e.mapList(e.all(e.data(d => d.ref(model))), (_, value) => e.metarialize(value))
+    )
+
+    if (filters.length > 0) {
+      for (const filter of filters) {
+        if (filter.type === ConditionType.StringIncludes) {
+          listExpression = buildExpression(e =>
+            e.filterList(listExpression, (_, value) =>
+              e.matchRegex(
+                escapeRegExp(filter.value),
+                filterValueExpression(value, [StructPathSegment('value'), ...filter.path])
+              )
+            )
+          )
+        }
+      }
+    }
+
+    function filterValueExpression(value: Expression, valuePath: ValuePath) {
+      for (const segment of valuePath) {
+        value = expressionForValuePathSegment(value, segment)
+      }
+
+      return value
+    }
+
+    function expressionForValuePathSegment(value: Expression, segment: ValuePathSegment) {
+      switch (segment.type) {
+        case ValuePathSegmentType.Struct:
+          return e.field(segment.key, value)
+
+        case ValuePathSegmentType.Union:
+          return e.field(segment.key, value)
+
+        default:
+          throw new Error('Not implemented!')
+      }
+    }
+
+    let valueExpression = (value: Expression) => {
+      for (const segment of sort.path) {
+        value = expressionForValuePathSegment(value, segment)
+      }
+
+      return value
+    }
+
+    listExpression = buildExpression(e =>
+      e.memSort(listExpression, value => valueExpression(value))
+    )
+
+    if (sort.descending) {
+      listExpression = e.reverseList(listExpression)
+    }
+
+    const records: MetarializedRecord[] = await query(
+      this.props.config.karmaDataURL,
+      this.state.session,
+      buildFunction(e => () => e.slice(listExpression, offset, limit))
+    )
+
+    return records.map(record => this.transformMetarializedRecord(record, viewContext))
+  }
+
+  public getReferrers = async (
+    model: Ref,
+    id: Ref,
+    limit: number,
+    offset: number,
+    sort: Sort,
+    filters: Condition[]
+  ): Promise<ModelRecord[]> => {
+    if (!this.state.session) throw new Error('No session!')
+
+    const viewContext = this.state.viewContextMap.get(model)
+    if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
+
+    let listExpression = buildExpression(e =>
+      e.mapList(e.allReferrers(e.data(d => d.ref(id))), (_, value) => e.metarialize(value))
     )
 
     if (filters.length > 0) {

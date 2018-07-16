@@ -1,9 +1,14 @@
 import * as React from 'react'
 
+import {
+  NotificationViewContainer,
+  CenteredLoadingIndicator,
+  withLocation,
+  LocationContext,
+  AppLocation
+} from '@karma.run/editor-common'
+
 import {LoginContainer} from './login'
-import {NotificationViewContainer} from '../ui/common/notification'
-import {CenteredLoadingIndicator} from '../ui/common/loader'
-import {withLocation, LocationContext, AppLocation} from '../context/location'
 import {AsyncComponent} from './asyncComponent'
 
 export interface RootViewProps {

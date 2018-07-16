@@ -2,12 +2,17 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 
 import {forceRenderStyles} from 'typestyle'
-import {deleteNullValues, EventDispatcher} from '@karma.run/editor-common'
 
-import {Theme, defaultTheme} from './context/theme'
+import {
+  deleteNullValues,
+  EventDispatcher,
+  Theme,
+  defaultTheme,
+  Config,
+  defaultConfig
+} from '@karma.run/editor-common'
+
 import {ThemeProvider} from './provider/theme'
-
-import {Config, defaultConfig} from './context/config'
 import {ConfigProvider} from './provider/config'
 
 import {SessionProviderContainer} from './provider/session'

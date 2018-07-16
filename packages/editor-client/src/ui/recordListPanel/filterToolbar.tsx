@@ -1,12 +1,9 @@
 import React from 'react'
-
 import {style} from 'typestyle'
-import {ViewContext} from '../../api/viewContext'
-import {Spacing} from '../../ui/style'
+import {ViewContext, SortConfiguration, FilterFieldGroup, Spacing} from '@karma.run/editor-common'
+
 import {QuickSearchFieldStyle, QuickSearchField} from '../../filter/ui/searchField'
 import {SortFieldStyle, SortField} from '../../filter/ui/sortField'
-import {SortConfiguration, FilterFieldGroup} from '../../filter/configuration'
-// import {Filter, Sort} from '../../api/karma'
 
 export const ToolbarFilterStyle = style({
   display: 'flex',

@@ -1,6 +1,6 @@
 import React from 'react'
 import shortid from 'shortid'
-import {Notification, NotificationContext} from '../context/notification'
+import {Notification, NotificationContext} from '@karma.run/editor-common'
 
 export const notificationDisplayTime = 5000
 

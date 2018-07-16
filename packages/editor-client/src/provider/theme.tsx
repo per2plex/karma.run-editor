@@ -1,5 +1,5 @@
 import React from 'react'
-import {Theme, ThemeContext} from '../context/theme'
+import {Theme, ThemeContext} from '@karma.run/editor-common'
 
 export interface ThemeProviderProps {
   theme: Theme

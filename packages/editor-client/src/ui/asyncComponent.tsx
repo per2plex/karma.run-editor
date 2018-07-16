@@ -1,5 +1,5 @@
 import React from 'react'
-import {CenteredLoadingIndicator} from './common/loader'
+import {CenteredLoadingIndicator} from '@karma.run/editor-common'
 
 export interface AsyncComponentProps {
   children: () => Promise<React.ReactNode>

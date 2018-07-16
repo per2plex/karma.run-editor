@@ -2,17 +2,26 @@ import React from 'react'
 import {Ref} from '@karma.run/sdk'
 import {Filter, Sort, ConditionType, Condition} from '@karma.run/editor-common'
 
-import {Panel} from '../common/panel'
-import {ViewContextPanelHeader} from '../common/panel/viewContextHeader'
-import {SessionContext, withSession, ModelRecord} from '../../context/session'
-import {PanelToolbar} from '../common/panel/toolbar'
-import {ViewContext} from '../../api/viewContext'
-import {Button, ButtonType, FlexList} from '../common'
-import {IconName} from '../common/icon'
-import {PanelContent} from '../common/panel/content'
+import {
+  ViewContextPanelHeader,
+  Panel,
+  SessionContext,
+  withSession,
+  ModelRecord,
+  PanelToolbar,
+  ErrorBar,
+  ViewContext,
+  Button,
+  ButtonType,
+  FlexList,
+  IconName,
+  PanelContent,
+  withLocale,
+  LocaleContext,
+  SortConfiguration
+} from '@karma.run/editor-common'
+
 import {ToolbarFilter} from '../recordListPanel/filterToolbar'
-import {withLocale, LocaleContext} from '../../context/locale'
-import {SortConfiguration} from '../../filter/configuration'
 import {RecordList} from '../recordListPanel/panel'
 
 export interface ToolbarAction {
@@ -154,8 +163,9 @@ export class RecordDeletePanel extends React.PureComponent<
     }
 
     // Request one more than the limit to check if there's another page
-    const records = await this.props.sessionContext.getRecordList(
+    const records = await this.props.sessionContext.getReferrers(
       this.viewContext.model,
+      this.props.recordID,
       this.state.limit + 1,
       offset,
       this.sort,
@@ -201,12 +211,12 @@ export class RecordDeletePanel extends React.PureComponent<
                 type={ButtonType.Icon}
                 onTrigger={() => {}}
                 icon={IconName.DeleteDocument}
-                disabled={this.props.disabled}
+                disabled={
+                  this.props.disabled || (this.state.records && this.state.records.length > 0)
+                }
                 label={_('deleteRecord')}
               />
-              <div>
-                This record is still being referred by the records below and cannot be deleted.
-              </div>
+              <div />
             </FlexList>
           }
           right={
@@ -235,8 +245,9 @@ export class RecordDeletePanel extends React.PureComponent<
                 disableQuickSearch={viewContext.displayKeyPaths.length === 0}
               />
             </>
-          }
-        />
+          }>
+          <ErrorBar message={_('recordIsStillBeingReferred')} />
+        </PanelToolbar>
         <PanelContent>
           <RecordList
             viewContext={viewContext}

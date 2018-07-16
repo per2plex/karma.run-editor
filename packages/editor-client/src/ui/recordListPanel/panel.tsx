@@ -1,21 +1,33 @@
 import React from 'react'
 import {Ref} from '@karma.run/sdk'
-import {Filter, Sort, ConditionType, Condition, Omit} from '@karma.run/editor-common'
 
-import {Panel} from '../common/panel'
-import {ViewContextPanelHeader} from '../common/panel/viewContextHeader'
-import {SessionContext, withSession, ModelRecord} from '../../context/session'
-import {PanelToolbar} from '../common/panel/toolbar'
-import {ViewContext} from '../../api/viewContext'
-import {CenteredLoadingIndicator} from '../common/loader'
-import {Button, ButtonType, FlexList} from '../common'
-import {refToString} from '../../util/ref'
-import {IconName} from '../common/icon'
-import {PanelContent} from '../common/panel/content'
+import {
+  Filter,
+  Sort,
+  ConditionType,
+  Condition,
+  Omit,
+  Panel,
+  ViewContextPanelHeader,
+  SessionContext,
+  withSession,
+  ModelRecord,
+  PanelToolbar,
+  ViewContext,
+  CenteredLoadingIndicator,
+  Button,
+  ButtonType,
+  FlexList,
+  refToString,
+  IconName,
+  PanelContent,
+  withLocale,
+  LocaleContext,
+  SortConfiguration
+} from '@karma.run/editor-common'
+
 import {ToolbarFilter} from './filterToolbar'
-import {withLocale, LocaleContext} from '../../context/locale'
 import {RecordItem} from './recordItem'
-import {SortConfiguration} from '../../filter/configuration'
 
 export interface ToolbarAction {
   key: string

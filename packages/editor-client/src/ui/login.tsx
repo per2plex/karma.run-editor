@@ -1,18 +1,27 @@
 import * as React from 'react'
 
 import {style} from 'typestyle'
-import {TextInputType, ButtonType} from '../ui/common'
-import {Color, Spacing, FontWeight} from '../ui/style'
-
-import {Button, TextInput} from '../ui/common'
-
 import {KarmaError, KarmaErrorType, Session} from '@karma.run/sdk'
 
-import {Theme, withTheme} from '../context/theme'
-import {SessionContext, withSession} from '../context/session'
-import {withLocale, LocaleContext} from '../context/locale'
-import {CenteredLoadingIndicator} from './common/loader'
-import {withNotification, NotificationContext, NotificationType} from '../context/notification'
+import {
+  TextInputType,
+  ButtonType,
+  Color,
+  Spacing,
+  FontWeight,
+  Button,
+  TextInput,
+  Theme,
+  withTheme,
+  SessionContext,
+  withSession,
+  withLocale,
+  LocaleContext,
+  CenteredLoadingIndicator,
+  withNotification,
+  NotificationContext,
+  NotificationType
+} from '@karma.run/editor-common'
 
 export interface LoginFormState {
   username: string

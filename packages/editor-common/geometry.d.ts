@@ -1,1 +1,1 @@
-export * from './lib/types/geometry'
+export * from './lib/types/util/geometry'

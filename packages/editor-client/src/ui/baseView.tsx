@@ -1,7 +1,15 @@
 import * as React from 'react'
 import {style} from 'typestyle'
 
-import {Color, FontSize} from '../ui/style'
+import {
+  Color,
+  FontSize,
+  withSession,
+  SessionContext,
+  withLocation,
+  LocationContext
+} from '@karma.run/editor-common'
+
 import {SidePanelContainer} from './sidePanel'
 // import {FlexList} from '../ui/common'
 
@@ -14,8 +22,6 @@ import {SidePanelContainer} from './sidePanel'
 // } from '../ui/panelManager'
 
 // import {LocationType} from '../store/locationStore'
-import {withSession, SessionContext} from '../context/session'
-import {withLocation, LocationContext} from '../context/location'
 import {MainPanelContainer} from './mainPanel'
 
 export interface BaseViewProps {

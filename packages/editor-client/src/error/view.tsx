@@ -1,9 +1,8 @@
 import * as React from 'react'
 import {style} from 'typestyle'
+import {Button, ButtonType, FontSize, Spacing, Color, FontWeight} from '@karma.run/editor-common'
 
 import * as storage from '../util/storage'
-import {Button, ButtonType} from '../ui/common'
-import {FontSize, Spacing, Color, FontWeight} from '../ui/style'
 
 export namespace ErrorView {
   export interface Props {

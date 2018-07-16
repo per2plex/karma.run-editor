@@ -2,9 +2,17 @@ import React from 'react'
 import shortid from 'shortid'
 import {Ref} from '@karma.run/sdk'
 
-import {withLocation, LocationContext, AppLocation, LocationType} from '../context/location'
-import {withSession, SessionContext, ModelRecord} from '../context/session'
-import {StackView} from './common/stackView'
+import {
+  withLocation,
+  LocationContext,
+  AppLocation,
+  LocationType,
+  withSession,
+  SessionContext,
+  ModelRecord,
+  StackView
+} from '@karma.run/editor-common'
+
 import {RootRecordListPanelContainer, SelectRecordListPanelContainer} from './recordListPanel'
 import {Deferred, lastItemThrow} from '@karma.run/editor-common'
 import {RecordEditPanelContainer} from './recordEditPanel'

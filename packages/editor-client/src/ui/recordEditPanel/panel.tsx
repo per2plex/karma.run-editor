@@ -1,17 +1,23 @@
 import React from 'react'
+import memoizeOne from 'memoize-one'
 import {Ref} from '@karma.run/sdk'
 
-import {Panel} from '../common/panel'
-import {ViewContextPanelHeader} from '../common/panel/viewContextHeader'
-import {SessionContext, withSession, ModelRecord} from '../../context/session'
-import {PanelContent} from '../common/panel/content'
-import {withLocale, LocaleContext} from '../../context/locale'
-import {PanelToolbar} from '../common/panel/toolbar'
-import {IconName} from '../common/icon'
-import {ButtonType, Button} from '../common/button'
-import {FlexList} from '../common'
-import {CenteredLoadingIndicator} from '../common/loader'
-import memoizeOne from 'memoize-one'
+import {
+  Panel,
+  ViewContextPanelHeader,
+  SessionContext,
+  withSession,
+  ModelRecord,
+  PanelContent,
+  withLocale,
+  LocaleContext,
+  PanelToolbar,
+  IconName,
+  ButtonType,
+  Button,
+  FlexList,
+  CenteredLoadingIndicator
+} from '@karma.run/editor-common'
 
 export interface RecordEditPanelProps {
   recordID?: Ref

@@ -35,6 +35,7 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
   let clientBundlePath: string | undefined
 
   if (opts.watch) {
+    console.info('Watching bundle...')
     clientBundlePath = await watchBuild(cachePath, {plugins}, (err, stats) => {
       if (err) return console.error(err.message)
       process.stdout.write(stats.toString({colors: true}) + '\n')
