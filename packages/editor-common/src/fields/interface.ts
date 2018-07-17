@@ -5,12 +5,19 @@ import {SortConfiguration, FilterConfiguration, ValuePath} from '../interface/fi
 import {ModelRecord} from '../context/session'
 import {WorkerContext} from '../context/worker'
 
-export type InferFieldFunction = (model: Model, inferredLabel?: string) => Field
-export type UnserializeFieldFunction = (rawField: any, model: Model) => Field
+export interface FieldOptions {
+  readonly label?: string
+}
+
+export interface TypedFieldOptions extends FieldOptions {
+  readonly type?: string
+}
+
+export type CreateFieldFunction = (model: Model, fieldOptions?: TypedFieldOptions) => Field
+export type UnserializeFieldFunction = (rawField: SerializedField) => Field
 
 export interface SerializedField {
   type: string
-  [key: string]: any
 }
 
 export interface ListRenderProps<V = any> {
@@ -68,18 +75,15 @@ export interface Field<V = any> {
   onDelete?(value: V, worker: WorkerContext): Promise<V>
 }
 
-export interface FieldClass<V = any> {
+export interface FieldClass<V = any, O extends FieldOptions = FieldOptions> {
   readonly type: string
+
+  canInferFromModel?(model: Model): boolean
 
   unserialize(
     rawField: SerializedField,
-    model: Model,
     unserializeField: UnserializeFieldFunction
   ): Readonly<Field<V>>
 
-  inferFromModel?(
-    model: Model,
-    inferredLabel: string | undefined,
-    inferField: InferFieldFunction
-  ): Readonly<Field<V>> | null
+  create(model: Model, options: O | undefined, createField: CreateFieldFunction): Readonly<Field<V>>
 }

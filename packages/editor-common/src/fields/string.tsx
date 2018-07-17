@@ -66,6 +66,8 @@ export interface StringFieldOptions {
   readonly multiline?: boolean
 }
 
+export type SerializedStringField = SerializedField & StringFieldOptions
+
 export class StringField implements Field<string> {
   public readonly label?: string
   public readonly description?: string
@@ -77,12 +79,12 @@ export class StringField implements Field<string> {
   public readonly sortConfigurations: SortConfiguration[]
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: StringFieldOptions) {
-    this.label = opts.label
-    this.description = opts.description
-    this.minLength = opts.minLength
-    this.maxLength = opts.maxLength
-    this.multiline = opts.multiline
+  public constructor(opts?: StringFieldOptions) {
+    this.label = opts && opts.label
+    this.description = opts && opts.description
+    this.minLength = opts && opts.minLength
+    this.maxLength = opts && opts.maxLength
+    this.multiline = opts && opts.multiline
 
     this.sortConfigurations = [
       {key: shortid.generate(), type: SortType.String, label: this.label || '', path: []}
@@ -126,11 +128,14 @@ export class StringField implements Field<string> {
     return errors
   }
 
-  public serialize() {
+  public serialize(): SerializedStringField {
     return {
       type: StringField.type,
       label: this.label,
-      description: this.description
+      description: this.description,
+      minLength: this.minLength,
+      maxLength: this.maxLength,
+      multiline: this.multiline
     }
   }
 
@@ -144,23 +149,23 @@ export class StringField implements Field<string> {
 
   public static type = 'string'
 
-  static inferFromModel(model: Model, label: string | undefined) {
-    if (model.type !== 'string') return null
-    return new this({label})
+  static canInferFromModel(model: Model) {
+    return model.type === 'string'
   }
 
-  static unserialize(rawField: SerializedField, model: Model) {
+  static create(model: Model, opts?: StringFieldOptions) {
     if (model.type !== 'string') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "string" received: "${model.type}"`
       })
     }
 
-    return new this({
-      label: rawField.label,
-      description: rawField.description
-    })
+    return new this(opts)
+  }
+
+  static unserialize(rawField: SerializedStringField) {
+    return new this(rawField)
   }
 }

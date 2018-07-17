@@ -1,13 +1,12 @@
 import React from 'react'
 
-import {Ref, Tag, Session, MetarializedRecord} from '@karma.run/sdk'
+import { Ref } from '@karma.run/sdk'
 
-import {EditorContext} from '../api/editorContext'
-import {ModelGroup} from '../api/modelGroup'
-import {createContextHOC} from './helper'
-import {ReadonlyRefMap, RefMap} from '../util/ref'
-import {ViewContext} from '../api/viewContext'
-import {Sort, Condition} from '../interface/filter'
+import { EditorContext } from '../api/editorContext'
+import { createContextHOC } from './helper'
+import { ReadonlyRefMap, RefMap } from '../util/ref'
+import { ViewContext } from '../api/viewContext'
+import { Sort, Condition } from '../interface/filter'
 
 export interface ModelRecord<T = any> {
   id: Ref
@@ -17,42 +16,31 @@ export interface ModelRecord<T = any> {
   value: T
 }
 
+export interface EditorSession {
+  username: string
+  signature: string
+}
+
 export interface EditorData {
-  models: MetarializedRecord[]
-  modelMap: ReadonlyRefMap<any>
-  tags: Tag[]
-  tagMap: ReadonlyMap<string, Ref>
-  reverseTagMap: ReadonlyRefMap<string>
   editorContexts: EditorContext[]
-  editorContextMap: ReadonlyMap<string, EditorContext>
-  modelGroups: ModelGroup[]
-  modelGroupMap: ReadonlyMap<string, ModelGroup>
   viewContexts: ViewContext[]
   viewContextMap: ReadonlyRefMap<ViewContext>
   viewContextSlugMap: ReadonlyMap<string, ViewContext>
 }
 
 export const initialEditorData: EditorData = {
-  models: [],
-  modelMap: new RefMap(),
-  tags: [],
-  tagMap: new Map(),
-  reverseTagMap: new RefMap(),
   editorContexts: [],
-  editorContextMap: new RefMap(),
-  modelGroups: [],
-  modelGroupMap: new RefMap(),
   viewContexts: [],
   viewContextMap: new RefMap(),
   viewContextSlugMap: new Map()
 }
 
 export interface SessionContext extends EditorData {
-  session?: Session
+  session?: EditorSession
   canRestoreSessionFromStorage: boolean
-  restoreSessionFromLocalStorage(): Promise<Session>
-  restoreSession(session: Session): Promise<Session>
-  authenticate(username: string, password: string): Promise<Session>
+  restoreSessionFromLocalStorage(): Promise<EditorSession>
+  restoreSession(session: EditorSession): Promise<EditorSession>
+  authenticate(username: string, password: string): Promise<EditorSession>
   invalidate(): Promise<void>
   getRecord(model: Ref, id: Ref): Promise<ModelRecord>
 

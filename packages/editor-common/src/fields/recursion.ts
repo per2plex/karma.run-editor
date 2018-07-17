@@ -7,22 +7,33 @@ import {
   SerializedField,
   EditRenderProps,
   Field,
-  InferFieldFunction,
+  CreateFieldFunction,
   UnserializeFieldFunction,
-  ListRenderProps
+  ListRenderProps,
+  FieldOptions
 } from './interface'
 
 import {SortConfiguration, FilterConfiguration} from '../interface/filter'
 import {WorkerContext} from '../context/worker'
 import {reduceToMap} from '../util/array'
+import {ObjectMap} from '../util/object'
 
 export interface RecursionContext {
   readonly recursions?: {[key: string]: Field}
 }
 
-export interface RecursiveFieldOptions {
+export interface RecursiveFieldOptions extends FieldOptions {
+  readonly fields: ObjectMap<FieldOptions>
+}
+
+export interface RecursiveFieldConstructorOptions {
   readonly topRecursionLabel: string
   readonly fields: ReadonlyMap<string, Field>
+}
+
+export type SerializedRecursiveField = SerializedField & {
+  readonly topRecursionLabel: string
+  readonly fields: ObjectMap<SerializedField>
 }
 
 export class RecursiveField implements Field<any> {
@@ -34,7 +45,7 @@ export class RecursiveField implements Field<any> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(options: RecursiveFieldOptions) {
+  public constructor(options: RecursiveFieldConstructorOptions) {
     const topField = options.fields.get(options.topRecursionLabel)
     if (!topField) throw new Error("Top label doesn't exist in fields.")
 
@@ -70,9 +81,9 @@ export class RecursiveField implements Field<any> {
     return this.topField.isValidValue(value)
   }
 
-  public serialize() {
+  public serialize(): SerializedRecursiveField {
     return {
-      type: RecursionField.type,
+      type: RecursiveField.type,
       topRecursionLabel: this.topRecursionLabel,
       fields: reduceToMap(Array.from(this.fields.entries()), ([key, field]) => [
         key,
@@ -107,59 +118,60 @@ export class RecursiveField implements Field<any> {
 
   public static type = 'recursive'
 
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'recursive') return null
-
-    return new this({
-      topRecursionLabel: model.top,
-      fields: new Map(
-        Object.entries(model.models).map(
-          ([recursionKey, model]) => [recursionKey, inferField(model, label)] as [string, Field]
-        )
-      )
-    })
+  static canInferFromModel(model: Model) {
+    return model.type === 'recursive'
   }
 
-  static unserialize(
-    rawField: SerializedField,
+  static create(
     model: Model,
-    unserializeField: UnserializeFieldFunction
+    opts: RecursiveFieldOptions | undefined,
+    createField: CreateFieldFunction
   ) {
     if (model.type !== 'recursive') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        message: `Expected model type "recursive" received: "${model.type}"`
       })
     }
 
     return new this({
       topRecursionLabel: model.top,
       fields: new Map(
+        Object.entries(model.models).map(
+          ([recursionKey, model]) =>
+            [recursionKey, createField(model, opts && opts.fields[recursionKey])] as [string, Field]
+        )
+      )
+    })
+  }
+
+  static unserialize(
+    rawField: SerializedRecursiveField,
+    unserializeField: UnserializeFieldFunction
+  ) {
+    return new this({
+      topRecursionLabel: rawField.topRecursionLabel,
+      fields: new Map(
         Object.entries(rawField.fields).map(([key, field]) => {
-          const recursionModel = model.models[key]
-
-          if (!recursionModel) {
-            return [
-              key,
-              new ErrorField({
-                label: rawField.label,
-                description: rawField.description,
-                message: `Model not found for recursion label: ${key}`
-              })
-            ] as [string, Field]
-          }
-
-          return [key, unserializeField(field, recursionModel)] as [string, Field]
+          return [key, unserializeField(field)] as [string, Field]
         })
       )
     })
   }
 }
 
-export interface RecursionFieldOptions {
+export interface RecursionFieldOptions extends FieldOptions {
+  readonly field: FieldOptions
+}
+
+export interface RecursionFieldConstructorOptions {
   readonly recursionLabel: string
   readonly field: Field
+}
+
+export type SerializedRecursionField = SerializedField & {
+  readonly recursionLabel: string
+  readonly field: SerializedField
 }
 
 export class RecursionField implements Field<any> {
@@ -170,7 +182,7 @@ export class RecursionField implements Field<any> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(options: RecursionFieldOptions) {
+  public constructor(options: RecursionFieldConstructorOptions) {
     this.recursionLabel = options.recursionLabel
     this.field = options.field
   }
@@ -202,7 +214,7 @@ export class RecursionField implements Field<any> {
     return this.field.isValidValue(value)
   }
 
-  public serialize() {
+  public serialize(): SerializedRecursionField {
     return {
       type: RecursionField.type,
       recursionLabel: this.recursionLabel,
@@ -236,40 +248,51 @@ export class RecursionField implements Field<any> {
 
   public static type = 'recursion'
 
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'recursion') return null
-
-    return new this({
-      recursionLabel: model.label,
-      field: inferField(model.model, label)
-    })
+  static canInferFromModel(model: Model) {
+    return model.type === 'recursion'
   }
 
-  static unserialize(
-    rawField: SerializedField,
+  static create(
     model: Model,
-    unserializeField: UnserializeFieldFunction
+    opts: RecursionFieldOptions | undefined,
+    createField: CreateFieldFunction
   ) {
     if (model.type !== 'recursion') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        message: `Expected model type "recursion" received: "${model.type}"`
       })
     }
 
     return new this({
+      recursionLabel: model.label,
+      field: createField(model.model, opts && opts.field)
+    })
+  }
+
+  static unserialize(
+    rawField: SerializedRecursionField,
+    unserializeField: UnserializeFieldFunction
+  ) {
+    console.log(rawField)
+    return new this({
       recursionLabel: rawField.recursionLabel,
-      field: unserializeField(rawField.field, model.model)
+      field: unserializeField(rawField.field)
     })
   }
 }
 
-export interface RecurseFieldOptions {
+export interface RecurseFieldOptions extends FieldOptions {
+  readonly description?: string
+}
+
+export interface RecurseFieldConstructorOptions {
   readonly label?: string
   readonly description?: string
   readonly recursionLabel: string
 }
+
+export type SerializedRecurseField = SerializedField & RecurseFieldConstructorOptions
 
 export class RecurseField implements Field<any> {
   public readonly recursionLabel: string
@@ -281,7 +304,7 @@ export class RecurseField implements Field<any> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: RecurseFieldOptions) {
+  public constructor(opts: RecurseFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.recursionLabel = opts.recursionLabel
@@ -336,9 +359,10 @@ export class RecurseField implements Field<any> {
     return this.field.isValidValue(value)
   }
 
-  public serialize() {
+  public serialize(): SerializedRecurseField {
     return {
-      type: RecursionField.type,
+      type: RecurseField.type,
+      recursionLabel: this.recursionLabel,
       label: this.label,
       description: this.description
     }
@@ -372,18 +396,22 @@ export class RecurseField implements Field<any> {
 
   public static type = 'recurse'
 
-  public static inferFromModel(model: Model, label: string | undefined) {
-    if (model.type !== 'recurse') return null
-    return new this({label, recursionLabel: model.label})
+  static canInferFromModel(model: Model) {
+    return model.type === 'recurse'
   }
 
-  public static unserialize(rawField: SerializedField, model: Model) {
+  static create(model: Model, opts?: RecurseFieldOptions) {
     if (model.type !== 'recurse') {
       return new ErrorField({
-        message: 'Invalid model!'
+        ...opts,
+        message: `Expected model type "recurse" received: "${model.type}"`
       })
     }
 
-    return new this({label: rawField.label, recursionLabel: model.label})
+    return new this({...opts, recursionLabel: model.label})
+  }
+
+  public static unserialize(rawField: SerializedRecurseField) {
+    return new this(rawField)
   }
 }

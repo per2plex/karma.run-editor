@@ -13,7 +13,7 @@ import {
 export interface RecordItemProps {
   record: ModelRecord
   viewContext: ViewContext
-  reverseTagMap: ReadonlyRefMap<string>
+  viewContextMap: ReadonlyRefMap<ViewContext>
   localeContext: LocaleContext
 }
 
@@ -36,7 +36,7 @@ export class RecordItem extends React.Component<RecordItemProps> {
         <DescriptionView
           viewContext={this.props.viewContext}
           record={this.props.record}
-          reverseTagMap={this.props.reverseTagMap}
+          viewContextMap={this.props.viewContextMap}
         />
         <CardFooter
           contentLeft={

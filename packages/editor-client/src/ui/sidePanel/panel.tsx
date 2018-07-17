@@ -19,13 +19,11 @@ import {
   LocationActionContext,
   uniqueFilter,
   SearchInput,
-  convertKeyToLabel,
   withSession,
   SessionContext,
   refToString,
   ReadonlyRefMap,
   EditorContext,
-  ModelGroup,
   ViewContext
 } from '@karma.run/editor-common'
 
@@ -93,7 +91,6 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
   private handleSearchChange = (searchValue: string) => {
     const fuseInstance = this.getFuseInstance(
       this.state.editorContext,
-      this.props.sessionContext.modelGroupMap,
       this.props.sessionContext.viewContextMap
     )
 
@@ -115,12 +112,8 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
   }
 
   private getFuseInstance = memoizeOne(
-    (
-      editorContext: EditorContext,
-      modelGroupMap: ReadonlyRefMap<ModelGroup>,
-      viewContextMap: ReadonlyRefMap<ViewContext>
-    ) => {
-      const groups = this.getActiveModelGroups(editorContext, modelGroupMap)
+    (editorContext: EditorContext, viewContextMap: ReadonlyRefMap<ViewContext>) => {
+      const groups = editorContext.modelGroups
       const modelIDs = groups
         .map(group => group.models.map(model => refToString(model)))
         .reduce((acc, models) => acc.concat(models))
@@ -148,25 +141,21 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
     }
   )
 
-  private getActiveModelGroups = memoizeOne(
-    (editorContext: EditorContext, modelGroupMap: ReadonlyRefMap<ModelGroup>) => {
-      return editorContext.modelGroups
-        .map(modelGroupID => modelGroupMap.get(modelGroupID))
-        .filter(modelGroup => modelGroup != undefined) as ModelGroup[]
-    }
-  )
+  private getActiveModelGroups = memoizeOne((editorContext: EditorContext) => {
+    return editorContext.modelGroups
+  })
 
   public render() {
     const sessionContext = this.props.sessionContext
-    const groups = this.getActiveModelGroups(this.state.editorContext, sessionContext.modelGroupMap)
+    const groups = this.getActiveModelGroups(this.state.editorContext)
 
     const groupSections = groups.map(group => {
       const items: SidePanelSectionItem[] = group.models.map(model => {
         const viewContext = sessionContext.viewContextMap.get(model)
 
         if (!viewContext) {
-          const tag = sessionContext.reverseTagMap.get(model)
-          const label = tag ? convertKeyToLabel(tag) : refToString(model)
+          const viewContext = sessionContext.viewContextMap.get(model)
+          const label = viewContext ? viewContext.name : refToString(model)
           return {id: `noPermission_${model}`, label}
         }
 
@@ -181,9 +170,9 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
 
       return (
         <SidePanelSection
-          key={group.id}
-          id={group.id}
-          isOpen={this.state.groupState[group.id]}
+          key={group.id || group.name}
+          id={group.id || group.name}
+          isOpen={this.state.groupState[group.id || group.name]}
           onClick={this.handleGroupClick}
           onItemClick={this.handleViewContextClick}
           items={items}
@@ -197,7 +186,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
 
     if (sessionContext.editorContexts.length > 1) {
       const editorContextOptions = sessionContext.editorContexts.map(context => ({
-        key: context.id,
+        key: context.id || context.name,
         label: context.name
       }))
 
@@ -205,7 +194,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
         <Select
           options={editorContextOptions}
           type={SelectType.Light}
-          value={this.state.editorContext.id}
+          value={this.state.editorContext.id || this.state.editorContext.name}
           disableUnselectedOption
           onChange={this.handleEditorContextChange}
         />

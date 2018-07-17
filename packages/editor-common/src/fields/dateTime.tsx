@@ -50,6 +50,7 @@ export interface DateTimeFieldOptions {
   readonly description?: string
 }
 
+export type SerializedDateTimeField = SerializedField & DateTimeFieldOptions
 export type DateTimeValue = string | Date | undefined
 
 export class DateTimeField implements Field<DateTimeValue> {
@@ -60,9 +61,9 @@ export class DateTimeField implements Field<DateTimeValue> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: DateTimeFieldOptions) {
-    this.label = opts.label
-    this.description = opts.description
+  public constructor(opts?: DateTimeFieldOptions) {
+    this.label = opts && opts.label
+    this.description = opts && opts.description
   }
 
   public initialize() {
@@ -97,7 +98,7 @@ export class DateTimeField implements Field<DateTimeValue> {
     return []
   }
 
-  public serialize() {
+  public serialize(): SerializedDateTimeField {
     return {
       type: DateTimeField.type,
       label: this.label,
@@ -115,20 +116,23 @@ export class DateTimeField implements Field<DateTimeValue> {
 
   public static type = 'dateTime'
 
-  static inferFromModel(model: Model, label: string | undefined) {
-    if (model.type !== 'dateTime') return null
-    return new this({label})
+  static canInferFromModel(model: Model) {
+    return model.type === 'dateTime'
   }
 
-  static unserialize(rawField: SerializedField, model: Model) {
+  static create(model: Model, opts?: DateTimeFieldOptions) {
     if (model.type !== 'dateTime') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "dateTime" received: "${model.type}"`
       })
     }
 
+    return new this(opts)
+  }
+
+  static unserialize(rawField: SerializedDateTimeField) {
     return new this({
       label: rawField.label,
       description: rawField.description

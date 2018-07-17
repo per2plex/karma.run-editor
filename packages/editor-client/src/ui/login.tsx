@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 import {style} from 'typestyle'
-import {KarmaError, KarmaErrorType, Session} from '@karma.run/sdk'
+import {KarmaError, KarmaErrorType} from '@karma.run/sdk'
 
 import {
   TextInputType,
@@ -20,7 +20,8 @@ import {
   CenteredLoadingIndicator,
   withNotification,
   NotificationContext,
-  NotificationType
+  NotificationType,
+  EditorSession
 } from '@karma.run/editor-common'
 
 export interface LoginFormState {
@@ -32,7 +33,7 @@ export interface LoginFormState {
 }
 
 export interface LoginFormProps {
-  session?: Session
+  session?: EditorSession
   theme: Theme
   sessionContext: SessionContext
   localeContext: LocaleContext
@@ -149,6 +150,7 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
     try {
       await this.props.sessionContext.authenticate(this.state.username, this.state.password)
     } catch (err) {
+      console.error(err)
       const karmaError: KarmaError = err
 
       if (karmaError.type === KarmaErrorType.PermissionDeniedError) {
@@ -182,6 +184,7 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
       try {
         await this.props.sessionContext.restoreSession(this.props.session)
       } catch (err) {
+        console.error(err)
         this.setState({
           isRestoringSession: false,
           error: 'Session expired'
@@ -193,6 +196,7 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
       try {
         await this.props.sessionContext.restoreSessionFromLocalStorage()
       } catch (err) {
+        console.error(err)
         this.setState({
           isRestoringSession: false,
           error: 'Session expired'

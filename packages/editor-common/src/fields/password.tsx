@@ -80,6 +80,8 @@ export interface PasswordFieldOptions {
   readonly costFactor?: number
 }
 
+export type SerializedPasswordField = SerializedField & PasswordFieldOptions
+
 export interface PasswordFieldValue {
   hash?: string
   password: string
@@ -99,10 +101,10 @@ export class PasswordField implements Field<PasswordFieldValue> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: PasswordFieldOptions) {
-    this.label = opts.label
-    this.description = opts.description
-    this.costFactor = opts.costFactor
+  public constructor(opts?: PasswordFieldOptions) {
+    this.label = opts && opts.label
+    this.description = opts && opts.description
+    this.costFactor = opts && opts.costFactor
   }
 
   public initialize() {
@@ -157,7 +159,7 @@ export class PasswordField implements Field<PasswordFieldValue> {
     return null
   }
 
-  public serialize() {
+  public serialize(): SerializedPasswordField {
     return {
       type: PasswordField.type,
       label: this.label,
@@ -176,23 +178,19 @@ export class PasswordField implements Field<PasswordFieldValue> {
 
   public static type = 'password'
 
-  static inferFromModel() {
-    return null
-  }
-
-  static unserialize(rawField: SerializedField, model: Model) {
+  static create(model: Model, opts?: PasswordFieldOptions) {
     if (model.type !== 'string') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "string" received: "${model.type}"`
       })
     }
 
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      costFactor: rawField.costFactor
-    })
+    return new this(opts)
+  }
+
+  static unserialize(rawField: SerializedPasswordField) {
+    return new this(rawField)
   }
 }

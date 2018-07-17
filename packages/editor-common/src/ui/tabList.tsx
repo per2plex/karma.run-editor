@@ -6,9 +6,10 @@ import {Color, Spacing, DefaultBorderRadiusPx, FontSize, FontWeight} from './sty
 import {FlexList} from './flex'
 import {Button, ButtonType} from './button'
 import {Icon, IconName} from './icon'
+import {base64} from '../util/string'
 
 // TODO: Find a better way to include SVG
-const arrowDownSVG = `data:image/svg+xml;base64,${btoa(
+const arrowDownSVG = `data:image/svg+xml;base64,${base64(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21"><path d="M18.634 5.798a.768.768 0 0 0-1.146 0L10.5 13.346 3.511 5.798a.768.768 0 0 0-1.145 0 .925.925 0 0 0 0 1.237l7.56 8.167a.768.768 0 0 0 1.146 0l.002-.003 7.56-8.165a.925.925 0 0 0 0-1.236z"/></svg>'
 )}`
 

@@ -65,7 +65,7 @@ export class RecordList extends React.Component<RecordListProps> {
             key={refToString(record.id)}
             record={record}
             viewContext={this.props.viewContext}
-            reverseTagMap={this.props.sessionContext.reverseTagMap}
+            viewContextMap={this.props.sessionContext.viewContextMap}
             localeContext={this.props.localeContext}>
             {this.props.actions.map(action => (
               <Button

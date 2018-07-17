@@ -52,8 +52,13 @@ export interface NumberFieldOptions {
   readonly minValue?: number
   readonly maxValue?: number
   readonly step?: number
+}
+
+export interface NumberFieldConstructorOptions extends NumberFieldOptions {
   readonly storageType: StorageType
 }
+
+export type SerializedNumberField = SerializedField & NumberFieldConstructorOptions
 
 export const enum StorageType {
   Float = 'float',
@@ -67,7 +72,7 @@ export const enum StorageType {
   UInt64 = 'uint64'
 }
 
-export const validModelTypes: ModelType[] = [
+const validModelTypes: ModelType[] = [
   'float',
   'int8',
   'int16',
@@ -91,7 +96,7 @@ export class NumberField implements Field<string> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: NumberFieldOptions) {
+  public constructor(opts: NumberFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.minValue = opts.minValue
@@ -168,11 +173,15 @@ export class NumberField implements Field<string> {
     return errors
   }
 
-  public serialize() {
+  public serialize(): SerializedNumberField {
     return {
       type: NumberField.type,
+      storageType: this.storageType,
       label: this.label,
-      description: this.description
+      description: this.description,
+      minValue: this.minValue,
+      maxValue: this.maxValue,
+      step: this.step
     }
   }
 
@@ -186,24 +195,23 @@ export class NumberField implements Field<string> {
 
   public static type = 'number'
 
-  static inferFromModel(model: Model, label: string | undefined) {
-    if (!validModelTypes.includes(model.type)) return null
-    return new this({label, storageType: model.type as StorageType})
+  static canInferFromModel(model: Model) {
+    return validModelTypes.includes(model.type)
   }
 
-  static unserialize(rawField: SerializedField, model: Model) {
-    if (!validModelTypes.includes(model.type)) {
+  static create(model: Model, opts?: NumberFieldConstructorOptions) {
+    if (model.type !== 'null') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "${validModelTypes.join(', ')}" received: "${model.type}"`
       })
     }
 
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      storageType: model.type as StorageType
-    })
+    return new this({...opts, storageType: model.type as StorageType})
+  }
+
+  static unserialize(rawField: SerializedNumberField) {
+    return new this(rawField)
   }
 }

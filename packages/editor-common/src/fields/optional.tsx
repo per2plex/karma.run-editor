@@ -8,9 +8,11 @@ import {
   SerializedField,
   EditRenderProps,
   Field,
-  InferFieldFunction,
+  CreateFieldFunction,
   EditComponentRenderProps,
-  UnserializeFieldFunction
+  UnserializeFieldFunction,
+  FieldOptions,
+  TypedFieldOptions
 } from './interface'
 
 import {FieldComponent, FieldLabel, FieldWrapper, FieldInset} from '../ui/field'
@@ -87,8 +89,17 @@ export interface OptionalFieldValue {
 export interface OptionalFieldOptions {
   readonly label?: string
   readonly description?: string
+  readonly field?: TypedFieldOptions
+}
+
+export interface OptionalFieldConstructorOptions {
+  readonly label?: string
+  readonly description?: string
   readonly field: Field
 }
+
+export type SerializedOptionalField = SerializedField &
+  OptionalFieldOptions & {readonly field: SerializedField}
 
 export class OptionalField implements Field<OptionalFieldValue> {
   public label?: string
@@ -104,7 +115,7 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   public field: Field
 
-  public constructor(options: OptionalFieldOptions) {
+  public constructor(options: OptionalFieldConstructorOptions) {
     this.label = options.label
     this.description = options.description
     this.field = options.field
@@ -152,7 +163,7 @@ export class OptionalField implements Field<OptionalFieldValue> {
     return value.isPresent ? this.field.isValidValue(value) : null
   }
 
-  public serialize() {
+  public serialize(): SerializedOptionalField {
     return {
       type: OptionalField.type,
       label: this.label,
@@ -193,28 +204,37 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   public static type = 'optional'
 
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'optional') return null
-    return new this({label, field: inferField(model.model)})
+  static canInferFromModel(model: Model) {
+    return model.type === 'optional'
   }
 
-  static unserialize(
-    rawField: SerializedField,
+  static create(
     model: Model,
-    unserializeField: UnserializeFieldFunction
+    opts: OptionalFieldOptions | undefined,
+    createField: CreateFieldFunction
   ) {
     if (model.type !== 'optional') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "optional" received: "${model.type}"`
       })
     }
 
     return new this({
+      ...opts,
+      field: createField(model.model, opts && opts.field)
+    })
+  }
+
+  static unserialize(
+    rawField: SerializedOptionalField,
+    unserializeField: UnserializeFieldFunction
+  ) {
+    return new this({
       label: rawField.label,
       description: rawField.description,
-      field: unserializeField(rawField.field, model.model)
+      field: unserializeField(rawField.field)
     })
   }
 }

@@ -7,7 +7,9 @@ import {
   EditRenderProps,
   SerializedField,
   UnserializeFieldFunction,
-  InferFieldFunction
+  CreateFieldFunction,
+  FieldOptions,
+  TypedFieldOptions
 } from './interface'
 
 import {ErrorField} from './error'
@@ -24,6 +26,8 @@ import {
 import {FieldWrapper, FieldComponent, FieldLabel, FieldInset} from '../ui/field'
 
 export type TupleFieldChildTuple = [number, Field]
+export type TupleFieldOptionsTuple = [number, TypedFieldOptions]
+export type TupleFieldSerializedTuple = [number, SerializedField]
 
 export class TupleFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<TupleField, TupleFieldValue>
@@ -75,10 +79,21 @@ export class TupleFieldEditComponent extends React.PureComponent<
   }
 }
 
-export interface TupleFieldOptions {
+export interface TupleFieldOptions extends FieldOptions {
+  readonly description?: string
+  readonly fields: TupleFieldOptionsTuple[]
+}
+
+export interface TupleFieldConstructorOptions {
   readonly label?: string
   readonly description?: string
   readonly fields: TupleFieldChildTuple[]
+}
+
+export type SerializedTupleField = SerializedField & {
+  readonly label?: string
+  readonly description?: string
+  readonly fields: TupleFieldSerializedTuple[]
 }
 
 export type TupleFieldValue = any[]
@@ -94,7 +109,7 @@ export class TupleField implements Field<TupleFieldValue> {
   public sortConfigurations!: SortConfiguration[]
   public filterConfigurations!: FilterConfiguration[]
 
-  public constructor(opts: TupleFieldOptions) {
+  public constructor(opts: TupleFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.fields = opts.fields
@@ -165,12 +180,14 @@ export class TupleField implements Field<TupleFieldValue> {
     return null
   }
 
-  public serialize() {
+  public serialize(): SerializedTupleField {
     return {
       type: TupleField.type,
-      label: this.label || null,
-      description: this.description || null,
-      fields: this.fields.map(([key, field]) => [key, field.serialize()])
+      label: this.label,
+      description: this.description,
+      fields: this.fields.map(
+        ([key, field]) => [key, field.serialize()] as TupleFieldSerializedTuple
+      )
     }
   }
 
@@ -226,44 +243,44 @@ export class TupleField implements Field<TupleFieldValue> {
 
   public static type = 'tuple'
 
-  static unserialize(
-    rawField: SerializedField,
+  static canInferFromModel(model: Model) {
+    return model.type === 'tuple'
+  }
+
+  static create(
     model: Model,
-    unserializeField: UnserializeFieldFunction
+    opts: TupleFieldOptions | undefined,
+    createField: CreateFieldFunction
   ) {
     if (model.type !== 'tuple') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "tuple" received: "${model.type}"`
       })
     }
 
-    if (!Array.isArray(rawField.fields)) {
-      return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid fields!'
-      })
+    const sortArray = opts && opts.fields && opts.fields.map(tuple => tuple[0])
+    const fieldOptionsMap = new Map(opts && opts.fields)
+
+    const fields = model.fields.map((model, index) => {
+      const options = fieldOptionsMap.get(index)
+      return [index, createField(model, {label: `Index ${index}`, ...options})]
+    }) as TupleFieldChildTuple[]
+
+    if (sortArray) {
+      fields.sort(([indexA], [indexB]) => sortArray.indexOf(indexA) - sortArray.indexOf(indexB))
     }
 
-    // TODO: Check all keys in model
+    return new this({...opts, fields})
+  }
+
+  static unserialize(rawField: SerializedTupleField, unserializeField: UnserializeFieldFunction) {
     return new this({
       label: rawField.label,
       description: rawField.description,
       fields: rawField.fields.map(
-        ([key, field]) => [key, unserializeField(field, model.fields[key])] as TupleFieldChildTuple
-      )
-    })
-  }
-
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'tuple') return null
-
-    return new this({
-      label: label,
-      fields: model.fields.map(
-        (model, index) => [index, inferField(model, `Index ${index}`)] as TupleFieldChildTuple
+        ([key, field]) => [key, unserializeField(field)] as TupleFieldChildTuple
       )
     })
   }

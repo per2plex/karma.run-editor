@@ -5,6 +5,7 @@ import commander from 'commander'
 import run, {defaultPort} from './commands/run'
 import build from './commands/build'
 import clean from './commands/clean'
+import viewContext from './commands/viewContext'
 
 export * from './interface'
 
@@ -26,7 +27,7 @@ program
     '-u --karma-data-url --karmaDataURL [karmaDataURL]',
     'Set karma.data URL. (environment: KARMA_DATA_URL)'
   )
-  .action(opts => run(opts))
+  .action(opts => run({...opts, karmaDataURL: opts.karmaDataUrl}))
 
 program
   .command('build')
@@ -38,7 +39,20 @@ program
     '-u --karma-data-url --karmaDataURL [karmaDataURL]',
     'Set karma.data URL. (environment: KARMA_DATA_URL)'
   )
-  .action(opts => build(opts))
+  .action(opts => build({...opts, karmaDataURL: opts.karmaDataUrl}))
+
+program
+  .command('viewcontext')
+  .description('Output inferred view context for all models.')
+  .option(
+    '-u --karma-data-url --karmaDataURL [karmaDataURL]',
+    'Set karma.data URL. (environment: KARMA_DATA_URL)'
+  )
+  .option(
+    '-s --instance-secret --instanceSecret [instanceSecret]',
+    'Set karma.data instance secret'
+  )
+  .action(opts => viewContext({...opts, karmaDataURL: opts.karmaDataUrl}))
 
 program
   .command('clean')

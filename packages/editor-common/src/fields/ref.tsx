@@ -10,7 +10,8 @@ import {
   EditComponentRenderProps,
   EditRenderProps,
   Field,
-  ListRenderProps
+  ListRenderProps,
+  FieldOptions
 } from './interface'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
@@ -118,8 +119,8 @@ export class RefFieldEditComponent extends React.PureComponent<
       content = (
         <DescriptionView
           viewContext={viewContext}
+          viewContextMap={this.props.sessionContext.viewContextMap}
           record={record}
-          reverseTagMap={this.props.sessionContext.reverseTagMap}
         />
       )
 
@@ -241,12 +242,16 @@ export const RefFieldEditComponentStyle = style({
 
 export const RefFieldEditComponentContainer = withLocale(withSession(RefFieldEditComponent))
 
-export interface RefFieldOptions {
-  readonly label?: string
+export interface RefFieldOptions extends FieldOptions {
   readonly description?: string
+  readonly disableEditing?: boolean
+}
+
+export interface RefFieldConstructorOptions extends RefFieldOptions {
   readonly model: Ref
 }
 
+export type SerializedRefField = SerializedField & RefFieldConstructorOptions
 export type RefFieldValue = Ref | undefined
 
 export class RefField implements Field<RefFieldValue> {
@@ -258,7 +263,7 @@ export class RefField implements Field<RefFieldValue> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: RefFieldOptions) {
+  public constructor(opts: RefFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.model = opts.model
@@ -296,9 +301,10 @@ export class RefField implements Field<RefFieldValue> {
     return value == undefined ? ['emptyRefError'] : null
   }
 
-  public serialize() {
+  public serialize(): SerializedRefField {
     return {
       type: RefField.type,
+      model: this.model,
       label: this.label,
       description: this.description
     }
@@ -314,24 +320,30 @@ export class RefField implements Field<RefFieldValue> {
 
   public static type = 'ref'
 
-  static inferFromModel(model: Model, label: string | undefined) {
-    if (model.type !== 'ref') return null
-    return new this({label, model: model.model})
+  static canInferFromModel(model: Model) {
+    return model.type === 'ref'
   }
 
-  static unserialize(rawField: SerializedField, model: Model) {
+  static create(model: Model, opts?: RefFieldOptions) {
     if (model.type !== 'ref') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "ref" received: "${model.type}"`
       })
     }
 
     return new this({
+      ...opts,
+      model: model.model
+    })
+  }
+
+  static unserialize(rawField: SerializedRefField) {
+    return new this({
       label: rawField.label,
       description: rawField.description,
-      model: model.model
+      model: rawField.model
     })
   }
 }

@@ -1,8 +1,6 @@
 import React from 'react'
 import {expression as e} from '@karma.run/sdk'
-
 import {Model} from '../api/model'
-import {ErrorField} from './error'
 
 import {
   SerializedField,
@@ -16,6 +14,7 @@ import {CheckboxInput} from '../ui/input'
 import {CardSection} from '../ui/card'
 import {SortConfiguration, FilterConfiguration} from '../interface/filter'
 import {FieldComponent, FieldLabel} from '../ui/field'
+import {ErrorField} from './error'
 
 export class BoolFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<BoolField, boolean>
@@ -53,6 +52,8 @@ export interface BoolFieldOptions {
   readonly multiline?: boolean
 }
 
+export type SerializedBoolField = SerializedField & BoolFieldOptions
+
 export class BoolField implements Field<boolean> {
   public readonly label?: string
   public readonly description?: string
@@ -61,9 +62,9 @@ export class BoolField implements Field<boolean> {
   public readonly sortConfigurations: SortConfiguration[]
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: BoolFieldOptions) {
-    this.label = opts.label
-    this.description = opts.description
+  public constructor(opts?: BoolFieldOptions) {
+    this.label = opts && opts.label
+    this.description = opts && opts.description
     this.sortConfigurations = []
   }
 
@@ -98,7 +99,7 @@ export class BoolField implements Field<boolean> {
     return null
   }
 
-  public serialize() {
+  public serialize(): SerializedBoolField {
     return {
       type: BoolField.type,
       label: this.label,
@@ -116,20 +117,23 @@ export class BoolField implements Field<boolean> {
 
   public static type = 'bool'
 
-  static inferFromModel(model: Model, label: string | undefined) {
-    if (model.type !== 'bool') return null
-    return new this({label})
+  static canInferFromModel(model: Model) {
+    return model.type === 'bool'
   }
 
-  static unserialize(rawField: SerializedField, model: Model) {
+  static create(model: Model, opts?: BoolFieldOptions) {
     if (model.type !== 'bool') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "bool" received: "${model.type}"`
       })
     }
 
+    return new this(opts)
+  }
+
+  static unserialize(rawField: SerializedBoolField) {
     return new this({
       label: rawField.label,
       description: rawField.description

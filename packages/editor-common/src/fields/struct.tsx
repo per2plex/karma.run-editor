@@ -7,7 +7,9 @@ import {
   EditRenderProps,
   SerializedField,
   UnserializeFieldFunction,
-  InferFieldFunction
+  CreateFieldFunction,
+  FieldOptions,
+  TypedFieldOptions
 } from './interface'
 
 import {ErrorField} from './error'
@@ -27,6 +29,8 @@ import {reduceToMap} from '../util/array'
 import {mapObjectAsync} from '../util/object'
 
 export type StructFieldChildTuple = [string, Field]
+export type StructFieldOptionsTuple = [string, TypedFieldOptions]
+export type StructFieldSerializedTuple = [string, SerializedField]
 
 export class StructFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StructField>
@@ -78,10 +82,21 @@ export class StructFieldEditComponent extends React.PureComponent<
   }
 }
 
-export interface StructFieldOptions {
+export interface StructFieldOptions extends FieldOptions {
+  readonly description?: string
+  readonly fields?: StructFieldOptionsTuple[]
+}
+
+export interface StructFieldConstructorOptions {
   readonly label?: string
   readonly description?: string
   readonly fields: StructFieldChildTuple[]
+}
+
+export type SerializedStructField = SerializedField & {
+  readonly label?: string
+  readonly description?: string
+  readonly fields: StructFieldSerializedTuple[]
 }
 
 export type StructFieldValue = {[key: string]: any}
@@ -97,7 +112,7 @@ export class StructField implements Field<StructFieldValue> {
   public sortConfigurations!: SortConfiguration[]
   public filterConfigurations!: FilterConfiguration[]
 
-  public constructor(opts: StructFieldOptions) {
+  public constructor(opts: StructFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.fields = opts.fields
@@ -161,12 +176,14 @@ export class StructField implements Field<StructFieldValue> {
     return null
   }
 
-  public serialize() {
+  public serialize(): SerializedStructField {
     return {
       type: StructField.type,
-      label: this.label || null,
-      description: this.description || null,
-      fields: this.fields.map(([key, field]) => [key, field.serialize()])
+      label: this.label,
+      description: this.description,
+      fields: this.fields.map(
+        ([key, field]) => [key, field.serialize()] as StructFieldSerializedTuple
+      )
     }
   }
 
@@ -211,44 +228,44 @@ export class StructField implements Field<StructFieldValue> {
 
   public static type = 'struct'
 
-  static unserialize(
-    rawField: SerializedField,
+  static canInferFromModel(model: Model) {
+    return model.type === 'struct'
+  }
+
+  static create(
     model: Model,
-    unserializeField: UnserializeFieldFunction
+    opts: StructFieldOptions | undefined,
+    createField: CreateFieldFunction
   ) {
     if (model.type !== 'struct') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "struct" received: "${model.type}"`
       })
     }
 
-    if (!Array.isArray(rawField.fields)) {
-      return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid fields!'
-      })
+    const sortArray = opts && opts.fields && opts.fields.map(tuple => tuple[0])
+    const fieldOptionsMap = new Map(opts && opts.fields)
+
+    const fields = Object.entries(model.fields).map(([key, model]) => {
+      const options = fieldOptionsMap.get(key)
+      return [key, createField(model, {label: convertKeyToLabel(key), ...options})]
+    }) as StructFieldChildTuple[]
+
+    if (sortArray) {
+      fields.sort(([keyA], [keyB]) => sortArray.indexOf(keyA) - sortArray.indexOf(keyB))
     }
 
-    // TODO: Check all keys in model
+    return new this({...opts, fields})
+  }
 
+  static unserialize(rawField: SerializedStructField, unserializeField: UnserializeFieldFunction) {
     return new this({
       label: rawField.label,
       description: rawField.description,
       fields: rawField.fields.map(
-        ([key, field]) => [key, unserializeField(field, model.fields[key])] as StructFieldChildTuple
-      )
-    })
-  }
-
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'struct') return null
-    return new this({
-      label,
-      fields: Object.entries(model.fields).map(
-        ([key, model]) => [key, inferField(model, convertKeyToLabel(key))] as StructFieldChildTuple
+        ([key, field]) => [key, unserializeField(field)] as StructFieldChildTuple
       )
     })
   }

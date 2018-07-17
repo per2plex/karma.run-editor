@@ -2,8 +2,8 @@ import {expression as e, data as d} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
-import {ListFieldValue, ListField} from './list'
-import {SerializedField, UnserializeFieldFunction, InferFieldFunction} from './interface'
+import {ListFieldValue, ListField, ListFieldOptions, SerializedListField} from './list'
+import {UnserializeFieldFunction, CreateFieldFunction} from './interface'
 
 export class SetField extends ListField {
   public transformValueToExpression(value: ListFieldValue) {
@@ -12,39 +12,42 @@ export class SetField extends ListField {
     )
   }
 
-  public serialize() {
+  public serialize(): SerializedListField {
     return {
       type: SetField.type,
-      label: this.label || null,
-      description: this.description || null,
+      label: this.label,
+      description: this.description,
       field: this.field.serialize()
     }
   }
 
   public static type = 'set'
 
-  static unserialize(
-    rawField: SerializedField,
+  static canInferFromModel(model: Model) {
+    return model.type === 'set'
+  }
+
+  static create(
     model: Model,
-    unserializeField: UnserializeFieldFunction
+    opts: ListFieldOptions | undefined,
+    createField: CreateFieldFunction
   ) {
     if (model.type !== 'set') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "set" received: "${model.type}"`
       })
     }
 
+    return new this({...opts, field: createField(model.model, opts && opts.field)})
+  }
+
+  static unserialize(rawField: SerializedListField, unserializeField: UnserializeFieldFunction) {
     return new this({
       label: rawField.label,
       description: rawField.description,
-      field: unserializeField(rawField.field, model.model)
+      field: unserializeField(rawField.field)
     })
-  }
-
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'set') return null
-    return new this({label, field: inferField(model.model)})
   }
 }

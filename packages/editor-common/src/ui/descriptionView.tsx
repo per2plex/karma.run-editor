@@ -9,8 +9,8 @@ import {ModelRecord} from '../context/session'
 
 export interface DescriptionViewProps {
   viewContext: ViewContext
+  viewContextMap: ReadonlyRefMap<ViewContext>
   record: ModelRecord
-  reverseTagMap: ReadonlyRefMap<string>
 }
 
 export function contentForViewContext(
@@ -45,11 +45,13 @@ export class DescriptionView extends React.Component<DescriptionViewProps> {
       return <>{content}</>
     }
 
-    const tag = this.props.reverseTagMap.get(this.props.record.id)
+    const viewContext = this.props.viewContextMap.get(this.props.record.id)
 
     return (
       <>
-        <CardSection>{tag || refToPrettyString(this.props.record.id)}</CardSection>
+        <CardSection>
+          {viewContext ? viewContext.name : refToPrettyString(this.props.record.id)}
+        </CardSection>
       </>
     )
   }

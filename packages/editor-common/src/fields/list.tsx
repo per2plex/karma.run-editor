@@ -9,7 +9,8 @@ import {
   EditRenderProps,
   SerializedField,
   UnserializeFieldFunction,
-  InferFieldFunction
+  CreateFieldFunction,
+  TypedFieldOptions
 } from './interface'
 
 import {KeyPath, Model} from '../api/model'
@@ -28,6 +29,7 @@ import {darkFieldColorForDepthAndIndex, Spacing, Color} from '../ui/style'
 import {FlexFiller} from '../ui/flex'
 import {Button, ButtonType} from '../ui/button'
 import {IconName} from '../ui/icon'
+import {FieldOptions} from './interface'
 
 export interface ListFieldItemProps {
   index: number
@@ -257,7 +259,19 @@ export class ListFieldEditComponent extends React.PureComponent<
 export interface ListFieldOptions {
   readonly label?: string
   readonly description?: string
+  readonly field?: TypedFieldOptions
+}
+
+export interface ListFieldConstructorOptions {
+  readonly label?: string
+  readonly description?: string
   readonly field: Field
+}
+
+export type SerializedListField = SerializedField & {
+  readonly label?: string
+  readonly description?: string
+  readonly field: SerializedField
 }
 
 export type ListFieldValue = {id: string; value: any}[]
@@ -272,7 +286,7 @@ export class ListField implements Field<ListFieldValue> {
 
   public readonly field: Field
 
-  public constructor(opts: ListFieldOptions) {
+  public constructor(opts: ListFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.field = opts.field
@@ -316,11 +330,11 @@ export class ListField implements Field<ListFieldValue> {
     return null
   }
 
-  public serialize() {
+  public serialize(): SerializedListField {
     return {
       type: ListField.type,
-      label: this.label || null,
-      description: this.description || null,
+      label: this.label,
+      description: this.description,
       field: this.field.serialize()
     }
   }
@@ -358,28 +372,31 @@ export class ListField implements Field<ListFieldValue> {
 
   public static type = 'list'
 
-  static unserialize(
-    rawField: SerializedField,
+  static canInferFromModel(model: Model) {
+    return model.type === 'list'
+  }
+
+  static create(
     model: Model,
-    unserializeField: UnserializeFieldFunction
+    opts: ListFieldOptions | undefined,
+    createField: CreateFieldFunction
   ) {
     if (model.type !== 'list') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "list" received: "${model.type}"`
       })
     }
 
+    return new this({...opts, field: createField(model.model, opts && opts.field)})
+  }
+
+  static unserialize(rawField: SerializedListField, unserializeField: UnserializeFieldFunction) {
     return new this({
       label: rawField.label,
       description: rawField.description,
-      field: unserializeField(rawField.field, model.model)
+      field: unserializeField(rawField.field)
     })
-  }
-
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'list') return null
-    return new this({label, field: inferField(model.model)})
   }
 }

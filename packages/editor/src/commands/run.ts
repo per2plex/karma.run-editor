@@ -85,7 +85,9 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
       clientName: 'index.js',
       workerName: 'worker.js',
       favicon: '../../static/favicon.ico',
-      karmaDataURL
+      karmaDataURL,
+      editorContextsForRoles: config.editorContexts,
+      viewContextsForRoles: config.viewContexts
     })
   )
 

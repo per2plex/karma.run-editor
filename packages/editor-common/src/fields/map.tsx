@@ -9,7 +9,8 @@ import {
   EditRenderProps,
   SerializedField,
   UnserializeFieldFunction,
-  InferFieldFunction
+  CreateFieldFunction,
+  TypedFieldOptions
 } from './interface'
 
 import {reduceToMap} from '../util/array'
@@ -162,8 +163,20 @@ export const MapFieldRendererStyle = style({
 export interface MapFieldOptions {
   readonly label?: string
   readonly description?: string
-  readonly field: Field
+  readonly field?: TypedFieldOptions
+}
+
+export interface MapFieldConstructorOptions {
+  readonly label?: string
+  readonly description?: string
   readonly restrictedToKeys?: string[]
+  readonly field: Field
+}
+
+export type SerializedMapField = SerializedField & {
+  readonly label?: string
+  readonly description?: string
+  readonly field: SerializedField
 }
 
 export type MapFieldValue = {id: string; key: string; value: any}[]
@@ -179,7 +192,7 @@ export class MapField implements Field<MapFieldValue> {
 
   public readonly field: Field
 
-  public constructor(opts: MapFieldOptions) {
+  public constructor(opts: MapFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.restrictedToKeys = opts.restrictedToKeys
@@ -229,11 +242,11 @@ export class MapField implements Field<MapFieldValue> {
     return null
   }
 
-  public serialize() {
+  public serialize(): SerializedMapField {
     return {
       type: MapField.type,
-      label: this.label || null,
-      description: this.description || null,
+      label: this.label,
+      description: this.description,
       field: this.field.serialize()
     }
   }
@@ -271,28 +284,27 @@ export class MapField implements Field<MapFieldValue> {
 
   public static type = 'map'
 
-  static unserialize(
-    rawField: SerializedField,
-    model: Model,
-    unserializeField: UnserializeFieldFunction
-  ) {
+  static canInferFromModel(model: Model) {
+    return model.type === 'map'
+  }
+
+  static create(model: Model, opts: MapFieldOptions | undefined, createField: CreateFieldFunction) {
     if (model.type !== 'map') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "map" received: "${model.type}"`
       })
     }
 
+    return new this({...opts, field: createField(model.model, opts && opts.field)})
+  }
+
+  static unserialize(rawField: SerializedMapField, unserializeField: UnserializeFieldFunction) {
     return new this({
       label: rawField.label,
       description: rawField.description,
-      field: unserializeField(rawField.field, model.model)
+      field: unserializeField(rawField.field)
     })
-  }
-
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'map') return null
-    return new this({label, field: inferField(model.model)})
   }
 }

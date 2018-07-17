@@ -16,6 +16,7 @@ import {SetField} from './set'
 import {DateTimeField} from './dateTime'
 import {NullField} from './null'
 import {CurrentUserField} from './currentUser'
+import {ErrorField} from './error'
 
 export type FieldRegistry = ReadonlyMap<string, FieldClass>
 
@@ -35,6 +36,7 @@ export function mergeFieldRegistries(...registries: FieldRegistry[]): FieldRegis
 }
 
 export const defaultFieldRegistry = createFieldRegistry(
+  ErrorField,
   CurrentUserField,
   PasswordField,
   BoolField,

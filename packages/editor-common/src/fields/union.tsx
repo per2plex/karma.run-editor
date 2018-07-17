@@ -8,7 +8,9 @@ import {
   EditRenderProps,
   SerializedField,
   UnserializeFieldFunction,
-  InferFieldFunction
+  CreateFieldFunction,
+  TypedFieldOptions,
+  FieldOptions
 } from './interface'
 
 import {KeyPath, Model} from '../api/model'
@@ -28,6 +30,8 @@ import {WorkerContext} from '../context/worker'
 import {firstKey, ObjectMap} from '../util/object'
 
 export type UnionFieldChildTuple = [string, string, Field]
+export type UnionFieldOptionsTuple = [string, string, TypedFieldOptions]
+export type UnionFieldSerializedTuple = [string, string, SerializedField]
 
 export class UnionFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<UnionField, UnionFieldValue>
@@ -104,7 +108,19 @@ export class UnionFieldEditComponent extends React.PureComponent<
 export interface UnionFieldOptions {
   readonly label?: string
   readonly description?: string
+  readonly fields?: UnionFieldOptionsTuple[]
+}
+
+export interface UnionFieldConstructorOptions {
+  readonly label?: string
+  readonly description?: string
   readonly fields: UnionFieldChildTuple[]
+}
+
+export type SerializedUnionField = SerializedField & {
+  readonly label?: string
+  readonly description?: string
+  readonly fields: UnionFieldSerializedTuple[]
 }
 
 export type UnionFieldValue = {selectedKey?: string; values: ObjectMap<any>}
@@ -119,7 +135,7 @@ export class UnionField implements Field<UnionFieldValue> {
   public sortConfigurations: SortConfiguration[] = []
   public filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: UnionFieldOptions) {
+  public constructor(opts: UnionFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.fields = opts.fields
@@ -178,12 +194,14 @@ export class UnionField implements Field<UnionFieldValue> {
     return null
   }
 
-  public serialize() {
+  public serialize(): SerializedUnionField {
     return {
       type: UnionField.type,
-      label: this.label || null,
-      description: this.description || null,
-      fields: this.fields.map(([key, label, field]) => [key, label, field.serialize()])
+      label: this.label,
+      description: this.description,
+      fields: this.fields.map(
+        ([key, label, field]) => [key, label, field.serialize()] as UnionFieldSerializedTuple
+      )
     }
   }
 
@@ -235,48 +253,54 @@ export class UnionField implements Field<UnionFieldValue> {
 
   public static type = 'union'
 
-  static unserialize(
-    rawField: SerializedField,
+  static canInferFromModel(model: Model) {
+    return model.type === 'union'
+  }
+
+  static create(
     model: Model,
-    unserializeField: UnserializeFieldFunction
+    opts: UnionFieldOptions | undefined,
+    createField: CreateFieldFunction
   ) {
     if (model.type !== 'union') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "union" received: "${model.type}"`
       })
     }
 
-    if (!Array.isArray(rawField.fields)) {
-      return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid fields!'
-      })
+    const sortArray = opts && opts.fields && opts.fields.map(tuple => tuple[0])
+    const fieldOptionsMap = new Map(
+      opts &&
+        opts.fields &&
+        opts.fields.map(
+          ([key, label, options]) => [key, [label, options]] as [string, [string, FieldOptions]]
+        )
+    )
+
+    const fields = Object.entries(model.fields).map(([key, model]) => {
+      const options = fieldOptionsMap.get(key)
+      const label = options ? options[0] : convertKeyToLabel(key)
+      const fieldOptions = options && options[1]
+
+      return [key, label, createField(model, {label, ...fieldOptions})]
+    }) as UnionFieldChildTuple[]
+
+    if (sortArray) {
+      fields.sort(([keyA], [keyB]) => sortArray.indexOf(keyA) - sortArray.indexOf(keyB))
     }
 
-    // TODO: Check all keys in model
+    return new this({...opts, fields})
+  }
 
+  static unserialize(rawField: SerializedUnionField, unserializeField: UnserializeFieldFunction) {
     return new this({
       label: rawField.label,
       description: rawField.description,
       fields: rawField.fields.map(
-        ([key, label, field]) =>
-          [key, label, unserializeField(field, model.fields[key])] as UnionFieldChildTuple
+        ([key, label, field]) => [key, label, unserializeField(field)] as UnionFieldChildTuple
       )
-    })
-  }
-
-  static inferFromModel(model: Model, label: string | undefined, inferField: InferFieldFunction) {
-    if (model.type !== 'union') return null
-
-    return new this({
-      label,
-      fields: Object.entries(model.fields).map(([key, model]) => {
-        const label = convertKeyToLabel(key)
-        return [key, label, inferField(model, label)] as UnionFieldChildTuple
-      })
     })
   }
 }

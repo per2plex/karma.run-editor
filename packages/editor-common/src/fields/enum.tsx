@@ -63,8 +63,16 @@ export type EnumFieldOption = [string, string]
 export interface EnumFieldOptions {
   readonly label?: string
   readonly description?: string
+  readonly options?: EnumFieldOption[]
+}
+
+export interface EnumFieldConstructorOptions {
+  readonly label?: string
+  readonly description?: string
   readonly options: EnumFieldOption[]
 }
+
+export type SerializedEnumField = SerializedField & EnumFieldConstructorOptions
 
 export class EnumField implements Field<EnumFieldValue> {
   public readonly label?: string
@@ -75,7 +83,7 @@ export class EnumField implements Field<EnumFieldValue> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: EnumFieldOptions) {
+  public constructor(opts: EnumFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.options = opts.options
@@ -112,11 +120,12 @@ export class EnumField implements Field<EnumFieldValue> {
     return []
   }
 
-  public serialize() {
+  public serialize(): SerializedEnumField {
     return {
       type: EnumField.type,
       label: this.label,
-      description: this.description
+      description: this.description,
+      options: this.options
     }
   }
 
@@ -130,38 +139,36 @@ export class EnumField implements Field<EnumFieldValue> {
 
   public static type = 'enum'
 
-  static inferFromModel(model: Model, label: string | undefined) {
-    if (model.type !== 'enum') return null
-    return new EnumField({
-      label,
-      options: model.values.map(option => [option, convertKeyToLabel(option)] as [string, string])
-    })
+  static canInferFromModel(model: Model) {
+    return model.type === 'enum'
   }
 
-  static unserialize(rawField: SerializedField, model: Model) {
+  static create(model: Model, opts?: EnumFieldOptions) {
     if (model.type !== 'enum') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "enum" received: "${model.type}"`
       })
     }
 
-    const rawOptions: EnumFieldOption[] = rawField.options
-    const filteredOptions = rawOptions.filter(([rawOptionKey]) =>
-      model.values.includes(rawOptionKey)
-    )
+    const options = (opts && opts.options) || []
+    const filteredOptions = options.filter(([rawOptionKey]) => model.values.includes(rawOptionKey))
 
     const missingOptions = model.values.filter(
       option => !filteredOptions.some(([key]) => key === option)
     )
 
     return new this({
-      label: rawField.label,
-      description: rawField.description,
+      label: opts && opts.label,
+      description: opts && opts.description,
       options: filteredOptions.concat(
         missingOptions.map(option => [option, convertKeyToLabel(option)] as [string, string])
       )
     })
+  }
+
+  static unserialize(rawField: SerializedEnumField) {
+    return new this(rawField)
   }
 }

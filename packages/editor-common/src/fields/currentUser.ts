@@ -3,7 +3,7 @@ import {expression as e} from '@karma.run/sdk'
 import {Model} from '../api/model'
 import {ErrorField} from './error'
 
-import {SerializedField, Field} from './interface'
+import {Field, SerializedField, FieldOptions} from './interface'
 import {SortConfiguration, FilterConfiguration} from '../interface/filter'
 
 export class CurrentUserField implements Field<null> {
@@ -35,7 +35,7 @@ export class CurrentUserField implements Field<null> {
     return null
   }
 
-  public serialize() {
+  public serialize(): SerializedField {
     return {type: CurrentUserField.type}
   }
 
@@ -49,19 +49,18 @@ export class CurrentUserField implements Field<null> {
 
   public static type = 'currentUser'
 
-  static inferFromModel() {
-    return null
-  }
-
-  static unserialize(rawField: SerializedField, model: Model) {
+  static create(model: Model, opts: FieldOptions) {
     if (model.type !== 'ref') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts.label,
+        message: `Expected model type "ref" received: "${model.type}"`
       })
     }
 
+    return new this()
+  }
+
+  static unserialize() {
     return new this()
   }
 }

@@ -52,11 +52,6 @@ export class KarmaError extends Error {
   }
 }
 
-export interface Session {
-  username: string
-  signature: string
-}
-
 export const enum Codec {
   JSON = 'json'
 }
@@ -64,8 +59,8 @@ export const enum Codec {
 export const CodedHeader = 'X-Karma-Codec'
 export const SignatureHeader = 'X-Karma-Signature'
 
-export function headersForSession(session?: Session, headers: ObjectMap = {}) {
-  if (session) headers[SignatureHeader] = session.signature
+export function headersForSignature(signature?: string, headers: ObjectMap = {}) {
+  if (signature) headers[SignatureHeader] = signature
   return headers
 }
 
@@ -84,13 +79,13 @@ export function bodyForData(data: any, codec: Codec) {
 async function postUploadRequest(
   url: string,
   data: any,
-  session?: Session,
+  signature?: string,
   codec = Codec.JSON
 ): Promise<any> {
   try {
-    const headers: ObjectMap = headersForSession(session, headersForCodec(codec))
-
+    const headers: ObjectMap = headersForSignature(signature, headersForCodec(codec))
     const result = await axios.post(url, bodyForData(data, codec), {headers})
+
     return result.data
   } catch (e) {
     const err: AxiosError = e
@@ -106,12 +101,13 @@ async function postUploadRequest(
 async function postRequest(
   url: string,
   data: any,
-  session?: Session,
+  signature?: string,
   codec = Codec.JSON
 ): Promise<any> {
   try {
-    const headers: ObjectMap = headersForSession(session, headersForCodec(codec))
+    const headers: ObjectMap = headersForSignature(signature, headersForCodec(codec))
     const result = await axios.post(url, bodyForData(data, codec), {headers})
+
     return result.data
   } catch (e) {
     const err: AxiosError = e
@@ -124,9 +120,9 @@ async function postRequest(
   }
 }
 
-async function binaryGetRequest(url: string, session?: Session, codec = Codec.JSON): Promise<any> {
+async function binaryGetRequest(url: string, signature?: string, codec = Codec.JSON): Promise<any> {
   try {
-    const headers: ObjectMap = headersForSession(session, headersForCodec(codec))
+    const headers: ObjectMap = headersForSignature(signature, headersForCodec(codec))
     const result = await axios.get(url, {headers, responseType: 'arraybuffer'})
 
     return result.data
@@ -143,15 +139,15 @@ async function binaryGetRequest(url: string, session?: Session, codec = Codec.JS
 
 export async function query(
   url: string,
-  session: Session,
+  signature: string,
   expression: FuncExpression,
   codec = Codec.JSON
 ) {
-  return await postRequest(url, expression, session, codec)
+  return await postRequest(url, expression, signature, codec)
 }
 
-export async function reset(url: string, session: Session, codec = Codec.JSON) {
-  await postRequest(url + '/admin/reset', undefined, session, codec)
+export async function reset(url: string, signature: string, codec = Codec.JSON) {
+  await postRequest(url + '/admin/reset', undefined, signature, codec)
 }
 
 export async function authenticate(
@@ -159,51 +155,51 @@ export async function authenticate(
   username: string,
   password: string,
   codec = Codec.JSON
-): Promise<Session> {
+): Promise<string> {
   const data = {username, password}
   const signature = await postRequest(url + '/auth', data, undefined, codec)
 
-  return {username, signature}
+  return signature
 }
 
 export async function refreshSession(
   baseURL: string,
-  session: Session,
+  signature?: string,
   codec = Codec.JSON
-): Promise<Session> {
-  const signature = await postRequest(baseURL + '/auth', undefined, session, codec)
-  return {...session, signature}
+): Promise<string> {
+  const newSignature = await postRequest(baseURL + '/auth', undefined, signature, codec)
+  return newSignature
 }
 
 export async function exportDB(
   url: string,
-  session: Session,
+  signature: string,
   codec = Codec.JSON
 ): Promise<ArrayBuffer> {
-  return await binaryGetRequest(url + '/admin/export', session, codec)
+  return await binaryGetRequest(url + '/admin/export', signature, codec)
 }
 
 export async function importDB(
   url: string,
-  session: Session,
+  signature: string,
   data: ArrayBuffer,
   codec = Codec.JSON
 ) {
-  return await postUploadRequest(url + '/admin/import', data, session, codec)
+  return await postUploadRequest(url + '/admin/import', data, signature, codec)
 }
 
 export async function createRecords(
   url: string,
-  session: Session,
+  signature: string,
   model: Ref | string,
   data: any[]
 ): Promise<Ref> {
-  if (isRef(model)) return await postRequest(`${url}/rest/${model[1]}`, data, session)
-  return await postRequest(`${url}/rest/${model}`, data, session)
+  if (isRef(model)) return await postRequest(`${url}/rest/${model[1]}`, data, signature)
+  return await postRequest(`${url}/rest/${model}`, data, signature)
 }
 
 export class Client {
-  public session?: Session
+  public signature?: string
   public readonly url: string
   public readonly codec: Codec
 
@@ -213,32 +209,32 @@ export class Client {
   }
 
   public query(expression: FuncExpression) {
-    if (!this.session) throw new Error("Can't query without session!")
-    return query(this.url, this.session, expression, this.codec)
+    if (!this.signature) throw new Error("Can't query without session!")
+    return query(this.url, this.signature, expression, this.codec)
   }
 
   public async authenticate(username: string, password: string) {
-    this.session = await authenticate(this.url, username, password, this.codec)
-    return this.session
+    this.signature = await authenticate(this.url, username, password, this.codec)
+    return this.signature
   }
 
   public reset() {
-    if (!this.session) throw new Error("Can't reset without session!")
-    return reset(this.url, this.session, this.codec)
+    if (!this.signature) throw new Error("Can't reset without session!")
+    return reset(this.url, this.signature, this.codec)
   }
 
   public exportDB() {
-    if (!this.session) throw new Error("Can't exportDBB without session!")
-    return exportDB(this.url, this.session, this.codec)
+    if (!this.signature) throw new Error("Can't exportDBB without session!")
+    return exportDB(this.url, this.signature, this.codec)
   }
 
   public importDB(data: ArrayBuffer) {
-    if (!this.session) throw new Error("Can't importDB without session!")
-    return importDB(this.url, this.session, data, this.codec)
+    if (!this.signature) throw new Error("Can't importDB without session!")
+    return importDB(this.url, this.signature, data, this.codec)
   }
 
   public createRecords(model: Ref | string, data: any[]) {
-    if (!this.session) throw new Error("Can't createRecords without session!")
-    return createRecords(this.url, this.session, model, data)
+    if (!this.signature) throw new Error("Can't createRecords without session!")
+    return createRecords(this.url, this.signature, model, data)
   }
 }

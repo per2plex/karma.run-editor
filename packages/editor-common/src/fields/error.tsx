@@ -4,6 +4,7 @@ import {Field, SerializedField, EditComponentRenderProps, EditRenderProps} from 
 import {FieldErrors, FieldComponent, FieldLabel} from '../ui/field'
 import {CardError} from '../ui/card'
 import {SortConfiguration, FilterConfiguration} from '../interface/filter'
+import {Model} from '../api/model'
 
 export class ErrorEditComponent extends React.PureComponent<EditComponentRenderProps<ErrorField>> {
   public render() {
@@ -26,8 +27,10 @@ export class ErrorEditComponent extends React.PureComponent<EditComponentRenderP
 export interface ErrorFieldOptions {
   readonly label?: string
   readonly description?: string
-  readonly message: string
+  readonly message?: string
 }
+
+export type SerializedErrorField = SerializedField & ErrorFieldOptions
 
 export class ErrorField implements Field<null> {
   public readonly label?: string
@@ -38,10 +41,10 @@ export class ErrorField implements Field<null> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public constructor(opts: ErrorFieldOptions) {
-    this.label = opts.label
-    this.description = opts.description
-    this.message = opts.message
+  public constructor(opts?: ErrorFieldOptions) {
+    this.label = opts && opts.label
+    this.description = opts && opts.description
+    this.message = (opts && opts.message) || 'Unknown Error'
   }
 
   public initialize() {
@@ -63,8 +66,13 @@ export class ErrorField implements Field<null> {
     )
   }
 
-  public serialize(): SerializedField {
-    throw new Error('Error field should not be serialized!')
+  public serialize(): SerializedErrorField {
+    return {
+      type: ErrorField.type,
+      label: this.label,
+      description: this.description,
+      message: this.message
+    }
   }
 
   public transformRawValue(value: any) {
@@ -85,5 +93,19 @@ export class ErrorField implements Field<null> {
 
   public valuePathForKeyPath() {
     return []
+  }
+
+  static inferFromModel() {
+    return null
+  }
+
+  public static type = 'error'
+
+  static create(_model: Model, opts?: ErrorFieldOptions) {
+    return new this(opts)
+  }
+
+  static unserialize(rawField: SerializedErrorField) {
+    return new this(rawField)
   }
 }
