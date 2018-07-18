@@ -1,9 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "include": ["./src/**/*"],
+  "exclude": ["./src/filter"],
   "compilerOptions": {
     "lib": ["es2017", "dom", "dom.iterable"],
-    "experimentalDecorators": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   }
 }

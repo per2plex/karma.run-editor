@@ -23,6 +23,7 @@ export interface EditorSession {
 
 export interface EditorData {
   editorContexts: EditorContext[]
+  editorContextMap: ReadonlyMap<string, EditorContext>
   viewContexts: ViewContext[]
   viewContextMap: ReadonlyRefMap<ViewContext>
   viewContextSlugMap: ReadonlyMap<string, ViewContext>
@@ -30,6 +31,7 @@ export interface EditorData {
 
 export const initialEditorData: EditorData = {
   editorContexts: [],
+  editorContextMap: new Map(),
   viewContexts: [],
   viewContextMap: new RefMap(),
   viewContextSlugMap: new Map()

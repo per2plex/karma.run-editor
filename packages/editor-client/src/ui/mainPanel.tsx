@@ -10,21 +10,24 @@ import {
   withSession,
   SessionContext,
   ModelRecord,
-  StackView
+  StackView,
+  Field,
+  Deferred,
+  lastItemThrow
 } from '@karma.run/editor-common'
 
 import {RootRecordListPanelContainer, SelectRecordListPanelContainer} from './recordListPanel'
-import {Deferred, lastItemThrow} from '@karma.run/editor-common'
 import {RecordEditPanelContainer} from './recordEditPanel'
 import {RecordDeletePanelContainer} from './recordDeletePanel'
+import {FieldPanelContainer} from './fieldPanel'
 
 export const enum PanelType {
   RootList = 'rootList',
   SelectList = 'selectList',
   Edit = 'edit',
   Delete = 'delete',
-  Editor = 'editor',
-  JSONEditor = 'jsonEditor',
+  Field = 'field',
+  Expression = 'expression',
   NotFound = 'notFound'
 }
 
@@ -108,53 +111,41 @@ export function DeletePanelContext(
   }
 }
 
-// export interface DeletePanelContext {
-//   type: PanelType.Delete
-//   contextID: string
-//   id: string
-//   viewContext: ViewContext
-//   result: Deferred<string | undefined>
-// }
+export interface FieldPanelContext extends BasePanelContext {
+  type: PanelType.Field
+  field: Field
+  value?: any
+  result: Deferred<any>
+}
 
-// export function DeletePanelContext(viewContext: ViewContext, id: string): DeletePanelContext {
-//   return {
-//     type: PanelType.Delete,
-//     contextID: shortid.generate(),
-//     viewContext,
-//     id,
-//     result: new Deferred()
-//   }
-// }
+export function FieldPanelContext(
+  field: Field,
+  value?: any,
+  id: string = shortid.generate()
+): FieldPanelContext {
+  return {type: PanelType.Field, result: new Deferred(), field, value, id}
+}
 
-// export interface EditorPanelContext {
-//   type: PanelType.Editor
-//   contextID: string
-//   fieldStore: FieldStore
-//   result: Deferred<any>
-// }
+export interface ExpressionPanelContext extends BasePanelContext {
+  type: PanelType.Expression
+  result: Deferred<any>
+}
 
-// export function EditorPanelContext(fieldStore: FieldStore): EditorPanelContext {
-//   return {type: PanelType.Editor, contextID: shortid.generate(), fieldStore, result: new Deferred()}
-// }
-
-// export interface JSONEditorPanelContext {
-//   type: PanelType.JSONEditor
-//   contextID: string
-//   data: any
-//   result: Deferred<any>
-// }
-
-// export function JSONEditorPanelContext(data: any): JSONEditorPanelContext {
-//   return {type: PanelType.JSONEditor, contextID: shortid.generate(), data, result: new Deferred()}
-// }
+export function ExpressionPanelContext(id: string = shortid.generate()): ExpressionPanelContext {
+  return {
+    type: PanelType.Expression,
+    result: new Deferred(),
+    id
+  }
+}
 
 export type PanelContext =
   | RootListPanelContext
   | SelectListPanelContext
   | EditPanelContext
   | DeletePanelContext
-  // | EditorPanelContext
-  // | JSONEditorPanelContext
+  | FieldPanelContext
+  | ExpressionPanelContext
   | NotFoundContext
 
 export interface MainPanelProps {
@@ -201,6 +192,15 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
       case PanelType.SelectList:
       case PanelType.Edit:
         return context.result.resolve(record)
+    }
+  }
+
+  private handleFieldApply = (value?: any) => {
+    const context = this.popPanelContext()
+
+    switch (context.type) {
+      case PanelType.Field:
+        return context.result.resolve(value)
     }
   }
 
@@ -277,6 +277,19 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
             onBack={this.handleBack}
             onEditRecord={this.handleEditRecord}
             onDeleteRecord={this.handleDeleteRecord}
+          />
+        )
+
+      case PanelType.Field:
+        return (
+          <FieldPanelContainer
+            value={context.value}
+            field={context.field}
+            disabled={disabled}
+            onBack={this.handleFieldApply}
+            onApply={this.handleFieldApply}
+            onEditRecord={this.handleEditRecord}
+            onSelectRecord={this.handleSelectRecord}
           />
         )
 

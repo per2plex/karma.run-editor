@@ -1,6 +1,6 @@
 import React from 'react'
-import {Session} from '@karma.run/sdk'
 import {createContextHOC} from './helper'
+import {EditorSession} from './session'
 
 export const enum LocationType {
   Login = 'login',
@@ -17,10 +17,13 @@ export const enum LocationType {
 export interface LoginLocation {
   type: LocationType.Login
   originalLocation?: AppLocation
-  session?: Session
+  session?: EditorSession
 }
 
-export function LoginLocation(originalLocation?: AppLocation, session?: Session): LoginLocation {
+export function LoginLocation(
+  originalLocation?: AppLocation,
+  session?: EditorSession
+): LoginLocation {
   return {type: LocationType.Login, originalLocation, session}
 }
 

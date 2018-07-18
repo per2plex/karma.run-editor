@@ -29,7 +29,6 @@ import {darkFieldColorForDepthAndIndex, Spacing, Color} from '../ui/style'
 import {FlexFiller} from '../ui/flex'
 import {Button, ButtonType} from '../ui/button'
 import {IconName} from '../ui/icon'
-import {FieldOptions} from './interface'
 
 export interface ListFieldItemProps {
   index: number

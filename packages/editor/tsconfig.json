@@ -2,9 +2,11 @@
   "extends": "../../tsconfig.json",
   "include": ["./src/**/*"],
   "compilerOptions": {
-    "lib": ["es2017"],
+    "lib": ["es2017", "dom", "dom.iterable"],
     "types": ["@types/node"],
     "declaration": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
     "outDir": "./dist/"
   }
 }

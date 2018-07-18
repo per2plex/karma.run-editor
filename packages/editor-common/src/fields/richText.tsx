@@ -5,13 +5,7 @@ import {expression as e} from '@karma.run/sdk'
 import {Model} from '../api/model'
 import {ErrorField} from './error'
 
-import {
-  SerializedField,
-  EditComponentRenderProps,
-  EditRenderProps,
-  Field,
-  ListRenderProps
-} from './interface'
+import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from './interface'
 
 import {
   RichTextInput,
@@ -164,7 +158,7 @@ export class RichTextField implements Field<RichTextFieldValue> {
     return new this({label})
   }
 
-  static unserialize(rawField: SerializedField, model: Model) {
+  static unserialize(rawField: any, model: Model) {
     if (this.isValidModel(model)) {
       return new ErrorField({
         label: rawField.label,

@@ -105,7 +105,6 @@ export namespace RichTextInput {
     ) => void
 
     onOpenLinkEditor: (data: any, done: (data: any) => void, cancel: () => void) => void
-
     onChange: (value: EditorState) => void
     value: EditorState
     disabled?: boolean

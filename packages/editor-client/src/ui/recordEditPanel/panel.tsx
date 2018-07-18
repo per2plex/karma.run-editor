@@ -183,7 +183,7 @@ export class RecordEditPanel extends React.PureComponent<
         />
         <PanelToolbar
           left={this.getToolbarButtons(disabled, hasUnsavedChanges, isNewRecord)}
-          right={this.getDeveloperButtons(true)} // TODO: Developer mode
+          right={this.getDeveloperButtons(false)} // TODO: Developer mode
         />
         <PanelContent>
           {this.state.isLoadingRecord ? (

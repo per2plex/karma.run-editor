@@ -353,12 +353,20 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       viewContexts.map(viewContext => [viewContext.model, viewContext] as [Ref, ViewContext])
     )
 
-    const viewContextSlugMap = new RefMap(
+    const viewContextSlugMap = new Map(
       viewContexts.map(viewContext => [viewContext.slug, viewContext] as [string, ViewContext])
+    )
+
+    const editorContextMap = new Map(
+      editorContexts.map(
+        editorContext =>
+          [editorContext.id || editorContext.name, editorContext] as [string, EditorContext]
+      )
     )
 
     return {
       editorContexts,
+      editorContextMap,
       viewContexts,
       viewContextMap,
       viewContextSlugMap

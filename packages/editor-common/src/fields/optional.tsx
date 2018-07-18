@@ -11,7 +11,6 @@ import {
   CreateFieldFunction,
   EditComponentRenderProps,
   UnserializeFieldFunction,
-  FieldOptions,
   TypedFieldOptions
 } from './interface'
 
