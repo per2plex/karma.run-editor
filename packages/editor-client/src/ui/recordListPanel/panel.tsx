@@ -23,7 +23,8 @@ import {
   PanelContent,
   withLocale,
   LocaleContext,
-  SortConfiguration
+  SortConfiguration,
+  ReadonlyRefMap
 } from '@karma.run/editor-common'
 
 import {ToolbarFilter} from './filterToolbar'
@@ -41,6 +42,46 @@ export interface RecordAction {
   icon: IconName
   label: string
   onTrigger: (record: ModelRecord) => void
+}
+
+export interface MixedRecordListProps {
+  viewContextMap: ReadonlyRefMap<ViewContext>
+  localeContext: LocaleContext
+  records?: ModelRecord[]
+  actions: RecordAction[]
+}
+
+export class MixedRecordList extends React.Component<MixedRecordListProps> {
+  public render() {
+    if (!this.props.records) return <CenteredLoadingIndicator />
+
+    // TODO: Empty view
+    if (this.props.records.length === 0) return <>No results</>
+
+    return (
+      <FlexList direction="column" spacing="medium">
+        {this.props.records.map(record => (
+          <RecordItem
+            key={refToString(record.id)}
+            record={record}
+            viewContext={this.props.viewContextMap.get(record.model)!}
+            viewContextMap={this.props.viewContextMap}
+            localeContext={this.props.localeContext}>
+            {this.props.actions.map(action => (
+              <Button
+                key={action.key}
+                type={ButtonType.Icon}
+                data={record}
+                onTrigger={action.onTrigger}
+                icon={action.icon}
+                label={action.label}
+              />
+            ))}
+          </RecordItem>
+        ))}
+      </FlexList>
+    )
+  }
 }
 
 export interface RecordListProps {
@@ -245,32 +286,34 @@ export class RecordListPanel extends React.PureComponent<
                   label={action.label}
                 />
               ))}
+            </FlexList>
+          }
+          right={
+            <FlexList spacing="medium">
               <Button
                 type={ButtonType.Icon}
-                icon={IconName.ListArrowUp}
+                icon={IconName.ListArrowLeft}
                 onTrigger={this.handlePreviousPage}
                 disabled={this.state.records == undefined || this.state.offset <= 0}
               />
               <Button
                 type={ButtonType.Icon}
-                icon={IconName.ListArrowDown}
+                icon={IconName.ListArrowRight}
                 onTrigger={this.handleNextPage}
                 disabled={this.state.records == undefined || !this.state.hasMore}
               />
+              <ToolbarFilter
+                viewContext={viewContext}
+                sortConfigurations={viewContext.sortConfigurations}
+                sortValue={this.sortValue}
+                sortDescending={this.state.sortDescending}
+                onSortChange={this.handleSortChange}
+                filterConfigurations={[]}
+                quickSearchValue={this.state.quickSearchValue}
+                onQuickSearchChange={this.handleQuickSearchChange}
+                disableQuickSearch={viewContext.displayKeyPaths.length === 0}
+              />
             </FlexList>
-          }
-          right={
-            <ToolbarFilter
-              viewContext={viewContext}
-              sortConfigurations={viewContext.sortConfigurations}
-              sortValue={this.sortValue}
-              sortDescending={this.state.sortDescending}
-              onSortChange={this.handleSortChange}
-              filterConfigurations={[]}
-              quickSearchValue={this.state.quickSearchValue}
-              onQuickSearchChange={this.handleQuickSearchChange}
-              disableQuickSearch={viewContext.displayKeyPaths.length === 0}
-            />
           }
         />
         <PanelContent>

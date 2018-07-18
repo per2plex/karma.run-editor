@@ -1,21 +1,22 @@
 import React from 'react'
 import {createContextHOC} from './helper'
-import {PluginTuple} from '../interface/plugin'
+import {ClientPlugin} from '../interface/plugin'
+import {FieldRegistry, defaultFieldRegistry} from '../fields/registry'
 
 export interface Config {
   karmaDataURL: string
   basePath: string
-  mediaBasePath: string
   title: string
-  plugins: PluginTuple[]
+  plugins: ClientPlugin[]
+  fieldRegistry: FieldRegistry
 }
 
 export const defaultConfig: Config = Object.freeze({
   karmaDataURL: '',
   basePath: '',
-  mediaBasePath: '',
   title: 'karma.run',
-  plugins: []
+  plugins: [],
+  fieldRegistry: defaultFieldRegistry
 })
 
 export const ConfigContext = React.createContext<Config>(defaultConfig)

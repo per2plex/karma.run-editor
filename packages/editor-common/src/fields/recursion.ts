@@ -10,11 +10,12 @@ import {
   CreateFieldFunction,
   UnserializeFieldFunction,
   ListRenderProps,
-  FieldOptions
+  FieldOptions,
+  SaveContext,
+  DeleteContext
 } from './interface'
 
 import {SortConfiguration, FilterConfiguration} from '../interface/filter'
-import {WorkerContext} from '../context/worker'
 import {reduceToMap} from '../util/array'
 import {ObjectMap} from '../util/object'
 
@@ -100,17 +101,17 @@ export class RecursiveField implements Field<any> {
     return this.topField.valuePathForKeyPath(keyPath)
   }
 
-  public async onSave(value: any, worker: WorkerContext) {
+  public async onSave(value: any, context: SaveContext) {
     if (this.topField.onSave) {
-      return this.topField.onSave(value, worker)
+      return this.topField.onSave(value, context)
     }
 
     return value
   }
 
-  public async onDelete(value: any, worker: WorkerContext) {
+  public async onDelete(value: any, context: DeleteContext) {
     if (this.topField.onDelete) {
-      return this.topField.onDelete(value, worker)
+      return this.topField.onDelete(value, context)
     }
 
     return value
@@ -230,17 +231,17 @@ export class RecursionField implements Field<any> {
     return this.field.valuePathForKeyPath(keyPath)
   }
 
-  public async onSave(value: any, worker: WorkerContext) {
+  public async onSave(value: any, context: SaveContext) {
     if (this.field.onSave) {
-      return this.field.onSave(value, worker)
+      return this.field.onSave(value, context)
     }
 
     return value
   }
 
-  public async onDelete(value: any, worker: WorkerContext) {
+  public async onDelete(value: any, context: DeleteContext) {
     if (this.field.onDelete) {
-      return this.field.onDelete(value, worker)
+      return this.field.onDelete(value, context)
     }
 
     return value
@@ -274,7 +275,6 @@ export class RecursionField implements Field<any> {
     rawField: SerializedRecursionField,
     unserializeField: UnserializeFieldFunction
   ) {
-    console.log(rawField)
     return new this({
       recursionLabel: rawField.recursionLabel,
       field: unserializeField(rawField.field)
@@ -378,17 +378,17 @@ export class RecurseField implements Field<any> {
     return this.field.valuePathForKeyPath(keyPath)
   }
 
-  public async onSave(value: any, worker: WorkerContext) {
+  public async onSave(value: any, context: SaveContext) {
     if (this.field && this.field.onSave) {
-      return this.field.onSave(value, worker)
+      return this.field.onSave(value, context)
     }
 
     return value
   }
 
-  public async onDelete(value: any, worker: WorkerContext) {
+  public async onDelete(value: any, context: DeleteContext) {
     if (this.field && this.field.onDelete) {
-      return this.field.onDelete(value, worker)
+      return this.field.onDelete(value, context)
     }
 
     return value

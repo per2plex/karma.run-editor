@@ -1,12 +1,30 @@
-import {Expression, Ref} from '@karma.run/sdk'
+import {Ref, DataExpression} from '@karma.run/sdk'
 
 import {KeyPath, Model} from '../api/model'
 import {SortConfiguration, FilterConfiguration, ValuePath} from '../interface/filter'
-import {ModelRecord} from '../context/session'
+import {SessionContext, ModelRecord} from '../context/session'
 import {WorkerContext} from '../context/worker'
+import {Config} from '../context/config'
+
+export interface SaveContext {
+  model: Ref
+  id: Ref | undefined
+  config: Config
+  workerContext: WorkerContext
+  sessionContext: SessionContext
+}
+
+export interface DeleteContext {
+  model: Ref
+  id: Ref | undefined
+  config: Config
+  workerContext: WorkerContext
+  sessionContext: SessionContext
+}
 
 export interface FieldOptions {
   readonly label?: string
+  readonly [key: string]: any
 }
 
 export interface TypedFieldOptions extends FieldOptions {
@@ -64,15 +82,15 @@ export interface Field<V = any> {
   serialize(): SerializedField
 
   transformRawValue(value: unknown): V
-  transformValueToExpression(value: V): Expression
+  transformValueToExpression(value: V): DataExpression
 
   isValidValue(value: V): string[] | null
 
   traverse(keyPath: KeyPath): Field | undefined
   valuePathForKeyPath(keyPath: KeyPath): ValuePath
 
-  onSave?(value: V, worker: WorkerContext): Promise<V>
-  onDelete?(value: V, worker: WorkerContext): Promise<V>
+  onSave?(value: V, context: SaveContext): Promise<V>
+  onDelete?(value: V, context: DeleteContext): Promise<V>
 }
 
 export interface FieldClass<V = any, O extends FieldOptions = FieldOptions> {

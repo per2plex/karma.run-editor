@@ -18,18 +18,22 @@ import {
   buildFunction,
   getTags,
   getModels,
-  Ref
+  Ref,
+  DefaultTags
 } from '@karma.run/sdk'
 
 import {
   ServerPlugin,
-  PluginTuple,
   ViewContext,
   RefMap,
   EditorContext,
   unserializeModel,
   defaultFieldRegistry,
-  ViewContextOptions
+  ViewContextOptions,
+  FieldClass,
+  FieldRegistry,
+  createFieldRegistry,
+  mergeFieldRegistries
 } from '@karma.run/editor-common'
 
 const cacheOptions = {maxAge: '1d'}
@@ -60,9 +64,6 @@ export interface MiddlewareOptions {
   viewContextsForRoles?: ViewContextsForRolesFn
 }
 
-export const defaultModelGroupID: string = 'default'
-export const defaultEditorContextID: string = 'default'
-
 export function getTagsModelsAndUserRoles(
   karmaDataURL: string,
   signature: string
@@ -89,6 +90,7 @@ export function getTagsModelsAndUserRoles(
 export async function getEditorContext(
   karmaDataURL: string,
   signature: string,
+  registry: FieldRegistry,
   editorContextsForRoles?: EditorContextsForRolesFn,
   viewContextsForRoles?: ViewContextsForRolesFn
 ) {
@@ -108,11 +110,31 @@ export async function getEditorContext(
     )
   )
 
+  // Set ViewContextOptions for default models if needed
+  const userModelRef = tagMap.get(DefaultTags.User)
+  const tagModelRef = tagMap.get(DefaultTags.Tag)
+
+  if (userModelRef && !overrideViewContextMap.has(userModelRef)) {
+    overrideViewContextMap.set(userModelRef, {
+      field: {
+        fields: [['username'], ['password', {type: 'password'}], ['roles']]
+      }
+    })
+  }
+
+  if (tagModelRef && !overrideViewContextMap.has(tagModelRef)) {
+    overrideViewContextMap.set(tagModelRef, {
+      field: {
+        fields: [['tag'], ['model']]
+      }
+    })
+  }
+
   const viewContexts = models.map(model =>
     ViewContext.inferFromModel(
       model.id,
       unserializeModel(model.value),
-      defaultFieldRegistry,
+      registry,
       reverseTagMap.get(model.id),
       [],
       overrideViewContextMap.get(model.id)
@@ -139,6 +161,26 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
 
   const reactDateTimeCSSPath = path.join(path.dirname(reactDateTimePath), 'css/react-datetime.css')
   const draftJSCSSPath = path.join(path.dirname(draftJSPath), '../dist/Draft.css')
+
+  const fields: FieldClass[] = []
+
+  if (opts.plugins && opts.plugins.length) {
+    for (const plugin of opts.plugins) {
+      if (plugin.registerRoutes) {
+        const pluginRouter = express.Router()
+        plugin.registerRoutes(opts.karmaDataURL, pluginRouter)
+        router.use(`${basePath}/api/plugin/${plugin.name}`, pluginRouter)
+      }
+
+      if (plugin.registerFields) {
+        fields.push(...plugin.registerFields())
+      }
+
+      console.info(`Initialized plugin: ${plugin.name}@${plugin.version}`)
+    }
+  }
+
+  const fieldRegistry = mergeFieldRegistries(createFieldRegistry(...fields), defaultFieldRegistry)
 
   router.get(`${basePath}/css/react-datetime.css`, (_, res) => {
     return res.sendFile(reactDateTimeCSSPath, cacheOptions)
@@ -172,6 +214,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
       const editorContext = await getEditorContext(
         opts.karmaDataURL,
         signature,
+        fieldRegistry,
         opts.editorContextsForRoles,
         opts.viewContextsForRoles
       )
@@ -185,15 +228,6 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
       return next(err)
     }
   })
-
-  const clientPlugins: PluginTuple[] = []
-
-  if (opts.plugins && opts.plugins.length) {
-    for (const plugin of opts.plugins) {
-      plugin.initialize({router})
-      console.info(`Initialized plugin: ${plugin.name}@${plugin.version}`)
-    }
-  }
 
   router.use(
     (err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
@@ -209,8 +243,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
       title,
       basePath,
       karmaDataURL: opts.karmaDataURL,
-      workerURL: `/static/worker.js`,
-      plugins: clientPlugins
+      workerURL: `/static/worker.js`
     })
 
     const stream = ReactDOMServer.renderToStaticNodeStream(

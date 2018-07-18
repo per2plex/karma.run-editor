@@ -37,6 +37,11 @@ export const initialEditorData: EditorData = {
   viewContextSlugMap: new Map()
 }
 
+export interface ReferrersResponse {
+  record: ModelRecord
+  referrers: ModelRecord[]
+}
+
 export interface SessionContext extends EditorData {
   session?: EditorSession
   canRestoreSessionFromStorage: boolean
@@ -54,16 +59,9 @@ export interface SessionContext extends EditorData {
     filters: Condition[]
   ): Promise<ModelRecord[]>
 
-  getReferrers(
-    model: Ref,
-    id: Ref,
-    limit: number,
-    offset: number,
-    sort: Sort,
-    filters: Condition[]
-  ): Promise<ModelRecord[]>
-
+  getReferrers(id: Ref, limit: number, offset: number): Promise<ModelRecord[]>
   saveRecord(model: Ref, id: Ref | undefined, value: any): Promise<ModelRecord>
+  deleteRecord(model: Ref, id: Ref, value: any): Promise<void>
 }
 
 export const SessionContext = React.createContext<SessionContext>({
@@ -99,6 +97,10 @@ export const SessionContext = React.createContext<SessionContext>({
   },
 
   async saveRecord() {
+    throw new Error('No SessionProvider found!')
+  },
+
+  async deleteRecord() {
     throw new Error('No SessionProvider found!')
   }
 })

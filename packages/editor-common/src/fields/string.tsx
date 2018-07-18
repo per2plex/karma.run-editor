@@ -1,6 +1,6 @@
 import React from 'react'
 import shortid from 'shortid'
-import {expression as e} from '@karma.run/sdk'
+import {data as d} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
@@ -116,7 +116,7 @@ export class StringField implements Field<string> {
   }
 
   public transformValueToExpression(value: string) {
-    return e.string(value)
+    return d.string(value)
   }
 
   public isValidValue(value: string) {

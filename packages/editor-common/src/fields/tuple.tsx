@@ -1,5 +1,5 @@
 import React from 'react'
-import {expression as e, data as d} from '@karma.run/sdk'
+import {data as d} from '@karma.run/sdk'
 
 import {
   EditComponentRenderProps,
@@ -9,12 +9,13 @@ import {
   UnserializeFieldFunction,
   CreateFieldFunction,
   FieldOptions,
-  TypedFieldOptions
+  TypedFieldOptions,
+  SaveContext,
+  DeleteContext
 } from './interface'
 
 import {ErrorField} from './error'
 import {KeyPath, Model} from '../api/model'
-import {WorkerContext} from '../context/worker'
 
 import {
   ValuePath,
@@ -173,7 +174,7 @@ export class TupleField implements Field<TupleFieldValue> {
       [] as any[]
     )
 
-    return e.data(d.tuple(...tupleValues))
+    return d.tuple(...tupleValues)
   }
 
   public isValidValue() {
@@ -211,7 +212,7 @@ export class TupleField implements Field<TupleFieldValue> {
     return [TuplePathSegment(Number(key)), ...field.valuePathForKeyPath(keyPath.slice(1))]
   }
 
-  public async onSave(value: TupleFieldValue, worker: WorkerContext) {
+  public async onSave(value: TupleFieldValue, context: SaveContext) {
     const newValues: any[] = []
 
     for (const [index, tupleValue] of value.entries()) {
@@ -220,13 +221,13 @@ export class TupleField implements Field<TupleFieldValue> {
       if (!field) throw new Error(`Couln't find field for index: ${index}`)
       if (!field.onSave) return value
 
-      newValues.push(await field.onSave(tupleValue, worker))
+      newValues.push(await field.onSave(tupleValue, context))
     }
 
     return newValues
   }
 
-  public async onDelete(value: TupleFieldValue, worker: WorkerContext) {
+  public async onDelete(value: TupleFieldValue, context: DeleteContext) {
     const newValues: any[] = []
 
     for (const [index, tupleValue] of value.entries()) {
@@ -235,7 +236,7 @@ export class TupleField implements Field<TupleFieldValue> {
       if (!field) throw new Error(`Couln't find field for index: ${index}`)
       if (!field.onDelete) return value
 
-      newValues.push(await field.onDelete(tupleValue, worker))
+      newValues.push(await field.onDelete(tupleValue, context))
     }
 
     return newValues

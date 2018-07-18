@@ -2,26 +2,25 @@ import React from 'react'
 import {EditorState, convertFromRaw} from 'draft-js'
 import {expression as e} from '@karma.run/sdk'
 
-import {Model} from '../api/model'
-import {ErrorField} from './error'
-
-import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from './interface'
-
 import {
-  RichTextInput,
-  Control,
-  LinkType,
-  BlockType,
-  StyleGroup,
-  CustomElement
-} from '../ui/richTextInput'
+  Model,
+  ErrorField,
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps,
+  FieldComponent,
+  FieldLabel,
+  SortConfiguration,
+  FilterConfiguration,
+  CardSection,
+  SerializedField
+} from '@karma.run/editor-common'
 
-import {FieldComponent, FieldLabel} from '../ui/field'
-import {SortConfiguration, FilterConfiguration} from '../interface/filter'
-import {CardSection} from '../ui/card'
+import {RichTextInput, Control, LinkType, BlockType, StyleGroup, CustomElement} from './input'
 
-export class RichTextFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<RichTextField, RichTextFieldValue>
+export class DraftJSFieldEditComponent extends React.PureComponent<
+  EditComponentRenderProps<DraftJSField, DraftJSFieldValue>
 > {
   private handleValueChange = (value: any) => {
     this.props.onValueChange(value, this.props.changeKey)
@@ -59,24 +58,24 @@ export class RichTextFieldEditComponent extends React.PureComponent<
   }
 }
 
-export interface StringFieldOptions {
+export interface DraftJSFieldOptions {
   readonly label?: string
   readonly description?: string
   readonly minLength?: number
   readonly maxLength?: number
-  readonly multiline?: boolean
 }
 
-export type RichTextFieldValue = EditorState
+export type DraftJSFieldValue = EditorState
+export type SerializedDraftJSField = SerializedField & DraftJSFieldOptions
 
-export class RichTextField implements Field<RichTextFieldValue> {
+export class DraftJSField implements Field<DraftJSFieldValue> {
   public readonly label?: string
   public readonly description?: string
 
   public readonly minLength?: number
   public readonly maxLength?: number
 
-  public readonly defaultValue: RichTextFieldValue = EditorState.createEmpty()
+  public readonly defaultValue: DraftJSFieldValue = EditorState.createEmpty()
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -87,24 +86,24 @@ export class RichTextField implements Field<RichTextFieldValue> {
   public readonly elements: CustomElement[] = []
   public readonly linkEntityType: string = 'LINK'
 
-  public constructor(opts: StringFieldOptions) {
-    this.label = opts.label
-    this.description = opts.description
-    this.minLength = opts.minLength
-    this.maxLength = opts.maxLength
+  public constructor(opts?: DraftJSFieldOptions) {
+    this.label = opts && opts.label
+    this.description = opts && opts.description
+    this.minLength = opts && opts.minLength
+    this.maxLength = opts && opts.maxLength
   }
 
   public initialize() {
     return this
   }
 
-  public renderListComponent(props: ListRenderProps<RichTextFieldValue>) {
+  public renderListComponent(props: ListRenderProps<DraftJSFieldValue>) {
     return <CardSection>{props.value.getCurrentContent().getPlainText()}</CardSection>
   }
 
-  public renderEditComponent(props: EditRenderProps<RichTextFieldValue>) {
+  public renderEditComponent(props: EditRenderProps<DraftJSFieldValue>) {
     return (
-      <RichTextFieldEditComponent
+      <DraftJSFieldEditComponent
         label={this.label}
         description={this.description}
         field={this}
@@ -117,11 +116,11 @@ export class RichTextField implements Field<RichTextFieldValue> {
     return EditorState.createWithContent(convertFromRaw(value))
   }
 
-  public transformValueToExpression(_value: RichTextFieldValue) {
+  public transformValueToExpression(_value: DraftJSFieldValue) {
     return e.null()
   }
 
-  public isValidValue(value: RichTextFieldValue) {
+  public isValidValue(value: DraftJSFieldValue) {
     const errors: string[] = []
     const plainText = value.getCurrentContent().getPlainText()
 
@@ -131,11 +130,13 @@ export class RichTextField implements Field<RichTextFieldValue> {
     return errors
   }
 
-  public serialize() {
+  public serialize(): SerializedDraftJSField {
     return {
-      type: RichTextField.type,
+      type: DraftJSField.type,
       label: this.label,
-      description: this.description
+      description: this.description,
+      minLength: this.minLength,
+      maxLength: this.maxLength
     }
   }
 
@@ -149,27 +150,31 @@ export class RichTextField implements Field<RichTextFieldValue> {
 
   public static type = 'richText'
 
-  static isValidModel(_model: Model) {
-    return false // TODO
+  static canInferFromModel(model: Model) {
+    if (model.type === 'annotation' && model.value === 'field:richText') {
+      return true
+    }
+
+    return false
   }
 
-  static inferFromModel(model: Model, label: string | undefined) {
-    if (this.isValidModel(model)) return null
-    return new this({label})
-  }
+  static create(model: Model, opts?: DraftJSFieldOptions) {
+    if (model.type === 'annotation') {
+      model = model.model
+    }
 
-  static unserialize(rawField: any, model: Model) {
-    if (this.isValidModel(model)) {
+    if (model.type !== 'struct') {
       return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: 'Invalid model!'
+        label: opts && opts.label,
+        description: opts && opts.description,
+        message: `Expected model type "struct" received: "${model.type}"`
       })
     }
 
-    return new this({
-      label: rawField.label,
-      description: rawField.description
-    })
+    return new this(opts)
+  }
+
+  static unserialize(rawField: SerializedDraftJSField) {
+    return new this(rawField)
   }
 }

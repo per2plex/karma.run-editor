@@ -1,23 +1,19 @@
 import os from 'os'
-import fs from 'fs'
 import path from 'path'
 import shortid from 'shortid'
 import mkdirp from 'mkdirp'
+import sharp from 'sharp'
 
 import Busboy from 'busboy'
-import {
-  deleteNullValues,
-  DatabaseHeader,
-  SignatureHeader,
-  Session,
-  rpcRequest
-} from '@karma.run/editor-common'
-
 import {Router, RequestHandler, json, Response} from 'express'
 import {ErrorRequestHandler, Request, NextFunction} from 'express-serve-static-core'
-import {MediaType, ErrorType, MediaPrivilege} from '../common'
 
-import {LocalBackend} from './backend'
+import {deleteNullValues} from '@karma.run/editor-common'
+import {SignatureHeader, query, buildFunction} from '@karma.run/sdk'
+
+import {MediaType, ErrorType} from '../common'
+
+import {LocalBackend, MediaBackend} from './backend'
 
 import {getFilePathForID, UploadFile, getMetadataForID} from './helper'
 
@@ -41,24 +37,24 @@ export type DeleteMiddlewareOptions = DeleteOptions
 export type ThumbnailMiddlewareOptions = ThumbnailOptions
 
 export interface CheckPrivilegeMiddlewareOptions {
-  karmaURL: string
+  karmaDataURL: string
+  allowedRoles: string[]
 }
 
 export interface PreviewMiddlewareOptions {
   tempDirPath: string
 }
 
-export type MiddlewareOptions = UploadMiddlewareOptions &
-  CommitMiddlewareOptions &
-  PreviewMiddlewareOptions &
-  CopyMiddlewareOptions &
-  DeleteMiddlewareOptions &
-  ThumbnailMiddlewareOptions &
-  CheckPrivilegeMiddlewareOptions
+export interface MiddlewareOptions {
+  karmaDataURL: string
+  hostname: string
+  backend: MediaBackend
+  allowedRoles: string[]
+  allowedMediaTypes?: MediaType[]
+  tempDirPath?: string
+}
 
-export const defaultOptions: MiddlewareOptions = Object.freeze({
-  karmaURL: '',
-  hostname: '',
+export const defaultOptions: Partial<MiddlewareOptions> = Object.freeze({
   tempDirPath: path.join(os.tmpdir(), 'karma.run-media'),
   backend: new LocalBackend(),
   allowedMediaTypes: [
@@ -80,7 +76,7 @@ export function uploadMediaMiddleware(opts: UploadMiddlewareOptions): RequestHan
       limits: {files: 1}
     })
 
-    busboy.on('file', (_fieldName, fileStream, filename) => {
+    busboy.on('file', async (_fieldName, fileStream, filename) => {
       // WORKAROUND: We have to include the extension so sharp can detect SVGs.
       const extension = path.extname(filename)
       const id = shortid() + extension
@@ -91,23 +87,23 @@ export function uploadMediaMiddleware(opts: UploadMiddlewareOptions): RequestHan
         path: getFilePathForID(id, opts.tempDirPath)
       }
 
-      const writeStream = fs.createWriteStream(uploadFile.path)
+      // Normalize rotation based on EXIF
+      const pipeline = sharp().rotate()
+      fileStream.pipe(pipeline)
 
-      writeStream.on('close', async () => {
-        try {
-          return res.status(200).send(
-            await uploadMedia(uploadFile!, {
-              hostname: opts.hostname,
-              tempDirPath: opts.tempDirPath,
-              allowedMediaTypes: opts.allowedMediaTypes
-            })
-          )
-        } catch (err) {
-          return next(err)
-        }
-      })
+      try {
+        await pipeline.toFile(uploadFile.path)
 
-      fileStream.pipe(writeStream)
+        return res.status(200).send(
+          await uploadMedia(uploadFile!, {
+            hostname: opts.hostname,
+            tempDirPath: opts.tempDirPath,
+            allowedMediaTypes: opts.allowedMediaTypes
+          })
+        )
+      } catch (err) {
+        return next(err)
+      }
     })
 
     req.pipe(busboy)
@@ -190,27 +186,22 @@ export function thumbnailRedirectMiddleware(opts: ThumbnailMiddlewareOptions): R
 
 export function checkPrivilegeMiddleware(opts: CheckPrivilegeMiddlewareOptions) {
   return async (req: Request, _res: Response, next: NextFunction) => {
-    const database = req.get(DatabaseHeader)
     const signature = req.get(SignatureHeader)
-
     if (!signature) return next(ErrorType.PermissionDenied)
 
-    const session: Session = {
-      endpoint: opts.karmaURL,
-      database: database || '',
-      username: '',
-      signature
-    }
-
     try {
-      const editorContexts = await rpcRequest(session, {
-        all: {tag: '_frontend_editor_context_v2'}
-      })
+      const roles: string[] = await query(
+        opts.karmaDataURL,
+        signature,
+        buildFunction(e => () =>
+          e.mapList(e.field('roles', e.get(e.currentUser())), (_, value) =>
+            e.field('name', e.get(value))
+          )
+        )
+      )
 
-      for (const editorContext of editorContexts) {
-        if (editorContext.privileges && editorContext.privileges.includes(MediaPrivilege)) {
-          return next()
-        }
+      if (roles.some(role => opts.allowedRoles.includes(role))) {
+        return next()
       }
     } catch (err) {
       return next(err)
@@ -245,8 +236,11 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   }
 }
 
-export function mediaMiddleware(options?: Partial<MiddlewareOptions>): Router {
-  const opts = options ? {...defaultOptions, ...deleteNullValues(options)} : defaultOptions
+export function mediaMiddleware(options: MiddlewareOptions): Router {
+  const opts = (options
+    ? {...defaultOptions, ...deleteNullValues(options)}
+    : defaultOptions) as Required<MiddlewareOptions>
+
   const router = Router()
 
   router.get('/preview/:id', previewMediaMiddleware(opts))

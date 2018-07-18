@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import 'dotenv/config'
 import commander from 'commander'
 
 import run, {defaultPort} from './commands/run'

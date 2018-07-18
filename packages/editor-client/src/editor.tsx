@@ -5,11 +5,11 @@ import {forceRenderStyles} from 'typestyle'
 
 import {
   deleteNullValues,
-  EventDispatcher,
   Theme,
   defaultTheme,
   Config,
-  defaultConfig
+  defaultConfig,
+  ClientPlugin
 } from '@karma.run/editor-common'
 
 import {ThemeProvider} from './provider/theme'
@@ -90,17 +90,17 @@ export class EditorComponent extends React.Component<EditorProps> {
 
 export interface EditorOptions {
   theme?: Partial<Theme>
+  plugins?: ClientPlugin[]
 }
 
 export interface EditorEventMap {
   configLoaded: Config
 }
 
-export class Editor extends EventDispatcher<EditorEventMap> {
+export class Editor {
   private opts: EditorOptions
 
   constructor(opts: EditorOptions = {}) {
-    super()
     this.opts = opts
   }
 
@@ -116,8 +116,12 @@ export class Editor extends EventDispatcher<EditorEventMap> {
         ? JSON.parse(serverConfigElement.textContent)
         : {}
 
-    this.dispatch('configLoaded', serverConfig)
-
-    ReactDOM.render(<EditorComponent {...this.opts} config={serverConfig} />, element)
+    ReactDOM.render(
+      <EditorComponent
+        {...this.opts}
+        config={{...serverConfig, plugins: this.opts.plugins || []}}
+      />,
+      element
+    )
   }
 }

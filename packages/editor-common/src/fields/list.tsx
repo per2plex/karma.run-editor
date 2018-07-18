@@ -1,7 +1,7 @@
 import React from 'react'
 import shortid from 'shortid'
 import {style} from 'typestyle'
-import {expression as e, data as d} from '@karma.run/sdk'
+import {data as d, DataExpression} from '@karma.run/sdk'
 
 import {
   EditComponentRenderProps,
@@ -10,7 +10,9 @@ import {
   SerializedField,
   UnserializeFieldFunction,
   CreateFieldFunction,
-  TypedFieldOptions
+  TypedFieldOptions,
+  SaveContext,
+  DeleteContext
 } from './interface'
 
 import {KeyPath, Model} from '../api/model'
@@ -24,7 +26,6 @@ import {
   ValuePathSegmentType
 } from '../interface/filter'
 
-import {WorkerContext} from '../context/worker'
 import {darkFieldColorForDepthAndIndex, Spacing, Color} from '../ui/style'
 import {FlexFiller} from '../ui/flex'
 import {Button, ButtonType} from '../ui/button'
@@ -319,10 +320,8 @@ export class ListField implements Field<ListFieldValue> {
     }))
   }
 
-  public transformValueToExpression(value: ListFieldValue) {
-    return e.data(
-      d.list(...value.map(({value}) => d.expr(this.field.transformValueToExpression(value))))
-    )
+  public transformValueToExpression(value: ListFieldValue): DataExpression {
+    return d.list(...value.map(({value}) => this.field.transformValueToExpression(value)))
   }
 
   public isValidValue() {
@@ -347,23 +346,23 @@ export class ListField implements Field<ListFieldValue> {
     return [{type: ValuePathSegmentType.Map}, ...this.field.valuePathForKeyPath(keyPath.slice(1))]
   }
 
-  public async onSave(value: ListFieldValue, worker: WorkerContext): Promise<ListFieldValue> {
+  public async onSave(value: ListFieldValue, context: SaveContext): Promise<ListFieldValue> {
     if (!this.field.onSave) return value
     let newValue = []
 
     for (const {id, value: mapValue} of value) {
-      newValue.push({id, value: await this.field.onSave(mapValue, worker)})
+      newValue.push({id, value: await this.field.onSave(mapValue, context)})
     }
 
     return newValue
   }
 
-  public async onDelete(value: ListFieldValue, worker: WorkerContext): Promise<ListFieldValue> {
+  public async onDelete(value: ListFieldValue, context: DeleteContext): Promise<ListFieldValue> {
     if (!this.field.onDelete) return value
     let newValue = []
 
     for (const {id, value: mapValue} of value) {
-      newValue.push({id, value: await this.field.onDelete(mapValue, worker)})
+      newValue.push({id, value: await this.field.onDelete(mapValue, context)})
     }
 
     return newValue

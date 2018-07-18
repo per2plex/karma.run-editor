@@ -1,23 +1,18 @@
 import {Router} from 'express'
-import {FieldRegistry} from '../fields/registry'
-
-export interface ServerPluginContext {
-  router: Router
-}
+import {FieldClass} from '../fields/interface'
 
 export interface ServerPlugin {
-  name: string
-  version: string
-  clientModule?: string
-  fieldRegistry: FieldRegistry
-  initialize(context: ServerPluginContext): void
+  readonly name: string
+  readonly version: string
+  readonly clientModule?: string
+
+  registerFields?(): FieldClass[]
+  registerRoutes?(karmaDataURL: string, router: Router): void
 }
 
-export interface ClientPluginContext {}
-export type PluginTuple = [string, string]
-
 export interface ClientPlugin {
-  name: string
-  version: string
-  fieldRegistry: FieldRegistry
+  readonly name: string
+  readonly version: string
+
+  registerFields?(): FieldClass[]
 }

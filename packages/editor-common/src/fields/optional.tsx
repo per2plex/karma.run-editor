@@ -11,14 +11,15 @@ import {
   CreateFieldFunction,
   EditComponentRenderProps,
   UnserializeFieldFunction,
-  TypedFieldOptions
+  TypedFieldOptions,
+  SaveContext,
+  DeleteContext
 } from './interface'
 
 import {FieldComponent, FieldLabel, FieldWrapper, FieldInset} from '../ui/field'
 import {CardSection} from '../ui/card'
 import {SortConfiguration, FilterConfiguration} from '../interface/filter'
 import {CheckboxInput} from '../ui'
-import {WorkerContext} from '../context/worker'
 
 export class OptionalFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<OptionalField, OptionalFieldValue>
@@ -181,10 +182,10 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   public async onSave(
     value: OptionalFieldValue,
-    worker: WorkerContext
+    context: SaveContext
   ): Promise<OptionalFieldValue> {
     if (this.field.onSave && value.isPresent) {
-      return {isPresent: value.isPresent, value: await this.field.onSave(value.value, worker)}
+      return {isPresent: value.isPresent, value: await this.field.onSave(value.value, context)}
     }
 
     return value
@@ -192,10 +193,10 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   public async onDelete(
     value: OptionalFieldValue,
-    worker: WorkerContext
+    context: DeleteContext
   ): Promise<OptionalFieldValue> {
     if (this.field.onDelete && value.isPresent) {
-      return {isPresent: value.isPresent, value: await this.field.onDelete(value.value, worker)}
+      return {isPresent: value.isPresent, value: await this.field.onDelete(value.value, context)}
     }
 
     return value

@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.json",
   "include": ["./src/**/*"],
   "compilerOptions": {
-    "lib": ["es2017"]
+    "lib": ["es2017", "dom", "dom.iterable"],
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   }
 }

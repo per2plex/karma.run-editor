@@ -218,6 +218,15 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     return await context.result
   }
 
+  private handlePostDelete = async () => {
+    const context = this.popPanelContext()
+
+    switch (context.type) {
+      case PanelType.Delete:
+        return context.result.resolve()
+    }
+  }
+
   private pushPanelContext(context: PanelContext) {
     this.setState({
       panelContexts: [...this.state.panelContexts, context]
@@ -275,6 +284,7 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
             recordID={context.recordID}
             disabled={disabled}
             onBack={this.handleBack}
+            onPostDelete={this.handlePostDelete}
             onEditRecord={this.handleEditRecord}
             onDeleteRecord={this.handleDeleteRecord}
           />

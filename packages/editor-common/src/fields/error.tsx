@@ -75,12 +75,12 @@ export class ErrorField implements Field<null> {
     }
   }
 
-  public transformRawValue(value: any) {
-    return value
+  public transformRawValue() {
+    return null
   }
 
-  public transformValueToExpression(value: any) {
-    return e.string(value)
+  public transformValueToExpression() {
+    return e.null()
   }
 
   public isValidValue() {

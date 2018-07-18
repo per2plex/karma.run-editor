@@ -1,4 +1,4 @@
-import {expression as e} from '@karma.run/sdk'
+import {expression as e, data as d} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
@@ -28,7 +28,7 @@ export class CurrentUserField implements Field<null> {
   }
 
   public transformValueToExpression() {
-    return e.currentUser()
+    return d.expr(e.currentUser())
   }
 
   public isValidValue() {

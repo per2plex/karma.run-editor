@@ -1,7 +1,7 @@
 import React from 'react'
 import shortid from 'shortid'
 import {style} from 'typestyle'
-import {expression as e, data as d} from '@karma.run/sdk'
+import {data as d} from '@karma.run/sdk'
 
 import {
   EditComponentRenderProps,
@@ -10,7 +10,9 @@ import {
   SerializedField,
   UnserializeFieldFunction,
   CreateFieldFunction,
-  TypedFieldOptions
+  TypedFieldOptions,
+  SaveContext,
+  DeleteContext
 } from './interface'
 
 import {reduceToMap} from '../util/array'
@@ -25,8 +27,6 @@ import {
   ValuePath,
   ValuePathSegmentType
 } from '../interface/filter'
-
-import {WorkerContext} from '../context/worker'
 
 export interface MapFieldEditComponentState {
   activeTabIndex: number
@@ -228,13 +228,8 @@ export class MapField implements Field<MapFieldValue> {
   }
 
   public transformValueToExpression(value: MapFieldValue) {
-    return e.data(
-      d.map(
-        reduceToMap(value, ({key, value}) => [
-          key,
-          d.expr(this.field.transformValueToExpression(value))
-        ])
-      )
+    return d.map(
+      reduceToMap(value, ({key, value}) => [key, this.field.transformValueToExpression(value)])
     )
   }
 
@@ -260,23 +255,23 @@ export class MapField implements Field<MapFieldValue> {
     return [{type: ValuePathSegmentType.Map}, ...this.field.valuePathForKeyPath(keyPath.slice(1))]
   }
 
-  public async onSave(value: MapFieldValue, worker: WorkerContext): Promise<MapFieldValue> {
+  public async onSave(value: MapFieldValue, context: SaveContext): Promise<MapFieldValue> {
     if (!this.field.onSave) return value
     let newValue = []
 
     for (const {id, key, value: mapValue} of value) {
-      newValue.push({id, key, value: await this.field.onSave(mapValue, worker)})
+      newValue.push({id, key, value: await this.field.onSave(mapValue, context)})
     }
 
     return newValue
   }
 
-  public async onDelete(value: MapFieldValue, worker: WorkerContext): Promise<MapFieldValue> {
+  public async onDelete(value: MapFieldValue, context: DeleteContext): Promise<MapFieldValue> {
     if (!this.field.onDelete) return value
     let newValue = []
 
     for (const {id, key, value: mapValue} of value) {
-      newValue.push({id, key: key, value: await this.field.onDelete(mapValue, worker)})
+      newValue.push({id, key: key, value: await this.field.onDelete(mapValue, context)})
     }
 
     return newValue

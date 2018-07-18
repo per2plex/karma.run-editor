@@ -87,7 +87,8 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
       favicon: '../../static/favicon.ico',
       karmaDataURL,
       editorContextsForRoles: config.editorContexts,
-      viewContextsForRoles: config.viewContexts
+      viewContextsForRoles: config.viewContexts,
+      plugins
     })
   )
 

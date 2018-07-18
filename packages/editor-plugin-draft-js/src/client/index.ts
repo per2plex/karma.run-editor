@@ -1,15 +1,12 @@
 import {ClientPlugin} from '@karma.run/editor-common'
-
 import {name, version} from '../common/version'
-import {MediaField} from '../common/field'
+import {DraftJSField} from '../common/field'
 
-export * from './component'
-
-export default class MediaPlugin implements ClientPlugin {
+export default class DraftJSPlugin implements ClientPlugin {
   public name: string = name
   public version: string = version
 
   public registerFields() {
-    return [MediaField]
+    return [DraftJSField]
   }
 }

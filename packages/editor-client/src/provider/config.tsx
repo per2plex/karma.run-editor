@@ -1,46 +1,44 @@
 import React from 'react'
-import {ConfigContext, Config, CenteredLoadingIndicator} from '@karma.run/editor-common'
 
-export interface ConfigProviderState {
-  isLoadingPlugins: boolean
+import {
+  ConfigContext,
+  Config,
+  defaultConfig,
+  ClientPlugin,
+  FieldClass,
+  mergeFieldRegistries,
+  createFieldRegistry,
+  defaultFieldRegistry
+} from '@karma.run/editor-common'
+
+export interface ConfigProviderProps {
+  config: {
+    karmaDataURL: string
+    basePath: string
+    title: string
+    plugins: ClientPlugin[]
+  }
 }
 
-export async function loadScript(url: string): Promise<{}> {
-  return new Promise((resolve, _reject) => {
-    const script = document.createElement('script')
-
-    script.src = url
-    script.async = true
-
-    script.addEventListener('load', () => {
-      resolve()
-    })
-
-    document.head.appendChild(script)
-  })
-}
-
-export class ConfigProvider extends React.Component<{config: Config}, ConfigProviderState> {
-  public state: ConfigProviderState = {isLoadingPlugins: true}
-
+export class ConfigProvider extends React.Component<ConfigProviderProps, Config> {
+  public state: Config = defaultConfig
   public async componentDidMount() {
-    for (const [identifier, url] of this.props.config.plugins) {
-      await loadScript(url)
-      console.info(`Loaded plugin: ${identifier}`)
+    const plugins = this.props.config.plugins
+    const fields: FieldClass[] = []
+
+    for (const plugin of plugins) {
+      if (plugin.registerFields) {
+        fields.push(...plugin.registerFields())
+      }
     }
 
-    this.setState({isLoadingPlugins: false})
+    this.setState({
+      ...this.props.config,
+      fieldRegistry: mergeFieldRegistries(createFieldRegistry(...fields), defaultFieldRegistry)
+    })
   }
 
   public render() {
-    if (this.state.isLoadingPlugins) {
-      return <CenteredLoadingIndicator />
-    }
-
-    return (
-      <ConfigContext.Provider value={this.props.config}>
-        {this.props.children}
-      </ConfigContext.Provider>
-    )
+    return <ConfigContext.Provider value={this.state}>{this.props.children}</ConfigContext.Provider>
   }
 }

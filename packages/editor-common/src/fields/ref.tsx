@@ -1,6 +1,6 @@
 import React from 'react'
 import {style} from 'typestyle'
-import {expression as e, data as d, Ref} from '@karma.run/sdk'
+import {data as d, Ref} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
@@ -293,8 +293,8 @@ export class RefField implements Field<RefFieldValue> {
   }
 
   public transformValueToExpression(value: RefFieldValue) {
-    if (!value) return e.null()
-    return e.data(d.ref(value))
+    if (!value) return d.null()
+    return d.ref(value)
   }
 
   public isValidValue(value: RefFieldValue) {

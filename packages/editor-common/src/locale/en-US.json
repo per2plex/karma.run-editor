@@ -19,5 +19,6 @@
   "deleteRecord": "Delete",
   "selectRecord": "Select",
   "noRecordSelected": "No Record Selected",
-  "recordIsStillBeingReferred": "This record is still being referred by the records below and cannot be deleted."
+  "recordIsStillBeingReferred": "This record is still being referred by the records below and cannot be deleted.",
+  "recordSafeToDelete": "This record is not referred in any records and can be deleted."
 }

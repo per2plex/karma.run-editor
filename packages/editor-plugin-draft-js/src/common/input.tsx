@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as Immutable from 'immutable'
-import {reduceToMap} from '../util/array'
+import {style} from 'typestyle'
 
 import {
   RichUtils,
@@ -17,15 +17,21 @@ import {
   DraftHandleValue
 } from 'draft-js'
 
-import {style} from 'typestyle'
-import {boolAttr} from '../util/react'
-import {Color, DefaultBorderRadiusPx} from './style'
-import {FlexList, FlexItem} from './flex'
-import {Button} from './button'
 import {List} from 'immutable'
-import {ButtonType} from './button'
-import {Select, SelectType} from './select'
-import {IconName} from './icon'
+
+import {
+  boolAttr,
+  reduceToMap,
+  Color,
+  DefaultBorderRadiusPx,
+  FlexList,
+  FlexItem,
+  Button,
+  ButtonType,
+  Select,
+  SelectType,
+  IconName
+} from '@karma.run/editor-common'
 
 export const RichTextInputStyle = style({
   $debugName: 'RichTextInput',

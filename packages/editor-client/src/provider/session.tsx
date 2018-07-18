@@ -14,7 +14,6 @@ import {
   EditorContext,
   RefMap,
   ViewContext,
-  defaultFieldRegistry,
   escapeRegExp,
   WorkerContext,
   withWorker,
@@ -74,7 +73,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       getRecord: this.getRecord,
       getRecordList: this.getRecordList,
       getReferrers: this.getReferrers,
-      saveRecord: this.saveRecord
+      saveRecord: this.saveRecord,
+      deleteRecord: this.deleteRecord
     }
   }
 
@@ -225,74 +225,12 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     return records.map(record => this.transformMetarializedRecord(record, viewContext))
   }
 
-  public getReferrers = async (
-    model: Ref,
-    id: Ref,
-    limit: number,
-    offset: number,
-    sort: Sort,
-    filters: Condition[]
-  ): Promise<ModelRecord[]> => {
+  public getReferrers = async (id: Ref, limit: number, offset: number): Promise<ModelRecord[]> => {
     if (!this.state.session) throw new Error('No session!')
-
-    const viewContext = this.state.viewContextMap.get(model)
-    if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
 
     let listExpression = buildExpression(e =>
       e.mapList(e.allReferrers(e.data(d => d.ref(id))), (_, value) => e.metarialize(e.get(value)))
     )
-
-    if (filters.length > 0) {
-      for (const filter of filters) {
-        if (filter.type === ConditionType.StringIncludes) {
-          listExpression = buildExpression(e =>
-            e.filterList(listExpression, (_, value) =>
-              e.matchRegex(
-                escapeRegExp(filter.value),
-                filterValueExpression(value, [StructPathSegment('value'), ...filter.path])
-              )
-            )
-          )
-        }
-      }
-    }
-
-    function filterValueExpression(value: Expression, valuePath: ValuePath) {
-      for (const segment of valuePath) {
-        value = expressionForValuePathSegment(value, segment)
-      }
-
-      return value
-    }
-
-    function expressionForValuePathSegment(value: Expression, segment: ValuePathSegment) {
-      switch (segment.type) {
-        case ValuePathSegmentType.Struct:
-          return e.field(segment.key, value)
-
-        case ValuePathSegmentType.Union:
-          return e.field(segment.key, value)
-
-        default:
-          throw new Error('Not implemented!')
-      }
-    }
-
-    let valueExpression = (value: Expression) => {
-      for (const segment of sort.path) {
-        value = expressionForValuePathSegment(value, segment)
-      }
-
-      return value
-    }
-
-    listExpression = buildExpression(e =>
-      e.memSort(listExpression, value => valueExpression(value))
-    )
-
-    if (sort.descending) {
-      listExpression = e.reverseList(listExpression)
-    }
 
     const records: MetarializedRecord[] = await query(
       this.props.config.karmaDataURL,
@@ -300,7 +238,9 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       buildFunction(e => () => e.slice(listExpression, offset, limit))
     )
 
-    return records.map(record => this.transformMetarializedRecord(record, viewContext))
+    return records.map(record =>
+      this.transformMetarializedRecord(record, this.state.viewContextMap.get(record.model)!)
+    )
   }
 
   public saveRecord = async (model: Ref, id: Ref | undefined, value: any): Promise<ModelRecord> => {
@@ -310,7 +250,13 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
 
     if (viewContext.field.onSave) {
-      value = await viewContext.field.onSave(value, this.props.workerContext)
+      value = await viewContext.field.onSave(value, {
+        config: this.props.config,
+        workerContext: this.props.workerContext,
+        sessionContext: this.state,
+        model,
+        id
+      })
     }
 
     const expressionValue = viewContext.field.transformValueToExpression(value)
@@ -321,14 +267,37 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
         e.define(
           'recordID',
           id
-            ? e.update(e.data(d => d.ref(id)), expressionValue)
-            : e.create(e.data(d => d.ref(model)), () => expressionValue)
+            ? e.update(e.data(d => d.ref(id)), e.data(() => expressionValue))
+            : e.create(e.data(d => d.ref(model)), () => e.data(() => expressionValue))
         ),
         e.metarialize(e.get(e.scope('recordID')))
       ])
     )
 
     return this.transformMetarializedRecord(record, viewContext)
+  }
+
+  public deleteRecord = async (model: Ref, id: Ref, value: any): Promise<void> => {
+    if (!this.state.session) throw new Error('No session!')
+
+    const viewContext = this.state.viewContextMap.get(model)
+    if (!viewContext) throw new Error(`Coulnd't find ViewContext for model: ${model}`)
+
+    if (viewContext.field.onDelete) {
+      await viewContext.field.onDelete(value, {
+        config: this.props.config,
+        workerContext: this.props.workerContext,
+        sessionContext: this.state,
+        model,
+        id
+      })
+    }
+
+    await query(
+      this.props.config.karmaDataURL,
+      this.state.session.signature,
+      buildFunction(e => () => e.delete(e.data(d => d.ref(id))))
+    )
   }
 
   private storeSession(session: EditorSession) {
@@ -346,7 +315,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   private async getEditorData(session: EditorSession): Promise<EditorData> {
     const {editorContexts, viewContexts: rawViewContexts} = await this.getContext(session)
     const viewContexts = rawViewContexts.map(rawViewContext =>
-      ViewContext.unserialize(rawViewContext, defaultFieldRegistry)
+      ViewContext.unserialize(rawViewContext, this.props.config.fieldRegistry)
     )
 
     const viewContextMap = new RefMap(

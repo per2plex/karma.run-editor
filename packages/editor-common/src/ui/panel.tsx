@@ -163,7 +163,7 @@ export namespace PanelToolbar {
       '> .content': {
         display: 'flex',
         alignItems: 'center',
-        padding: Spacing.large,
+        padding: Spacing.medium,
         minHeight: '5rem',
 
         $nest: {
@@ -201,20 +201,39 @@ export namespace PanelToolbar {
   })
 }
 
-export interface ErrorBarProps {
+export const enum MessageBarType {
+  Success = 'success',
+  Error = 'error'
+}
+
+export interface MessageBarProps {
+  type: MessageBarType
   message: string
 }
 
-export class ErrorBar extends React.PureComponent<ErrorBarProps> {
+export class MessageBar extends React.PureComponent<MessageBarProps> {
   public render() {
-    return <div className={ErrorBarStyle}>{this.props.message}</div>
+    return (
+      <div className={MessageBarStyle} data-type={this.props.type || MessageBarType.Success}>
+        {this.props.message}
+      </div>
+    )
   }
 }
 
-export const ErrorBarStyle = style({
-  backgroundColor: Color.error.light1,
-  color: Color.error.base,
-  padding: Spacing.medium
+export const MessageBarStyle = style({
+  padding: Spacing.medium,
+  $nest: {
+    '&[data-type="success"]': {
+      backgroundColor: Color.success.light1,
+      color: Color.success.base
+    },
+
+    '&[data-type="error"]': {
+      backgroundColor: Color.error.light1,
+      color: Color.error.base
+    }
+  }
 })
 
 export namespace ViewContextPanelHeader {

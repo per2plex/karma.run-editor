@@ -26,7 +26,6 @@
     "babel-polyfill": "^6.26.0",
     "classnames": "^2.2.5",
     "csx": "^9.0.0",
-    "draft-js": "^0.10.5",
     "fuse.js": "^3.2.0",
     "intersection-observer-polyfill": "^0.1.0",
     "memoize-one": "^3.1.1",
@@ -39,7 +38,6 @@
   },
   "devDependencies": {
     "@types/classnames": "^2.2.3",
-    "@types/draft-js": "^0.10.16",
     "@types/memoize-one": "^3.1.1",
     "@types/qs": "^6.5.1",
     "@types/react": "^16.3.14",

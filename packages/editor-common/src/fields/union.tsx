@@ -1,6 +1,6 @@
 import React from 'react'
 import memoizeOne from 'memoize-one'
-import {expression as e, data as d, Expression} from '@karma.run/sdk'
+import {data as d, DataExpression} from '@karma.run/sdk'
 
 import {
   EditComponentRenderProps,
@@ -10,7 +10,9 @@ import {
   UnserializeFieldFunction,
   CreateFieldFunction,
   TypedFieldOptions,
-  FieldOptions
+  FieldOptions,
+  SaveContext,
+  DeleteContext
 } from './interface'
 
 import {KeyPath, Model} from '../api/model'
@@ -26,7 +28,6 @@ import {
   SortConfiguration
 } from '../interface/filter'
 
-import {WorkerContext} from '../context/worker'
 import {firstKey, ObjectMap} from '../util/object'
 
 export type UnionFieldChildTuple = [string, string, Field]
@@ -176,16 +177,13 @@ export class UnionField implements Field<UnionFieldValue> {
     return {selectedKey: key, values: {[key]: this.fieldForKey(key).transformRawValue(unionValue)}}
   }
 
-  public transformValueToExpression(value: UnionFieldValue): Expression {
-    if (!value.selectedKey) return e.null()
-    return e.data(
-      d.union(
-        value.selectedKey,
-        d.expr(
-          this.fieldForKey(value.selectedKey).transformValueToExpression(
-            value.values[value.selectedKey]
-          )
-        )
+  public transformValueToExpression(value: UnionFieldValue): DataExpression {
+    if (!value.selectedKey) return d.null()
+
+    return d.union(
+      value.selectedKey,
+      this.fieldForKey(value.selectedKey).transformValueToExpression(
+        value.values[value.selectedKey]
       )
     )
   }
@@ -228,7 +226,7 @@ export class UnionField implements Field<UnionFieldValue> {
     ]
   }
 
-  public async onSave(value: UnionFieldValue, worker: WorkerContext): Promise<UnionFieldValue> {
+  public async onSave(value: UnionFieldValue, context: SaveContext): Promise<UnionFieldValue> {
     if (!value.selectedKey) return value
     const field = this.fieldForKey(value.selectedKey)
 
@@ -236,18 +234,18 @@ export class UnionField implements Field<UnionFieldValue> {
 
     return {
       selectedKey: value.selectedKey,
-      values: {[value.selectedKey]: await field.onSave(value.values[value.selectedKey], worker)}
+      values: {[value.selectedKey]: await field.onSave(value.values[value.selectedKey], context)}
     }
   }
 
-  public async onDelete(value: UnionFieldValue, worker: WorkerContext): Promise<UnionFieldValue> {
+  public async onDelete(value: UnionFieldValue, context: DeleteContext): Promise<UnionFieldValue> {
     if (!value.selectedKey) return value
     const field = this.fieldForKey(value.selectedKey)
 
     if (!field.onDelete) return value
     return {
       selectedKey: value.selectedKey,
-      values: {[value.selectedKey]: await field.onDelete(value.values[value.selectedKey], worker)}
+      values: {[value.selectedKey]: await field.onDelete(value.values[value.selectedKey], context)}
     }
   }
 

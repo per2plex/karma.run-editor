@@ -1,5 +1,5 @@
 import React from 'react'
-import {expression as e, data as d} from '@karma.run/sdk'
+import {data as d} from '@karma.run/sdk'
 
 import {
   EditComponentRenderProps,
@@ -9,7 +9,9 @@ import {
   UnserializeFieldFunction,
   CreateFieldFunction,
   FieldOptions,
-  TypedFieldOptions
+  TypedFieldOptions,
+  SaveContext,
+  DeleteContext
 } from './interface'
 
 import {ErrorField} from './error'
@@ -23,7 +25,6 @@ import {
   FilterConfiguration
 } from '../interface/filter'
 
-import {WorkerContext} from '../context/worker'
 import {KeyPath, Model} from '../api/model'
 import {reduceToMap} from '../util/array'
 import {mapObjectAsync} from '../util/object'
@@ -162,13 +163,11 @@ export class StructField implements Field<StructFieldValue> {
   }
 
   public transformValueToExpression(value: StructFieldValue) {
-    return e.data(
-      d.struct(
-        reduceToMap(this.fields, ([key, field]) => [
-          key,
-          d.expr(field.transformValueToExpression(value[key]))
-        ])
-      )
+    return d.struct(
+      reduceToMap(this.fields, ([key, field]) => [
+        key,
+        field.transformValueToExpression(value[key])
+      ])
     )
   }
 
@@ -207,22 +206,22 @@ export class StructField implements Field<StructFieldValue> {
     return [StructPathSegment(key.toString()), ...field.valuePathForKeyPath(keyPath.slice(1))]
   }
 
-  public async onSave(value: StructFieldValue, worker: WorkerContext) {
+  public async onSave(value: StructFieldValue, context: SaveContext) {
     return mapObjectAsync(value, async (value, key) => {
       const field = this.fieldMap.get(key)
 
       if (!field) throw new Error(`Couln't find field for key: ${key}`)
       if (!field.onSave) return value
-      return await field.onSave(value, worker)
+      return await field.onSave(value, context)
     })
   }
 
-  public async onDelete(value: StructFieldValue, worker: WorkerContext) {
+  public async onDelete(value: StructFieldValue, context: DeleteContext) {
     return mapObjectAsync(value, async (value, key) => {
       const field = this.fieldMap.get(key)
       if (!field) throw new Error(`Couln't find field for key: ${key}`)
       if (!field.onDelete) return value
-      return await field.onDelete(value, worker)
+      return await field.onDelete(value, context)
     })
   }
 

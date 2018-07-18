@@ -1,8 +1,6 @@
 import {PointLike} from '@karma.run/editor-common/geometry'
 import {CommitResponse, MediaType} from './interface'
 
-export const MediaPrivilege = 'media'
-
 export type Media<T = any> = CommitResponse<T> & {
   focusPoint?: {x: number; y: number}
   focusScale?: number
@@ -25,6 +23,10 @@ export type SerializedMedia<T = any> = {
   focusPoint?: PointLike
   focusScale?: number
   backend: T
+}
+
+export function thumbnailURL(baseURL: string, id: string) {
+  return `${baseURL}/thumbnail/${id}`
 }
 
 export function serializeMedia<T = any>(media: Media<T>): SerializedMedia<T> {

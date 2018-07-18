@@ -1,6 +1,7 @@
 import {loadConfig} from './helper'
 import {getEditorContext} from '@karma.run/editor-server'
 import {authenticate} from '@karma.run/sdk'
+import {defaultFieldRegistry} from '@karma.run/editor-common'
 
 export interface ViewContextCommandOptions {
   cwd?: string
@@ -21,7 +22,7 @@ export default async function viewContextCommand(opts: ViewContextCommandOptions
 
   try {
     const signature = await authenticate(karmaDataURL, 'admin', opts.instanceSecret)
-    const {viewContexts} = await getEditorContext(karmaDataURL, signature)
+    const {viewContexts} = await getEditorContext(karmaDataURL, signature, defaultFieldRegistry)
 
     process.stdout.write(
       JSON.stringify(viewContexts.map(viewContext => viewContext.serialize()), undefined, 2),

@@ -1,4 +1,4 @@
-import {expression as e, data as d} from '@karma.run/sdk'
+import {data as d, DataExpression} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
@@ -6,10 +6,8 @@ import {ListFieldValue, ListField, ListFieldOptions, SerializedListField} from '
 import {UnserializeFieldFunction, CreateFieldFunction} from './interface'
 
 export class SetField extends ListField {
-  public transformValueToExpression(value: ListFieldValue) {
-    return e.data(
-      d.set(...value.map(({value}) => d.expr(this.field.transformValueToExpression(value))))
-    )
+  public transformValueToExpression(value: ListFieldValue): DataExpression {
+    return d.set(...value.map(({value}) => this.field.transformValueToExpression(value)))
   }
 
   public serialize(): SerializedListField {

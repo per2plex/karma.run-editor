@@ -126,15 +126,24 @@ const ListArrowDownIcon: StatelessComponent = () => (
   </svg>
 )
 
+const ListArrowUpIcon: StatelessComponent = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21">
+    <path d="M2.366 15.202a.768.768 0 0 0 1.145 0L10.5 7.654l6.989 7.548a.768.768 0 0 0 1.145 0 .925.925 0 0 0 0-1.237l-7.561-8.167a.768.768 0 0 0-1.146 0l-.001.003-7.56 8.164a.925.925 0 0 0 0 1.237z" />
+  </svg>
+)
+
 const ListArrowRightIcon: StatelessComponent = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21">
     <path d="M5.798 2.366a.768.768 0 0 0 0 1.145l7.548 6.989-7.548 6.989a.768.768 0 0 0 0 1.145.925.925 0 0 0 1.237 0l8.167-7.56a.768.768 0 0 0 0-1.146l-.003-.002-8.164-7.56a.925.925 0 0 0-1.237 0z" />
   </svg>
 )
 
-const ListArrowUpIcon: StatelessComponent = () => (
+const ListArrowLeftIcon: StatelessComponent = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21">
-    <path d="M2.366 15.202a.768.768 0 0 0 1.145 0L10.5 7.654l6.989 7.548a.768.768 0 0 0 1.145 0 .925.925 0 0 0 0-1.237l-7.561-8.167a.768.768 0 0 0-1.146 0l-.001.003-7.56 8.164a.925.925 0 0 0 0 1.237z" />
+    <path
+      transform="scale(-1,1) translate(-21, 0)"
+      d="M5.798 2.366a.768.768 0 0 0 0 1.145l7.548 6.989-7.548 6.989a.768.768 0 0 0 0 1.145.925.925 0 0 0 1.237 0l8.167-7.56a.768.768 0 0 0 0-1.146l-.003-.002-8.164-7.56a.925.925 0 0 0-1.237 0z"
+    />
   </svg>
 )
 
@@ -225,6 +234,8 @@ export const enum IconName {
   FilterDescending = 'filterDescending',
   ArrowUp = 'arrowUp',
   ArrowDown = 'arrowDown',
+  ListArrowLeft = 'listArrowLeft',
+  ListArrowRight = 'listArrowRight',
   ListArrowUp = 'listArrowUp',
   ListArrowDown = 'listArrowDown',
   AddTop = 'addTop',
@@ -270,6 +281,10 @@ function nodeForIconName(name: IconName): React.ReactNode {
       return <ArrowUpIcon />
     case IconName.ArrowDown:
       return <ArrowDownIcon />
+    case IconName.ListArrowLeft:
+      return <ListArrowLeftIcon />
+    case IconName.ListArrowRight:
+      return <ListArrowRightIcon />
     case IconName.ListArrowUp:
       return <ListArrowUpIcon />
     case IconName.ListArrowDown:

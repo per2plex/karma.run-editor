@@ -1,6 +1,5 @@
 import React from 'react'
 import {Ref} from '@karma.run/sdk'
-import {Filter, Sort, ConditionType, Condition} from '@karma.run/editor-common'
 
 import {
   ViewContextPanelHeader,
@@ -9,7 +8,7 @@ import {
   withSession,
   ModelRecord,
   PanelToolbar,
-  ErrorBar,
+  MessageBar,
   ViewContext,
   Button,
   ButtonType,
@@ -18,25 +17,10 @@ import {
   PanelContent,
   withLocale,
   LocaleContext,
-  SortConfiguration
+  MessageBarType
 } from '@karma.run/editor-common'
 
-import {ToolbarFilter} from '../recordListPanel/filterToolbar'
-import {RecordList} from '../recordListPanel/panel'
-
-export interface ToolbarAction {
-  key: string
-  icon: IconName
-  label: string
-  onTrigger: (id: Ref) => void
-}
-
-export interface RecordAction {
-  key: string
-  icon: IconName
-  label: string
-  onTrigger: (record: ModelRecord) => void
-}
+import {MixedRecordList} from '../recordListPanel/panel'
 
 export interface RecordDeletePanelProps {
   model: Ref
@@ -44,21 +28,18 @@ export interface RecordDeletePanelProps {
   sessionContext: SessionContext
   localeContext: LocaleContext
   disabled: boolean
-  onBack: (model: Ref, record?: ModelRecord) => void
+  onBack: (mode: Ref) => void
+  onPostDelete: () => void
   onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
   onDeleteRecord: (model: Ref, id: Ref) => Promise<void>
 }
 
 export interface RecordDeletePanelState {
-  records?: ModelRecord[]
+  record?: ModelRecord
+  referrers?: ModelRecord[]
   limit: number
   offset: number
   hasMore: boolean
-  filter?: Filter
-  sort?: Sort
-  sortValue?: SortConfiguration
-  sortDescending: boolean
-  quickSearchValue: string
 }
 
 export class RecordDeletePanel extends React.PureComponent<
@@ -68,9 +49,7 @@ export class RecordDeletePanel extends React.PureComponent<
   public state: RecordDeletePanelState = {
     limit: 50,
     offset: 0,
-    hasMore: true,
-    sortDescending: false,
-    quickSearchValue: ''
+    hasMore: true
   }
 
   private handleNextPage = () => {
@@ -79,30 +58,6 @@ export class RecordDeletePanel extends React.PureComponent<
 
   private handlePreviousPage = () => {
     this.previousPage()
-  }
-
-  private handleSortChange = (value: SortConfiguration, descending: boolean) => {
-    this.setState(
-      {
-        sortValue: value,
-        sortDescending: descending
-      },
-      () => {
-        this.loadRecords(this.state.offset)
-      }
-    )
-  }
-
-  private handleQuickSearchChange = (value: string) => {
-    this.setState(
-      {
-        offset: 0,
-        quickSearchValue: value
-      },
-      () => {
-        this.loadRecords(this.state.offset)
-      }
-    )
   }
 
   private handleEditRecord = async (record: ModelRecord) => {
@@ -115,20 +70,18 @@ export class RecordDeletePanel extends React.PureComponent<
     this.reload()
   }
 
+  private handleDelete = async () => {
+    await this.props.sessionContext.deleteRecord(
+      this.props.model,
+      this.props.recordID,
+      this.state.record!.value
+    )
+
+    this.props.onPostDelete()
+  }
+
   private get viewContext(): ViewContext | undefined {
     return this.props.sessionContext.viewContextMap.get(this.props.model)
-  }
-
-  private get sortValue(): SortConfiguration {
-    return this.state.sortValue || this.viewContext!.sortConfigurations[0]
-  }
-
-  private get sort(): Sort {
-    return {
-      path: this.sortValue.path,
-      type: this.sortValue.type,
-      descending: this.state.sortDescending
-    }
   }
 
   private async previousPage() {
@@ -146,40 +99,25 @@ export class RecordDeletePanel extends React.PureComponent<
   private loadRecords = async (offset: number) => {
     if (!this.viewContext) return
 
-    this.setState({offset, records: undefined})
+    this.setState({offset, record: undefined, referrers: undefined})
 
-    const filters: Condition[] = []
-
-    if (this.state.quickSearchValue.trim() !== '') {
-      for (const keyPath of this.viewContext.displayKeyPaths) {
-        const valuePath = this.viewContext.field.valuePathForKeyPath(keyPath)
-
-        filters.push({
-          type: ConditionType.StringIncludes,
-          path: valuePath,
-          value: this.state.quickSearchValue.trim()
-        })
-      }
-    }
+    const record = await this.props.sessionContext.getRecord(this.props.model, this.props.recordID)
 
     // Request one more than the limit to check if there's another page
-    const records = await this.props.sessionContext.getReferrers(
-      this.viewContext.model,
+    const referrers = await this.props.sessionContext.getReferrers(
       this.props.recordID,
       this.state.limit + 1,
-      offset,
-      this.sort,
-      filters
+      offset
     )
 
-    const hasMore = records.length > this.state.limit
+    const hasMore = referrers.length > this.state.limit
 
     if (hasMore) {
       // Remove extranous record
-      records.splice(-1, 1)
+      referrers.splice(-1, 1)
     }
 
-    this.setState({records, hasMore})
+    this.setState({record, referrers, hasMore})
   }
 
   public componentDidMount() {
@@ -187,8 +125,11 @@ export class RecordDeletePanel extends React.PureComponent<
   }
 
   public render() {
-    const sessionContext = this.props.sessionContext
     const viewContext = this.viewContext
+    const canDelete = Boolean(
+      this.state.record && this.state.referrers && !this.state.referrers.length
+    )
+
     const _ = this.props.localeContext.get
 
     // TODO: Error panel
@@ -209,11 +150,9 @@ export class RecordDeletePanel extends React.PureComponent<
               />
               <Button
                 type={ButtonType.Icon}
-                onTrigger={() => {}}
+                onTrigger={this.handleDelete}
                 icon={IconName.DeleteDocument}
-                disabled={
-                  this.props.disabled || (this.state.records && this.state.records.length > 0)
-                }
+                disabled={this.props.disabled && !canDelete}
                 label={_('deleteRecord')}
               />
               <div />
@@ -223,37 +162,30 @@ export class RecordDeletePanel extends React.PureComponent<
             <>
               <Button
                 type={ButtonType.Icon}
-                icon={IconName.ListArrowUp}
+                icon={IconName.ListArrowLeft}
                 onTrigger={this.handlePreviousPage}
-                disabled={this.state.records == undefined || this.state.offset <= 0}
+                disabled={this.state.referrers == undefined || this.state.offset <= 0}
               />
               <Button
                 type={ButtonType.Icon}
-                icon={IconName.ListArrowDown}
+                icon={IconName.ListArrowRight}
                 onTrigger={this.handleNextPage}
-                disabled={this.state.records == undefined || !this.state.hasMore}
-              />
-              <ToolbarFilter
-                viewContext={viewContext}
-                sortConfigurations={viewContext.sortConfigurations}
-                sortValue={this.sortValue}
-                sortDescending={this.state.sortDescending}
-                onSortChange={this.handleSortChange}
-                filterConfigurations={[]}
-                quickSearchValue={this.state.quickSearchValue}
-                onQuickSearchChange={this.handleQuickSearchChange}
-                disableQuickSearch={viewContext.displayKeyPaths.length === 0}
+                disabled={this.state.referrers == undefined || !this.state.hasMore}
               />
             </>
           }>
-          <ErrorBar message={_('recordIsStillBeingReferred')} />
+          {this.state.referrers && (
+            <MessageBar
+              type={canDelete ? MessageBarType.Success : MessageBarType.Error}
+              message={canDelete ? _('recordSafeToDelete') : _('recordIsStillBeingReferred')}
+            />
+          )}
         </PanelToolbar>
         <PanelContent>
-          <RecordList
-            viewContext={viewContext}
-            sessionContext={sessionContext}
+          <MixedRecordList
+            viewContextMap={this.props.sessionContext.viewContextMap}
             localeContext={this.props.localeContext}
-            records={this.state.records}
+            records={this.state.referrers}
             actions={[
               {
                 key: 'edit',

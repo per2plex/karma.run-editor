@@ -1,5 +1,5 @@
 import React from 'react'
-import {expression as e, Expression} from '@karma.run/sdk'
+import {expression as e, DataExpression} from '@karma.run/sdk'
 
 import {Model} from '../api/model'
 import {ErrorField} from './error'
@@ -9,7 +9,8 @@ import {
   EditComponentRenderProps,
   EditRenderProps,
   Field,
-  ListRenderProps
+  ListRenderProps,
+  SaveContext
 } from './interface'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
@@ -17,7 +18,6 @@ import {TextInput} from '../ui/input'
 import {CardSection} from '../ui/card'
 import {SortConfiguration, FilterConfiguration} from '../interface/filter'
 import {FlexList} from '../ui'
-import {WorkerContext} from '../context/worker'
 
 export class PasswordFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<PasswordField, PasswordFieldValue>
@@ -134,18 +134,18 @@ export class PasswordField implements Field<PasswordFieldValue> {
     }
   }
 
-  public transformValueToExpression(value: PasswordFieldValue): Expression {
+  public transformValueToExpression(value: PasswordFieldValue): DataExpression {
     if (!value.hash) return e.null()
     return e.string(value.hash)
   }
 
   public async onSave(
     value: PasswordFieldValue,
-    worker: WorkerContext
+    context: SaveContext
   ): Promise<PasswordFieldValue> {
     if (value.password && value.passwordConfirm && value.password === value.passwordConfirm) {
       return {
-        hash: await worker.generateHash(value.password, this.costFactor),
+        hash: await context.workerContext.generateHash(value.password, this.costFactor),
         password: '',
         passwordConfirm: ''
       }
