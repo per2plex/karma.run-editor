@@ -41,9 +41,6 @@ export function createRef(model: string, id: string): t.Ref {
   return [model, id]
 }
 
-// TODO
-// export function expressionToDataExpression(expr: t.Expression): t.DataExpression {}
-
 export function createModel(
   creator: (m: ModelContext, d: DataContext, ref: t.ScopeFn) => t.DataExpression,
   context: ExpressionContext = createContext()
@@ -80,9 +77,6 @@ export function getTags() {
 export function getModels() {
   return build(e => e.all(e.tag(DefaultTags.Model)))
 }
-
-// TODO
-// export function createExpression() {}
 
 export function createModels(
   creators: ObjectMap<(m: ModelContext, d: DataContext, refs: t.ScopeFn) => t.DataExpression>,

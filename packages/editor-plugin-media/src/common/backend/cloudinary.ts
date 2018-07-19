@@ -14,7 +14,7 @@ export interface CloudinaryResponse {
   bytes: number
   type: string
   etag: string
-  placeholder: false
+  placeholder: boolean
   url: string
   secure_url: string
   access_mode: string
@@ -23,7 +23,7 @@ export interface CloudinaryResponse {
   frame_rate?: number
   bit_rate?: number
   duration?: number
-  is_audio?: number
+  is_audio?: boolean
   rotation?: number
 }
 

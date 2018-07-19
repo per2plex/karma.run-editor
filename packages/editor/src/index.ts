@@ -18,7 +18,8 @@ program
     `Set port the server runs on. (environment: PORT, default: ${defaultPort})`,
     parseInt
   )
-  .option('-c --config [config]', 'Set path to config file.')
+  .option('-s --server-config --serverConfig [serverConfig]', 'Set path to the server config file.')
+  .option('-c --client-config --clientConfig [clientConfig]', 'Set path to the client config file.')
   .option('-r --require [require]', 'Preload module before loading config.')
   .option('-w --watch', 'Watch bundle build.')
   .option('--no-cache --noCache', 'Ignores cache.')
@@ -26,7 +27,14 @@ program
     '-u --karma-data-url --karmaDataURL [karmaDataURL]',
     'Set karma.data URL. (environment: KARMA_DATA_URL)'
   )
-  .action(opts => run({...opts, karmaDataURL: opts.karmaDataUrl}))
+  .action(opts =>
+    run({
+      ...opts,
+      serverConfigPath: opts.serverConfig,
+      clientConfigPath: opts.clientConfig,
+      karmaDataURL: opts.karmaDataUrl
+    })
+  )
 
 program
   .command('build')

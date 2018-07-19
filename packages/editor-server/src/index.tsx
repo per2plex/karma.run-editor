@@ -163,6 +163,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
   const draftJSCSSPath = path.join(path.dirname(draftJSPath), '../dist/Draft.css')
 
   const fields: FieldClass[] = []
+  const pluginIdentifiers: string[] = []
 
   if (opts.plugins && opts.plugins.length) {
     for (const plugin of opts.plugins) {
@@ -176,7 +177,9 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
         fields.push(...plugin.registerFields())
       }
 
-      console.info(`Initialized plugin: ${plugin.name}@${plugin.version}`)
+      const identifier = `${plugin.name}@${plugin.version}`
+      pluginIdentifiers.push(identifier)
+      console.info(`Initialized plugin: ${identifier}`)
     }
   }
 
@@ -204,6 +207,14 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
 
   router.get(`${basePath}/static/favicon.ico`, (_, res) => {
     return res.sendFile(opts.favicon, cacheOptions)
+  })
+
+  router.get(`${basePath}/api/status`, (_, res) => {
+    return res.status(200).send({
+      status: 'ok',
+      karmaDataURL: opts.karmaDataURL,
+      plugins: pluginIdentifiers
+    })
   })
 
   router.get(`${basePath}/api/context`, async (req, res, next) => {

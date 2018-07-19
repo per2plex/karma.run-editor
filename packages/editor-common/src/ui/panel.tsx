@@ -157,7 +157,6 @@ export namespace PanelToolbar {
 
     backgroundColor: Color.neutral.light5,
     color: Color.neutral.dark2,
-    borderBottom: solidBorderWithColor(Color.neutral.light1),
 
     $nest: {
       '> .content': {

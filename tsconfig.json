@@ -1,13 +1,17 @@
 {
+  "include": [
+    "editor.client.config.ts"
+  ],
   "compilerOptions": {
     "target": "es2017",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": ["es2017"],
+    "lib": ["es2017", "dom", "dom.iterable"],
     "types": [],
     "jsx": "react",
 
     "sourceMap": true,
+    "resolveJsonModule": true,
 
     "strict": true,
     "strictNullChecks": true,

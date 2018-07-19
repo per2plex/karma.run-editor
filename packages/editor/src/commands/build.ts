@@ -1,16 +1,28 @@
-import {loadPlugins, loadConfig, build, watchBuild, getCachePath} from './helper'
+import {
+  build,
+  watchBuild,
+  getCachePath,
+  loadServerConfig,
+  findConfigsIfNeededAndSetCWD
+} from './helper'
 
 export interface BuildCommandOptions {
   cwd?: string
   karmaDataURL?: string
   watch?: boolean
-  config?: string
+  serverConfigPath?: string
+  clientConfigPath?: string
   require?: string
   plugins?: string[]
 }
 
 export default async function buildCommand(opts: BuildCommandOptions): Promise<void> {
-  const config = await loadConfig(opts)
+  const {serverConfigPath, clientConfigPath} = findConfigsIfNeededAndSetCWD(
+    opts.serverConfigPath,
+    opts.clientConfigPath
+  )
+
+  const config = serverConfigPath ? await loadServerConfig(serverConfigPath) : {}
   const karmaDataURL = process.env.KARMA_DATA_URL || opts.karmaDataURL || config.karmaDataURL
 
   if (!karmaDataURL) {
@@ -18,11 +30,10 @@ export default async function buildCommand(opts: BuildCommandOptions): Promise<v
     return process.exit(1)
   }
 
-  const plugins = loadPlugins([...(opts.plugins || []), ...(config.plugins || [])])
   const cachePath = getCachePath()
 
   if (opts.watch) {
-    const path = await watchBuild(cachePath, {plugins}, (err, stats) => {
+    const path = await watchBuild(cachePath, clientConfigPath, (err, stats) => {
       if (err) return console.error(err.message)
       process.stdout.write(stats.toString({colors: true}) + '\n')
       console.info(`\nBuilt client: ${path}`)
@@ -30,7 +41,7 @@ export default async function buildCommand(opts: BuildCommandOptions): Promise<v
   } else {
     try {
       console.info('Building bundle...')
-      const {path, stats} = await build(cachePath, {plugins})
+      const {path, stats} = await build(cachePath, clientConfigPath)
       process.stdout.write(stats.toString({colors: true}) + '\n')
       console.info(`\nBuilt client: ${path}`)
       process.exit(0)

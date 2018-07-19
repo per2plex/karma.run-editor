@@ -28,14 +28,16 @@ import {
   SessionContext,
   withSession,
   SaveContext,
-  DeleteContext
+  DeleteContext,
+  firstKeyOptional
 } from '@karma.run/editor-common'
 
-import {expression as e} from '@karma.run/sdk'
+import {data as d, DataExpression} from '@karma.run/sdk'
 import {UploadResponse, MediaType} from './interface'
-import {Media, thumbnailURL} from './editor'
+import {Media, thumbnailURL, unserializeMedia} from './editor'
 import {name} from './version'
 import {uploadMedia, commitMedia, copyMedia, deleteMedia} from './api'
+import {CloudinaryResponse} from '@karma.run/editor-plugin-media/src/common/backend'
 
 export function mediaAPIPath(basePath: string) {
   return `${basePath}/api/plugin/${name}`
@@ -248,12 +250,83 @@ export class MediaField implements Field<MediaFieldValue> {
     )
   }
 
-  public transformRawValue(value: any) {
-    return value
+  public transformRawValue(value: any): MediaFieldValue {
+    return {media: unserializeMedia(value)}
   }
 
-  public transformValueToExpression(_value: MediaFieldValue) {
-    return e.null() // TODO
+  private mediaTypeExpressionForMedia(media: Media): DataExpression {
+    switch (media.mediaType) {
+      case MediaType.Image:
+        return d.union(
+          media.mediaType,
+          d.struct({
+            width: d.int32(media.width),
+            height: d.int32(media.height)
+          })
+        )
+
+      default:
+        return d.union(media.mediaType, d.struct())
+    }
+  }
+
+  private backendExpressionForMedia(media: Media): DataExpression | undefined {
+    const backendKey = media.backend && firstKeyOptional(media.backend)
+
+    // TODO: Find pluggable way to expressionify backend specific data
+    switch (backendKey) {
+      case 'cloudinary': {
+        const value: CloudinaryResponse = media.backend[backendKey]
+        return d.struct({
+          public_id: d.string(value.public_id),
+          version: d.int32(value.version),
+          signature: d.string(value.signature),
+          width: value.width ? d.int32(value.width) : d.null(),
+          height: value.height ? d.int32(value.height) : d.null(),
+          format: d.string(value.format),
+          resource_type: d.string(value.resource_type),
+          created_at: d.string(value.created_at),
+          tags: d.list(...value.tags.map(tag => d.string(tag))),
+          bytes: d.int32(value.bytes),
+          type: d.string(value.type),
+          etag: d.string(value.etag),
+          placeholder: d.bool(value.placeholder),
+          url: d.string(value.url),
+          secure_url: d.string(value.secure_url),
+          access_mode: d.string(value.access_mode),
+          original_filename: d.string(value.original_filename),
+          pages: value.pages ? d.int32(value.pages) : d.null(),
+          frame_rate: value.frame_rate ? d.int32(value.frame_rate) : d.null(),
+          bit_rate: value.frame_rate ? d.int32(value.frame_rate) : d.null(),
+          duration: value.duration ? d.float(value.duration) : d.null(),
+          is_audio: value.is_audio ? d.bool(value.is_audio) : d.null(),
+          rotation: value.rotation ? d.int32(value.rotation) : d.null()
+        })
+      }
+
+      default:
+        return undefined
+    }
+  }
+
+  public transformValueToExpression(value: MediaFieldValue): DataExpression {
+    const media = value.media
+    if (!media) return d.null()
+
+    return d.struct({
+      mediaType: this.mediaTypeExpressionForMedia(media),
+      id: d.string(media.id),
+      url: d.string(media.url),
+      mimeType: d.string(media.mimeType),
+      filename: d.string(media.filename),
+      fileSize: d.int32(media.fileSize),
+      extension: media.extension ? d.string(media.extension) : d.null(),
+      focusPoint: media.focusPoint
+        ? d.struct({x: d.float(media.focusPoint.x), y: d.float(media.focusPoint.y)})
+        : d.null(),
+      focusScale: media.focusScale ? d.float(media.focusScale) : d.null(),
+      backend: this.backendExpressionForMedia(media)
+    })
   }
 
   public isValidValue() {

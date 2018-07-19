@@ -650,7 +650,7 @@ export interface MapFn {
 }
 
 export interface StructFn {
-  struct: ObjectMap<DataExpression>
+  struct: ObjectMap<DataExpression | undefined>
 }
 
 export interface UnionFn {

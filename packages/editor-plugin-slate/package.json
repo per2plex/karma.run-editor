@@ -1,0 +1,36 @@
+{
+  "name": "@karma.run/editor-plugin-slate",
+  "version": "0.13.0",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/es6/index.js",
+  "types": "./lib/types/index.d.ts",
+  "license": "MIT",
+  "repository": "github:karmarun/karma.tools",
+  "scripts": {
+    "build": "run-p build:*",
+    "build:cjs": "tsc --outDir ./lib/cjs",
+    "build:es6": "tsc --module esnext --outDir ./lib/es6",
+    "build:types": "tsc --declaration --declarationDir ./lib/types --emitDeclarationOnly",
+    "watch": "run-s clean mkdir symlink watch:dev",
+    "watch:dev": "tsc --watch --outDir ./lib/cjs --declaration --declarationDir ./lib/types --declarationMap",
+    "mkdir": "shx mkdir -p ./lib/cjs ./lib/types",
+    "symlink": "shx ln -s ./cjs ./lib/es6",
+    "copy:license": "shx cp ../../LICENSE ./",
+    "clean": "shx rm -rf ./LICENSE ./lib",
+    "prepare": "run-s clean copy:license build"
+  },
+  "dependencies": {
+    "@karma.run/editor-common": "^0.13.0",
+    "slate": "^0.34.5",
+    "slate-react": "^0.13.2"
+  },
+  "devDependencies": {
+    "@types/draft-js": "^0.10.16",
+    "@types/slate": "^0.33.0",
+    "@types/slate-react": "^0.12.0",
+    "typescript": "^3.0.0-rc"
+  },
+  "peerDependencies": {
+    "@karma.run/editor": "^0.13.0"
+  }
+}

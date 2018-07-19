@@ -4,7 +4,6 @@ import {FieldClass} from '../fields/interface'
 export interface ServerPlugin {
   readonly name: string
   readonly version: string
-  readonly clientModule?: string
 
   registerFields?(): FieldClass[]
   registerRoutes?(karmaDataURL: string, router: Router): void

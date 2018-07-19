@@ -144,7 +144,7 @@ export const data = {
     return {set: value}
   },
 
-  struct(value: ObjectMap<t.DataExpression> = {}): t.StructFn {
+  struct(value: ObjectMap<t.DataExpression | undefined> = {}): t.StructFn {
     return {struct: value}
   },
 

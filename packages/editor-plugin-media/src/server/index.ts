@@ -44,3 +44,5 @@ export class MediaPlugin implements ServerPlugin {
     )
   }
 }
+
+export default MediaPlugin

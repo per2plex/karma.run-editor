@@ -5,7 +5,7 @@ import {MediaField} from '../common/field'
 
 export * from './component'
 
-export default class MediaPlugin implements ClientPlugin {
+export class MediaPlugin implements ClientPlugin {
   public name: string = name
   public version: string = version
 
@@ -13,3 +13,5 @@ export default class MediaPlugin implements ClientPlugin {
     return [MediaField]
   }
 }
+
+export default MediaPlugin

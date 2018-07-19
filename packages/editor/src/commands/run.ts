@@ -2,7 +2,15 @@ import express from 'express'
 import compression from 'compression'
 import editorMiddleware from '@karma.run/editor-server'
 
-import {loadPlugins, loadConfig, build, getCachedBuild, watchBuild, getCachePath} from './helper'
+import {
+  loadPlugins,
+  build,
+  getCachedBuild,
+  watchBuild,
+  getCachePath,
+  findConfigsIfNeededAndSetCWD,
+  loadServerConfig
+} from './helper'
 
 export const defaultPort = 3000
 
@@ -10,14 +18,20 @@ export interface RunCommandOptions {
   cwd?: string
   karmaDataURL?: string
   watch?: boolean
-  config?: string
+  serverConfigPath?: string
+  clientConfigPath?: string
   require?: string
   port: number
   plugins?: string[]
 }
 
 export default async function runCommand(opts: RunCommandOptions): Promise<void> {
-  const config = await loadConfig(opts)
+  const {serverConfigPath, clientConfigPath} = findConfigsIfNeededAndSetCWD(
+    opts.serverConfigPath,
+    opts.clientConfigPath
+  )
+
+  const config = serverConfigPath ? await loadServerConfig(serverConfigPath) : {}
   const karmaDataURL = process.env.KARMA_DATA_URL || opts.karmaDataURL || config.karmaDataURL
 
   if (!karmaDataURL) {
@@ -27,7 +41,7 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
 
   const port = process.env.PORT
     ? parseInt(process.env.PORT)
-    : opts.port || config.port || defaultPort
+    : opts.port || (config && config.port) || defaultPort
 
   const plugins = loadPlugins([...(opts.plugins || []), ...(config.plugins || [])])
   const cachePath = getCachePath()
@@ -36,17 +50,17 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
 
   if (opts.watch) {
     console.info('Watching bundle...')
-    clientBundlePath = await watchBuild(cachePath, {plugins}, (err, stats) => {
+    clientBundlePath = await watchBuild(cachePath, clientConfigPath, (err, stats) => {
       if (err) return console.error(err.message)
       process.stdout.write(stats.toString({colors: true}) + '\n')
     })
   } else {
-    clientBundlePath = await getCachedBuild(cachePath, {plugins})
+    clientBundlePath = await getCachedBuild(cachePath, clientConfigPath)
 
     if (!clientBundlePath) {
       try {
         console.info('Building bundle...')
-        const {path, stats} = await build(cachePath, {plugins})
+        const {path, stats} = await build(cachePath, clientConfigPath)
         process.stdout.write(stats.toString({colors: true}) + '\n')
         clientBundlePath = path
       } catch (err) {
@@ -75,10 +89,6 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
 
   app.use(compression())
 
-  app.get('/api/status', (_, res) => {
-    res.status(200).send({status: 'OK'}) // TODO: Move into middleware
-  })
-
   app.use(
     editorMiddleware({
       bundlePublicPath: clientBundlePath!,
@@ -96,24 +106,3 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
     console.log('Server running at localhost:' + port)
   })
 }
-
-// TODO: Move to plugin
-// if (
-//   process.env.CLOUDINARY_CLOUD_NAME &&
-//   process.env.CLOUDINARY_API_KEY &&
-//   process.env.CLOUDINARY_API_SECRET
-// ) {
-//   app.use(
-//     '/api/media',
-//     editorMediaMiddleware({
-//       karmaURL: process.env.KARMA_URL || process.env.KARMA_API_URL || karmaURL,
-//       hostname: '/api/media',
-//       backend: new CloudinaryBackend({
-//         cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-//         folder: process.env.CLOUDINARY_FOLDER,
-//         apiKey: process.env.CLOUDINARY_API_KEY,
-//         apiSecret: process.env.CLOUDINARY_API_SECRET
-//       })
-//     })
-//   )
-// }
