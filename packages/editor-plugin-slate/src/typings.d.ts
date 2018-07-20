@@ -1,4 +1,5 @@
-// Original slate typings exported everything as a namespace which is incorrect.
+// TODO: Original slate typings exported everything as a namespace which is incorrect.
+// Push these changes back into the @typings repo once everythings is checked.
 declare module 'slate' {
   // Type definitions for slate 0.33
   // Project: https://github.com/ianstormtaylor/slate
