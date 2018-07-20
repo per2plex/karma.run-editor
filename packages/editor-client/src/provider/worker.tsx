@@ -1,8 +1,9 @@
 import React from 'react'
+import {WorkerTypeMap} from '@karma.run/editor-common'
 
 import {WorkerContext} from '../context/worker'
 import {Config, withConfig} from '../context/config'
-import {createWorkerInterface, WorkerTypeMap, MessageFunctionMap} from '../util/worker'
+import {createWorkerInterface, MessageFunctionMap} from '../util/worker'
 
 export interface WorkerProviderProps {
   config: Config

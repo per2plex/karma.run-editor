@@ -151,8 +151,7 @@ export class RefFieldEditComponent extends React.PureComponent<
 
     let editButtons: React.ReactNode
 
-    // TODO: this.props.store.disableEditing
-    if (true) {
+    if (this.props.field.disableEditing) {
       editButtons = (
         <>
           <Button
@@ -260,10 +259,13 @@ export class RefField implements Field<RefFieldValue> {
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
+  public readonly disableEditing: boolean
+
   public constructor(opts: RefFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
     this.model = opts.model
+    this.disableEditing = opts.disableEditing || false
   }
 
   public initialize() {

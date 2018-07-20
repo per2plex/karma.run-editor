@@ -18,10 +18,10 @@ import {
 } from 'draft-js'
 
 import {List} from 'immutable'
+import {reduceToMap} from '@karma.run/editor-common'
 
 import {
   boolAttr,
-  reduceToMap,
   Color,
   DefaultBorderRadiusPx,
   FlexList,
@@ -31,7 +31,7 @@ import {
   Select,
   SelectType,
   IconName
-} from '@karma.run/editor-common'
+} from '@karma.run/editor-client'
 
 export const RichTextInputStyle = style({
   $debugName: 'RichTextInput',

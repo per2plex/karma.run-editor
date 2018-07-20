@@ -90,7 +90,7 @@ export function getClientEntryData(cachePath: string, clientConfigPath?: string)
 import {Editor} from '@karma.run/editor-client'
 ${clientConfigPath && `import config from '${path.relative(cachePath, clientConfigPath)}'`}
 
-const editor = new Editor(${clientConfigPath && 'config'})
+const editor = new Editor(${clientConfigPath ? 'config' : ''})
 editor.attach()`
 }
 
@@ -144,26 +144,16 @@ export async function build(
     }
 
     const clientEntryData = getClientEntryData(cachePath, clientConfigPath)
-    const clientEntryPath = path.resolve(
-      cachePath,
-      `./${getEntryFilename('client', md5Hash(clientEntryData))}.js`
-    )
+    const clientEntryPath = path.resolve(cachePath, './entry.client.js')
 
     const workerEntryData = getWorkerEntryData()
-    const workerEntryPath = path.resolve(
-      cachePath,
-      `./${getEntryFilename('worker', md5Hash(workerEntryData))}.js`
-    )
+    const workerEntryPath = path.resolve(cachePath, './entry.worker.js')
 
     await mkdirpPromise(cachePath)
     await fs.promises.writeFile(clientEntryPath, clientEntryData)
     await fs.promises.writeFile(workerEntryPath, workerEntryData)
 
-    const bundlePath = path.resolve(
-      cachePath,
-      './',
-      getBundleFilename(md5Hash(clientEntryData + workerEntryData))
-    )
+    const bundlePath = path.resolve(cachePath, './bundle')
 
     const compiler = webpack({
       entry: {index: clientEntryPath, worker: workerEntryPath},

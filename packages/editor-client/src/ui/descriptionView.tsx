@@ -54,7 +54,9 @@ export class DescriptionView extends React.Component<DescriptionViewProps> {
     return (
       <>
         <CardSection>
-          {viewContext ? viewContext.name : refToPrettyString(this.props.record.id)}
+          {`${refToPrettyString(this.props.record.id)} ${
+            viewContext ? `(${viewContext.name})` : ''
+          }`}
         </CardSection>
       </>
     )

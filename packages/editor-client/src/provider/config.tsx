@@ -24,6 +24,8 @@ export class ConfigProvider extends React.Component<ConfigProviderProps, Config>
       if (plugin.registerFields) {
         fields.push(...plugin.registerFields())
       }
+
+      console.info(`Initialized plugin: ${plugin.name}@${plugin.version}`)
     }
 
     this.setState({

@@ -1,9 +1,13 @@
 import React from 'react'
-import {EditorState, convertFromRaw} from 'draft-js'
+import Slate from 'slate'
+
+import {Editor as SlateEditor} from 'slate-react'
+import plainTextSerializer from 'slate-plain-serializer'
 import {expression as e} from '@karma.run/sdk'
 
+import {Model, SortConfiguration, FilterConfiguration} from '@karma.run/editor-common'
+
 import {
-  Model,
   ErrorField,
   EditComponentRenderProps,
   EditRenderProps,
@@ -11,24 +15,13 @@ import {
   ListRenderProps,
   FieldComponent,
   FieldLabel,
-  SortConfiguration,
-  FilterConfiguration,
   CardSection,
   SerializedField
-} from '@karma.run/editor-common'
+} from '@karma.run/editor-client'
 
-import {RichTextInput, Control, LinkType, BlockType, StyleGroup, CustomElement} from './input'
-
-export class DraftJSFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<DraftJSField, DraftJSFieldValue>
+export class SlateFieldEditComponent extends React.PureComponent<
+  EditComponentRenderProps<SlateField, SlateFieldValue>
 > {
-  private handleValueChange = (value: any) => {
-    this.props.onValueChange(value, this.props.changeKey)
-  }
-
-  private handleOpenBlockEditor = () => {}
-  private handleOpenLinkEditor = () => {}
-
   public render() {
     return (
       <FieldComponent depth={this.props.depth} index={this.props.index}>
@@ -40,53 +33,34 @@ export class DraftJSFieldEditComponent extends React.PureComponent<
             index={this.props.index}
           />
         )}
-        <RichTextInput
-          value={this.props.value}
-          onOpenBlockEditor={this.handleOpenBlockEditor}
-          onOpenLinkEditor={this.handleOpenLinkEditor}
-          onChange={this.handleValueChange}
-          controls={this.props.field.controls}
-          links={this.props.field.links}
-          styleGroups={this.props.field.styleGroups}
-          blocks={this.props.field.blocks}
-          elements={this.props.field.elements}
-          linkEntityType={this.props.field.linkEntityType}
-          maxLength={this.props.field.maxLength}
-        />
+        <SlateEditor value={this.props.value} />
       </FieldComponent>
     )
   }
 }
 
-export interface DraftJSFieldOptions {
+export interface SlateFieldOptions {
   readonly label?: string
   readonly description?: string
   readonly minLength?: number
   readonly maxLength?: number
 }
 
-export type DraftJSFieldValue = EditorState
-export type SerializedDraftJSField = SerializedField & DraftJSFieldOptions
+export type SlateFieldValue = Slate.Value
+export type SerializedSlateField = SerializedField & SlateFieldOptions
 
-export class DraftJSField implements Field<DraftJSFieldValue> {
+export class SlateField implements Field<SlateFieldValue> {
   public readonly label?: string
   public readonly description?: string
 
   public readonly minLength?: number
   public readonly maxLength?: number
 
-  public readonly defaultValue: DraftJSFieldValue = EditorState.createEmpty()
+  public readonly defaultValue: SlateFieldValue = Slate.Value.create()
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public readonly controls: Set<Control> = new Set()
-  public readonly links: LinkType[] = []
-  public readonly blocks: BlockType[] = []
-  public readonly styleGroups: StyleGroup[] = []
-  public readonly elements: CustomElement[] = []
-  public readonly linkEntityType: string = 'LINK'
-
-  public constructor(opts?: DraftJSFieldOptions) {
+  public constructor(opts?: SlateFieldOptions) {
     this.label = opts && opts.label
     this.description = opts && opts.description
     this.minLength = opts && opts.minLength
@@ -97,13 +71,14 @@ export class DraftJSField implements Field<DraftJSFieldValue> {
     return this
   }
 
-  public renderListComponent(props: ListRenderProps<DraftJSFieldValue>) {
-    return <CardSection>{props.value.getCurrentContent().getPlainText()}</CardSection>
+  public renderListComponent(props: ListRenderProps<SlateFieldValue>) {
+    const plainText = plainTextSerializer.serialize(props.value)
+    return <CardSection>{plainText}</CardSection>
   }
 
-  public renderEditComponent(props: EditRenderProps<DraftJSFieldValue>) {
+  public renderEditComponent(props: EditRenderProps<SlateFieldValue>) {
     return (
-      <DraftJSFieldEditComponent
+      <SlateFieldEditComponent
         label={this.label}
         description={this.description}
         field={this}
@@ -113,16 +88,18 @@ export class DraftJSField implements Field<DraftJSFieldValue> {
   }
 
   public transformRawValue(value: any) {
-    return EditorState.createWithContent(convertFromRaw(value))
+    return Slate.Value.create({
+      document: Slate.Document.fromJSON(value)
+    })
   }
 
-  public transformValueToExpression(_value: DraftJSFieldValue) {
+  public transformValueToExpression(_value: SlateFieldValue) {
     return e.null()
   }
 
-  public isValidValue(value: DraftJSFieldValue) {
+  public isValidValue(value: SlateFieldValue) {
     const errors: string[] = []
-    const plainText = value.getCurrentContent().getPlainText()
+    const plainText = plainTextSerializer.serialize(value)
 
     if (this.maxLength && plainText.length > this.maxLength) errors.push('stringToLongError')
     if (this.minLength && plainText.length < this.minLength) errors.push('stringToShortError')
@@ -130,9 +107,9 @@ export class DraftJSField implements Field<DraftJSFieldValue> {
     return errors
   }
 
-  public serialize(): SerializedDraftJSField {
+  public serialize(): SerializedSlateField {
     return {
-      type: DraftJSField.type,
+      type: SlateField.type,
       label: this.label,
       description: this.description,
       minLength: this.minLength,
@@ -158,7 +135,7 @@ export class DraftJSField implements Field<DraftJSFieldValue> {
     return false
   }
 
-  static create(model: Model, opts?: DraftJSFieldOptions) {
+  static create(model: Model, opts?: SlateFieldOptions) {
     if (model.type === 'annotation') {
       model = model.model
     }
@@ -174,7 +151,7 @@ export class DraftJSField implements Field<DraftJSFieldValue> {
     return new this(opts)
   }
 
-  static unserialize(rawField: SerializedDraftJSField) {
+  static unserialize(rawField: SerializedSlateField) {
     return new this(rawField)
   }
 }

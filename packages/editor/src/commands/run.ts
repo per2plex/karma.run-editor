@@ -31,6 +31,7 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
     opts.clientConfigPath
   )
 
+  // TODO: Watch server config with watch flag
   const config = serverConfigPath ? await loadServerConfig(serverConfigPath) : {}
   const karmaDataURL = process.env.KARMA_DATA_URL || opts.karmaDataURL || config.karmaDataURL
 
@@ -55,6 +56,7 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
       process.stdout.write(stats.toString({colors: true}) + '\n')
     })
   } else {
+    // TODO: Add ignore cache option
     clientBundlePath = await getCachedBuild(cachePath, clientConfigPath)
 
     if (!clientBundlePath) {

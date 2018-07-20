@@ -6,5 +6,5 @@
  */
 export * from './server'
 
-import {MediaPlugin} from './server'
-export default MediaPlugin
+import {MediaServerPlugin} from './server'
+export default MediaServerPlugin

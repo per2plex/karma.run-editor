@@ -1,11 +1,11 @@
-import {ClientPlugin} from '@karma.run/editor-common'
+import {ClientPlugin} from '@karma.run/editor-client'
 
 import {name, version} from '../common/version'
-import {MediaField} from '../common/field'
+import {MediaField} from './field'
 
 export * from './component'
 
-export class MediaPlugin implements ClientPlugin {
+export class MediaClientPlugin implements ClientPlugin {
   public name: string = name
   public version: string = version
 
@@ -14,4 +14,4 @@ export class MediaPlugin implements ClientPlugin {
   }
 }
 
-export default MediaPlugin
+export default MediaClientPlugin

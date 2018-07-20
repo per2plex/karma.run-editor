@@ -1,11 +1,10 @@
 import {Router} from 'express'
-import {ServerPlugin} from '@karma.run/editor-common'
+import {ServerPlugin} from '@karma.run/editor-server'
 
 import {name, version} from '../common/version'
 import {mediaMiddleware} from './middleware'
 import {MediaType} from '../common/interface'
 import {MediaBackend} from '../server/backend'
-import {MediaField} from '../common/field'
 
 export * from './middleware'
 export * from './backend'
@@ -19,7 +18,7 @@ export interface MediaPluginOptions {
   tempDirPath?: string
 }
 
-export class MediaPlugin implements ServerPlugin {
+export class MediaServerPlugin implements ServerPlugin {
   public name: string = name
   public version: string = version
   public clientModule = '@karma.run/editor-plugin-media/client'
@@ -28,10 +27,6 @@ export class MediaPlugin implements ServerPlugin {
 
   public constructor(opts: MediaPluginOptions) {
     this.options = opts
-  }
-
-  public registerFields() {
-    return [MediaField]
   }
 
   public registerRoutes(karmaDataURL: string, router: Router) {
@@ -45,4 +40,4 @@ export class MediaPlugin implements ServerPlugin {
   }
 }
 
-export default MediaPlugin
+export default MediaServerPlugin

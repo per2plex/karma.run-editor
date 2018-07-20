@@ -1,17 +1,13 @@
 import React from 'react'
 
 import {
-  Field,
-  EditComponentRenderProps,
-  FieldComponent,
-  FieldLabel,
-  SerializedField,
   SortConfiguration,
   FilterConfiguration,
-  CardSection,
-  ListRenderProps,
-  EditRenderProps,
   Model,
+  firstKeyOptional
+} from '@karma.run/editor-common'
+
+import {
   ErrorField,
   DropAreaFileInput,
   FlexList,
@@ -29,13 +25,20 @@ import {
   withSession,
   SaveContext,
   DeleteContext,
-  firstKeyOptional
-} from '@karma.run/editor-common'
+  CardSection,
+  ListRenderProps,
+  EditRenderProps,
+  Field,
+  EditComponentRenderProps,
+  FieldComponent,
+  FieldLabel,
+  SerializedField
+} from '@karma.run/editor-client'
 
 import {data as d, DataExpression} from '@karma.run/sdk'
-import {UploadResponse, MediaType} from './interface'
-import {Media, thumbnailURL, unserializeMedia} from './editor'
-import {name} from './version'
+import {UploadResponse, MediaType} from '../common/interface'
+import {Media, thumbnailURL, unserializeMedia} from '../common/editor'
+import {name} from '../common/version'
 import {uploadMedia, commitMedia, copyMedia, deleteMedia} from './api'
 import {CloudinaryResponse} from '@karma.run/editor-plugin-media/src/common/backend'
 

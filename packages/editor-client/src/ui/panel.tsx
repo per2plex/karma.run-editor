@@ -16,10 +16,6 @@ import {
   solidBorderWithColor
 } from './style'
 
-// TODO:
-// import {QuickSearchFieldStyle} from '../../../filter/ui/searchField'
-// import {SortFieldStyle} from '../../../filter/ui/sortField'
-
 export class Panel extends React.Component {
   public render() {
     return <div className={Panel.Style}>{this.props.children}</div>
@@ -177,14 +173,10 @@ export namespace PanelToolbar {
             justifyContent: 'flex-end',
 
             $nest: {
-              // TODO:
-              // [`> .${QuickSearchFieldStyle}`]: {
-              //   marginRight: Spacing.largest
-              // },
-              // [`> .${SortFieldStyle}`]: {
-              //   marginRight: Spacing.large,
-              //   $nest: {'&:last-child': {marginRight: 0}}
-              // }
+              '> *': {
+                marginRight: Spacing.largest,
+                $nest: {'&:last-child': {marginRight: 0}}
+              }
             }
           }
         }

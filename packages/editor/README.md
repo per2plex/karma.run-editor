@@ -20,3 +20,5 @@ $ karma-editor --help
     -u --karmaURL [url]  set karma.run API URL. (environment: KARMA_URL or KARMA_API_URL)
     -h, --help           output usage information
 ```
+
+## Configuration

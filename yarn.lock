@@ -159,6 +159,12 @@
   version "0.0.29"
   resolved "https://registry.yarnpkg.com/@types/shortid/-/shortid-0.0.29.tgz#8093ee0416a6e2bf2aa6338109114b3fbffa0e9b"
 
+"@types/slate-plain-serializer@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@types/slate-plain-serializer/-/slate-plain-serializer-0.5.0.tgz#f3e2b3d6068070fb758ecb53a89fa7c7152713bc"
+  dependencies:
+    "@types/slate" "*"
+
 "@types/slate-react@^0.12.0":
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/@types/slate-react/-/slate-react-0.12.0.tgz#757d6c8c5c26d633752ae1823aec72851dcf4514"
@@ -3166,7 +3172,7 @@ react-datetime@^2.10.3:
     prop-types "^15.5.7"
     react-onclickoutside "^6.5.0"
 
-react-dom@^16.0.0, react-dom@^16.4.0:
+react-dom@^16.4.0:
   version "16.4.1"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.4.1.tgz#7f8b0223b3a5fbe205116c56deb85de32685dad6"
   dependencies:
@@ -3199,7 +3205,7 @@ react-portal@^3.1.0:
   dependencies:
     prop-types "^15.5.8"
 
-react@^16.3.0, react@^16.4.0:
+react@^16.4.0:
   version "16.4.1"
   resolved "https://registry.yarnpkg.com/react/-/react-16.4.1.tgz#de51ba5764b5dbcd1f9079037b862bd26b82fe32"
   dependencies:
@@ -3579,6 +3585,12 @@ slate-hotkeys@^0.1.2:
 slate-plain-serializer@^0.5.20:
   version "0.5.20"
   resolved "https://registry.yarnpkg.com/slate-plain-serializer/-/slate-plain-serializer-0.5.20.tgz#4877b0980cafbea0528a8ff1e75ca75363368b3b"
+  dependencies:
+    slate-dev-logger "^0.1.39"
+
+slate-plain-serializer@^0.5.21:
+  version "0.5.21"
+  resolved "https://registry.yarnpkg.com/slate-plain-serializer/-/slate-plain-serializer-0.5.21.tgz#c74bec957767b20d22a04b6e030f0fe42e27ec94"
   dependencies:
     slate-dev-logger "^0.1.39"
 

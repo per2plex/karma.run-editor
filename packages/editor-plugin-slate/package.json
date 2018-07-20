@@ -20,17 +20,18 @@
     "prepare": "run-s clean copy:license build"
   },
   "dependencies": {
-    "@karma.run/editor-common": "^0.13.0",
     "slate": "^0.34.5",
-    "slate-react": "^0.13.2"
+    "slate-react": "^0.13.2",
+    "slate-plain-serializer": "^0.5.21"
   },
   "devDependencies": {
-    "@types/draft-js": "^0.10.16",
     "@types/slate": "^0.33.0",
     "@types/slate-react": "^0.12.0",
+    "@types/slate-plain-serializer": "^0.5.0",
     "typescript": "^3.0.0-rc"
   },
   "peerDependencies": {
-    "@karma.run/editor": "^0.13.0"
+    "@karma.run/editor-client": "^0.13.0",
+    "@karma.run/editor-common": "^0.13.0"
   }
 }
