@@ -54,9 +54,3 @@ const escapeRegExpRegExp = /[-\/\\^$*+?.()|[\]{}]/g
 export function escapeRegExp(str: string) {
   return str.replace(escapeRegExpRegExp, '\\$&')
 }
-
-// TODO: Isomorphic solution?
-export function base64(str: string) {
-  if (typeof window != 'undefined') return window.btoa(str)
-  return ''
-}

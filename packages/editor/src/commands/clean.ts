@@ -1,14 +1,12 @@
 import rimraf from 'rimraf'
-import {getCachePath, loadConfig} from './helper'
+import {getCachePath, findConfigsIfNeededAndSetCWD} from './helper'
 
 export interface CleanCommandOptions {
-  cwd?: string
-  config?: string
-  require?: string
+  serverConfigPath?: string
 }
 
 export default async function cleanCommand(opts: CleanCommandOptions): Promise<void> {
-  await loadConfig(opts)
+  findConfigsIfNeededAndSetCWD(opts.serverConfigPath)
   const cachePath = getCachePath()
 
   console.info('Cleaning cache...')

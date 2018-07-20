@@ -9,20 +9,12 @@ import {
   ValuePath,
   StructPathSegment,
   ConditionType,
-  Config,
-  withConfig,
   EditorContext,
   RefMap,
-  ViewContext,
   escapeRegExp,
-  WorkerContext,
-  withWorker,
-  SessionContext,
-  initialEditorData,
-  EditorData,
-  ModelRecord,
-  EditorSession,
-  SerializedViewContext
+  ViewContextOptions,
+  ViewContextOptionsWithModel,
+  unserializeModel
 } from '@karma.run/editor-common'
 
 import {
@@ -35,10 +27,28 @@ import {
   Expression,
   expression as e,
   MetarializedRecord,
-  SignatureHeader
+  SignatureHeader,
+  getTags,
+  getModels,
+  Tag,
+  DefaultTags
 } from '@karma.run/sdk'
 
 import * as storage from '../util/storage'
+
+import {Config, withConfig} from '../context/config'
+import {WorkerContext, withWorker} from '../context/worker'
+
+import {
+  SessionContext,
+  initialEditorData,
+  EditorData,
+  ModelRecord,
+  EditorSession
+} from '../context/session'
+
+import {ViewContext} from '../api/viewContext'
+import {FieldRegistry} from '../api/field'
 
 export const defaultModelGroupID: string = 'default'
 export const defaultEditorContextID: string = 'default'
@@ -52,9 +62,92 @@ export interface SessionProviderProps {
 }
 
 export interface UserContext {
-  // TODO: Rename to EditorContext and find a better name for current 'EditorContext'
   editorContexts: EditorContext[]
-  viewContexts: SerializedViewContext[]
+  viewContextOptions: ViewContextOptionsWithModel[]
+}
+
+export function getTagsAndModels(
+  karmaDataURL: string,
+  signature: string
+): Promise<{tags: Tag[]; models: MetarializedRecord[]; userRoles: string[]}> {
+  return query(
+    karmaDataURL,
+    signature,
+    buildFunction(e => () =>
+      e.data(d =>
+        d.struct({
+          tags: d.expr(() => getTags()),
+          models: d.expr(e => e.mapList(getModels(), (_, model) => e.metarialize(model)))
+        })
+      )
+    )
+  )
+}
+
+// TODO: Find better name
+export async function getUserContext(
+  karmaDataURL: string,
+  signature: string,
+  registry: FieldRegistry,
+  editorContexts?: EditorContext[],
+  viewContextOptions?: ViewContextOptionsWithModel[]
+) {
+  const {tags, models} = await getTagsAndModels(karmaDataURL, signature)
+
+  const tagMap = new Map(tags.map(tag => [tag.tag, tag.model] as [string, Ref]))
+  const reverseTagMap = new RefMap(tags.map(tag => [tag.model, tag.tag] as [Ref, string]))
+
+  const overrideViewContextMap = new RefMap(
+    viewContextOptions
+      ? viewContextOptions.map(
+          viewContext =>
+            [
+              typeof viewContext.model === 'string'
+                ? tagMap.get(viewContext.model)
+                : viewContext.model,
+              viewContext
+            ] as [Ref, ViewContextOptions]
+        )
+      : []
+  )
+
+  // Set ViewContextOptions for default models if needed
+  const userModelRef = tagMap.get(DefaultTags.User)
+  const tagModelRef = tagMap.get(DefaultTags.Tag)
+
+  if (userModelRef && !overrideViewContextMap.has(userModelRef)) {
+    overrideViewContextMap.set(userModelRef, {
+      field: {
+        fields: [['username'], ['password', {type: 'password'}], ['roles']]
+      }
+    })
+  }
+
+  if (tagModelRef && !overrideViewContextMap.has(tagModelRef)) {
+    overrideViewContextMap.set(tagModelRef, {
+      field: {
+        fields: [['tag'], ['model']]
+      }
+    })
+  }
+
+  const viewContexts = models.map(model =>
+    ViewContext.inferFromModel(
+      model.id,
+      unserializeModel(model.value),
+      registry,
+      reverseTagMap.get(model.id),
+      [],
+      overrideViewContextMap.get(model.id)
+    )
+  )
+
+  return {
+    editorContexts: editorContexts || [
+      {name: 'Default', modelGroups: [{name: 'Models', models: models.map(model => model.id)}]}
+    ],
+    viewContexts
+  }
 }
 
 export class SessionProvider extends React.Component<SessionProviderProps, SessionContext> {
@@ -313,9 +406,13 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   }
 
   private async getEditorData(session: EditorSession): Promise<EditorData> {
-    const {editorContexts, viewContexts: rawViewContexts} = await this.getContext(session)
-    const viewContexts = rawViewContexts.map(rawViewContext =>
-      ViewContext.unserialize(rawViewContext, this.props.config.fieldRegistry)
+    const {editorContexts: userEditorContexts, viewContextOptions} = await this.getContext(session)
+    const {editorContexts, viewContexts} = await getUserContext(
+      this.props.config.karmaDataURL,
+      session.signature,
+      this.props.config.fieldRegistry,
+      userEditorContexts,
+      viewContextOptions
     )
 
     const viewContextMap = new RefMap(

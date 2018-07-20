@@ -10,4 +10,5 @@ import 'intersection-observer-polyfill/index.global'
 import './ui/global'
 
 export * from './editor'
+export * from './plugin'
 export * from './version'

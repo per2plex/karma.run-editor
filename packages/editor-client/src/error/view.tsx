@@ -1,6 +1,8 @@
 import * as React from 'react'
 import {style} from 'typestyle'
-import {Button, ButtonType, FontSize, Spacing, Color, FontWeight} from '@karma.run/editor-common'
+
+import {Button, ButtonType} from '../ui/button'
+import {FontSize, Spacing, Color, FontWeight} from '../ui/style'
 
 import * as storage from '../util/storage'
 

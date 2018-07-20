@@ -64,7 +64,8 @@ program
 program
   .command('clean')
   .description('Clean client cache.')
-  .action(opts => clean(opts))
+  .option('-s --server-config --serverConfig [serverConfig]', 'Set path to the server config file.')
+  .action(opts => clean({...opts, serverConfigPath: opts.serverConfig}))
 
 program.parse(process.argv)
 

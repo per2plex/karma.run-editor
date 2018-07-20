@@ -14,12 +14,11 @@ import {
   EntryListLocation,
   DashboardLocation,
   LocationContext,
-  LocationActionContext,
-  SessionContext,
-  withSession,
-  withConfig,
-  Config
-} from '@karma.run/editor-common'
+  LocationActionContext
+} from '../context/location'
+
+import {SessionContext, withSession} from '../context/session'
+import {withConfig, Config} from '../context/config'
 
 export function urlPathForLocation(basePath: string, location: AppLocation): string {
   switch (location.type) {

@@ -1,5 +1,5 @@
 import {cssRule} from 'typestyle'
-import {Color, FontFamily} from '@karma.run/editor-common'
+import {Color, FontFamily} from '../ui'
 
 cssRule('html', {
   boxSizing: 'border-box',

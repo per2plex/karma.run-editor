@@ -1,15 +1,9 @@
 import React from 'react'
 
-import {
-  ConfigContext,
-  Config,
-  defaultConfig,
-  ClientPlugin,
-  FieldClass,
-  mergeFieldRegistries,
-  createFieldRegistry,
-  defaultFieldRegistry
-} from '@karma.run/editor-common'
+import {ClientPlugin} from '../plugin'
+import {Config, defaultConfig, ConfigContext} from '../context/config'
+import {FieldClass, mergeFieldRegistries, createFieldRegistry} from '../api/field'
+import {defaultFieldRegistry} from '../fields/defaultRegistry'
 
 export interface ConfigProviderProps {
   config: {

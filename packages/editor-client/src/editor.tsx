@@ -3,14 +3,7 @@ import ReactDOM from 'react-dom'
 
 import {forceRenderStyles} from 'typestyle'
 
-import {
-  deleteNullValues,
-  Theme,
-  defaultTheme,
-  Config,
-  defaultConfig,
-  ClientPlugin
-} from '@karma.run/editor-common'
+import {deleteNullValues} from '@karma.run/editor-common'
 
 import {ThemeProvider} from './provider/theme'
 import {ConfigProvider} from './provider/config'
@@ -20,8 +13,12 @@ import {LocaleProvider} from './provider/locale'
 import {LocationProviderContainer} from './provider/location'
 import {NotificationProvider} from './provider/notification'
 
-import {RootViewContainer} from './ui/rootView'
+import {RootViewContainer} from './view/rootView'
 import {ErrorBoundary} from './error/boundary'
+
+import {Config, defaultConfig} from './context/config'
+import {Theme, defaultTheme} from './context/theme'
+import {ClientPlugin} from './plugin'
 
 export interface EditorProps {
   config?: Partial<Config>

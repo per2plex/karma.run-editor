@@ -1,7 +1,12 @@
-import {ServerPlugin} from '@karma.run/editor-common'
+import {ServerPlugin} from '@karma.run/editor-server'
+import {ClientPlugin} from '@karma.run/editor-client'
 import {EditorContextsForRolesFn, ViewContextsForRolesFn} from '@karma.run/editor-server'
 
-export interface Configuration {
+export interface ClientConfiguration {
+  plugins?: (ClientPlugin | string)[]
+}
+
+export interface ServerConfiguration {
   port?: number
   karmaDataURL?: string
   plugins?: (ServerPlugin | string)[]

@@ -5,38 +5,10 @@ import util from 'util'
 import mkdirp from 'mkdirp'
 import findupSync from 'findup-sync'
 
-import {ObjectMap, ServerPlugin} from '@karma.run/editor-common'
-import {Configuration} from '../interface'
-
-const Liftoff = require('liftoff')
-const interpret = require('interpret')
+import {ServerPlugin} from '@karma.run/editor-server'
+import {ServerConfiguration} from '../interface'
 
 const mkdirpPromise = util.promisify(mkdirp)
-
-export interface LiftoffEnvironment {
-  cwd: string
-  require: string[]
-  configNameSearch: string[]
-  configPath: string
-  configBase: string
-  configFiles: string[]
-  modulePackage: any
-}
-
-// Include .config in extensions
-const extensions = Object.entries(interpret.jsVariants).reduce(
-  (acc, [key, value]) => {
-    acc[`.server.config${key}`] = value
-    return acc
-  },
-  {} as ObjectMap<any>
-)
-
-export interface LoadConfigOptions {
-  cwd?: string
-  configPath?: string
-  require?: string
-}
 
 export function findServerConfig(): string | undefined {
   return findupSync('editor.server.config.{js,ts,tsx}')
@@ -75,7 +47,7 @@ export function findConfigsIfNeededAndSetCWD(serverConfigPath?: string, clientCo
   return {serverConfigPath, clientConfigPath}
 }
 
-export function loadServerConfig(serverConfigPath?: string): Configuration {
+export function loadServerConfig(serverConfigPath?: string): ServerConfiguration {
   if (!serverConfigPath) return {}
 
   const extension = path.extname(serverConfigPath)
@@ -87,40 +59,6 @@ export function loadServerConfig(serverConfigPath?: string): Configuration {
 
   const module = require(serverConfigPath)
   return module.default || module
-}
-
-export async function loadConfig(opts: LoadConfigOptions): Promise<Configuration> {
-  return new Promise(resolve => {
-    const configLoader = new Liftoff({
-      name: 'karma.tools/editor',
-      configName: 'editor', // Extension includes .config so full name is editor.config.*
-      extensions: extensions
-    })
-      .on('require', (name: string) => {
-        console.info('Preloading module:', name)
-      })
-      .on('requireFail', (name: string, err: Error) => {
-        console.info('Unable to preload:', name, err)
-      })
-
-    configLoader.launch(
-      {cwd: opts.cwd, configPath: opts.configPath, require: opts.require},
-      (env: LiftoffEnvironment): void => {
-        let config: Configuration = {}
-        if (env.configPath) {
-          const module = require(env.configPath)
-          config = module.default || module
-        }
-
-        if (process.cwd() !== env.cwd) {
-          process.chdir(env.cwd)
-          console.info('Working directory changed to', env.cwd)
-        }
-
-        return resolve(config)
-      }
-    )
-  })
 }
 
 export function loadPlugins(plugins: (ServerPlugin | string)[]): ServerPlugin[] {
@@ -231,14 +169,9 @@ export async function build(
       entry: {index: clientEntryPath, worker: workerEntryPath},
       mode: 'production',
       devtool: 'source-map',
-      output: {
-        path: bundlePath,
-        publicPath: '/static/'
-      },
+      output: {path: bundlePath, publicPath: '/static/'},
       resolve: {extensions: ['.ts', '.tsx', '.js']},
-      module: {
-        rules: [{test: /\.tsx?$/, loader: 'ts-loader'}]
-      }
+      module: {rules: [{test: /\.tsx?$/, loader: 'ts-loader'}]}
     } as import('webpack').Configuration)
 
     if (onProgress) compiler.apply(new webpack.ProgressPlugin(onProgress))
@@ -280,14 +213,9 @@ export async function watchBuild(
     entry: {index: clientEntryPath, worker: workerEntryPath},
     mode: 'development',
     devtool: 'cheap-module-eval-source-map',
-    output: {
-      path: bundlePath,
-      publicPath: '/static/'
-    },
+    output: {path: bundlePath, publicPath: '/static/'},
     resolve: {extensions: ['.ts', '.tsx', '.js']},
-    module: {
-      rules: [{test: /\.tsx?$/, loader: 'ts-loader'}]
-    }
+    module: {rules: [{test: /\.tsx?$/, loader: 'ts-loader'}]}
   } as import('webpack').Configuration)
 
   if (onProgress) compiler.apply(new webpack.ProgressPlugin(onProgress))

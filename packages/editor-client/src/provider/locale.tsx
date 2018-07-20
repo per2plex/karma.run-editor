@@ -1,15 +1,16 @@
 import React from 'react'
 
+import {CenteredLoadingIndicator} from '../ui'
+
 import {
-  CenteredLoadingIndicator,
   Locale,
   defaultLocale,
   LocaleContext,
   loadLocaleMessageMap,
   LocaleMessageKey
-} from '@karma.run/editor-common'
+} from '../context/locale'
 
-export const localeMap = new Map<Locale, string>([['en-US', 'English'], ['de-DE', 'Deutsch']])
+export const localeMap = new Map<Locale, string>([['en-US', 'English']])
 
 export function getNavigatorLocale(): Locale {
   const languageCodes = window.navigator.languages || [window.navigator.language]

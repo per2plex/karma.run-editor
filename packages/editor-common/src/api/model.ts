@@ -1,18 +1,6 @@
 import {Ref as ModelRef} from '@karma.run/sdk'
 import {firstKey, mapObject, ObjectMap} from '../util/object'
 
-export type KeyPath = (string | number)[]
-export function keyPathToString(keyPath: KeyPath) {
-  return ['root', ...keyPath].join('.')
-}
-
-export function isKeyPathEqual(keyPathA: KeyPath | string, keyPathB: KeyPath | string) {
-  let keyPathStringA = typeof keyPathA === 'string' ? keyPathA : keyPathToString(keyPathA)
-  let keyPathStringB = typeof keyPathB === 'string' ? keyPathB : keyPathToString(keyPathB)
-
-  return keyPathStringA === keyPathStringB
-}
-
 // Helpers
 export type ModelMap = ObjectMap<Model>
 
@@ -368,7 +356,6 @@ export function unserializeModel(rawModel: any): Model {
     }
 
     default: {
-      console.info(`Unknown model of type ${type}.`)
       return Unknown(type, rawModel[type])
     }
   }

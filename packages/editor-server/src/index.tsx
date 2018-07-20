@@ -10,33 +10,17 @@ import ReactDOMServer from 'react-dom/server'
 import path from 'path'
 import express from 'express'
 
-import {
-  SignatureHeader,
-  Tag,
-  MetarializedRecord,
-  query,
-  buildFunction,
-  getTags,
-  getModels,
-  Ref,
-  DefaultTags
-} from '@karma.run/sdk'
-
-import {
-  ServerPlugin,
-  ViewContext,
-  RefMap,
-  EditorContext,
-  unserializeModel,
-  defaultFieldRegistry,
-  ViewContextOptions,
-  FieldClass,
-  FieldRegistry,
-  createFieldRegistry,
-  mergeFieldRegistries
-} from '@karma.run/editor-common'
+import {SignatureHeader, Tag, query, buildFunction, getTags, Ref} from '@karma.run/sdk'
+import {EditorContext, ViewContextOptionsWithModel} from '@karma.run/editor-common'
 
 const cacheOptions = {maxAge: '1d'}
+
+export interface ServerPlugin {
+  readonly name: string
+  readonly version: string
+
+  registerRoutes?(karmaDataURL: string, router: express.Router): void
+}
 
 export type EditorContextsForRolesFn = (
   roles: string[],
@@ -46,7 +30,7 @@ export type EditorContextsForRolesFn = (
 export type ViewContextsForRolesFn = (
   roles: string[],
   tagMap: ReadonlyMap<string, Ref>
-) => ({model: string | Ref} & ViewContextOptions)[]
+) => ViewContextOptionsWithModel[]
 
 export interface MiddlewareOptions {
   title?: string
@@ -64,10 +48,10 @@ export interface MiddlewareOptions {
   viewContextsForRoles?: ViewContextsForRolesFn
 }
 
-export function getTagsModelsAndUserRoles(
+export function getTagsAndRoles(
   karmaDataURL: string,
   signature: string
-): Promise<{tags: Tag[]; models: MetarializedRecord[]; userRoles: string[]}> {
+): Promise<{tags: Tag[]; roles: string[]}> {
   return query(
     karmaDataURL,
     signature,
@@ -75,8 +59,7 @@ export function getTagsModelsAndUserRoles(
       e.data(d =>
         d.struct({
           tags: d.expr(() => getTags()),
-          models: d.expr(e => e.mapList(getModels(), (_, model) => e.metarialize(model))),
-          userRoles: d.expr(e =>
+          roles: d.expr(e =>
             e.mapList(e.field('roles', e.get(e.currentUser())), (_, value) =>
               e.field('name', e.get(value))
             )
@@ -85,70 +68,6 @@ export function getTagsModelsAndUserRoles(
       )
     )
   )
-}
-
-export async function getEditorContext(
-  karmaDataURL: string,
-  signature: string,
-  registry: FieldRegistry,
-  editorContextsForRoles?: EditorContextsForRolesFn,
-  viewContextsForRoles?: ViewContextsForRolesFn
-) {
-  const {tags, models, userRoles} = await getTagsModelsAndUserRoles(karmaDataURL, signature)
-
-  const tagMap = new Map(tags.map(tag => [tag.tag, tag.model] as [string, Ref]))
-  const reverseTagMap = new RefMap(tags.map(tag => [tag.model, tag.tag] as [Ref, string]))
-
-  const overrideViewContexts = viewContextsForRoles ? viewContextsForRoles(userRoles, tagMap) : []
-  const overrideViewContextMap = new RefMap(
-    overrideViewContexts.map(
-      viewContext =>
-        [
-          typeof viewContext.model === 'string' ? tagMap.get(viewContext.model) : viewContext.model,
-          viewContext
-        ] as [Ref, ViewContextOptions]
-    )
-  )
-
-  // Set ViewContextOptions for default models if needed
-  const userModelRef = tagMap.get(DefaultTags.User)
-  const tagModelRef = tagMap.get(DefaultTags.Tag)
-
-  if (userModelRef && !overrideViewContextMap.has(userModelRef)) {
-    overrideViewContextMap.set(userModelRef, {
-      field: {
-        fields: [['username'], ['password', {type: 'password'}], ['roles']]
-      }
-    })
-  }
-
-  if (tagModelRef && !overrideViewContextMap.has(tagModelRef)) {
-    overrideViewContextMap.set(tagModelRef, {
-      field: {
-        fields: [['tag'], ['model']]
-      }
-    })
-  }
-
-  const viewContexts = models.map(model =>
-    ViewContext.inferFromModel(
-      model.id,
-      unserializeModel(model.value),
-      registry,
-      reverseTagMap.get(model.id),
-      [],
-      overrideViewContextMap.get(model.id)
-    )
-  )
-
-  const editorContexts: EditorContext[] = editorContextsForRoles
-    ? editorContextsForRoles(userRoles, tagMap)
-    : [{name: 'Default', modelGroups: [{name: 'Models', models: models.map(model => model.id)}]}]
-
-  return {
-    editorContexts,
-    viewContexts
-  }
 }
 
 export function editorMiddleware(opts: MiddlewareOptions): express.Router {
@@ -162,7 +81,6 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
   const reactDateTimeCSSPath = path.join(path.dirname(reactDateTimePath), 'css/react-datetime.css')
   const draftJSCSSPath = path.join(path.dirname(draftJSPath), '../dist/Draft.css')
 
-  const fields: FieldClass[] = []
   const pluginIdentifiers: string[] = []
 
   if (opts.plugins && opts.plugins.length) {
@@ -173,17 +91,11 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
         router.use(`${basePath}/api/plugin/${plugin.name}`, pluginRouter)
       }
 
-      if (plugin.registerFields) {
-        fields.push(...plugin.registerFields())
-      }
-
       const identifier = `${plugin.name}@${plugin.version}`
       pluginIdentifiers.push(identifier)
       console.info(`Initialized plugin: ${identifier}`)
     }
   }
-
-  const fieldRegistry = mergeFieldRegistries(createFieldRegistry(...fields), defaultFieldRegistry)
 
   router.get(`${basePath}/css/react-datetime.css`, (_, res) => {
     return res.sendFile(reactDateTimeCSSPath, cacheOptions)
@@ -222,17 +134,16 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
     if (!signature) return next('No signature header found.')
 
     try {
-      const editorContext = await getEditorContext(
-        opts.karmaDataURL,
-        signature,
-        fieldRegistry,
-        opts.editorContextsForRoles,
-        opts.viewContextsForRoles
-      )
+      const {tags, roles} = await getTagsAndRoles(opts.karmaDataURL, signature)
+      const tagMap = new Map(tags.map(tag => [tag.tag, tag.model] as [string, Ref]))
 
       return res.status(200).send({
-        ...editorContext,
-        viewContexts: editorContext.viewContexts.map(viewContext => viewContext.serialize())
+        editorContexts: opts.editorContextsForRoles
+          ? opts.editorContextsForRoles(roles, tagMap)
+          : [],
+        viewContextOptions: opts.viewContextsForRoles
+          ? opts.viewContextsForRoles(roles, tagMap)
+          : []
       })
     } catch (err) {
       // TODO: Better error handling
