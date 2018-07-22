@@ -1,7 +1,7 @@
 import React from 'react'
 import shortid from 'shortid'
 import {Ref} from '@karma.run/sdk'
-import {Deferred, lastItemThrow} from '@karma.run/editor-common'
+import {Deferred, lastItemThrow, refToString} from '@karma.run/editor-common'
 
 import {RootRecordListPanelContainer, SelectRecordListPanelContainer} from './recordListPanel'
 import {RecordEditPanelContainer} from './recordEditPanel'
@@ -151,23 +151,45 @@ export interface MainPanelState {
 }
 
 export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
-  public state: MainPanelState = {
-    panelContexts: []
+  public state: MainPanelState
+
+  public constructor(props: MainPanelProps) {
+    super(props)
+
+    this.state = {
+      panelContexts: this.getPanelContextsForLocation(props.locationContext.location!)
+    }
   }
 
   // TODO: Handle
-  private getRootPanelContextForLocation(location: AppLocation) {
+  private getPanelContextsForLocation(location: AppLocation): PanelContext[] {
     const sessionContext = this.props.sessionContext
     switch (location.type) {
-      case LocationType.EntryList:
+      case LocationType.EntryList: {
         const viewContext = sessionContext.viewContextSlugMap.get(location.slug)
-        if (!viewContext) return NotFoundContext('notFound')
+        if (!viewContext) return [NotFoundContext('notFound')]
 
-        return RootListPanelContext(viewContext.model, `root.${location.slug}`)
+        const modelRefString = refToString(viewContext.model)
+        return [RootListPanelContext(viewContext.model, `rootList/${modelRefString}`)]
+      }
+
+      case LocationType.EntryEdit: {
+        const viewContext = sessionContext.viewContextSlugMap.get(location.slug)
+        if (!viewContext) return [NotFoundContext('notFound')]
+
+        const modelRefString = refToString(viewContext.model)
+        const editContext: EditPanelContext | undefined = EditPanelContext(
+          viewContext.model,
+          location.id ? [viewContext.model[1], location.id] : undefined,
+          `edit/${modelRefString}`
+        )
+
+        return [RootListPanelContext(viewContext.model, `rootList/${modelRefString}`), editContext]
+      }
 
       default:
       case LocationType.NotFound:
-        return NotFoundContext('notFound')
+        return [NotFoundContext('notFound')]
     }
   }
 
@@ -302,17 +324,14 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     }
   }
 
-  public render() {
-    const panelContexts = [
-      this.getRootPanelContextForLocation(this.props.locationContext.location!),
-      ...this.state.panelContexts
-    ]
+  public componentDidUpdate() {}
 
+  public render() {
     return (
       <StackView>
-        {panelContexts.map((panelContext, index) => (
+        {this.state.panelContexts.map((panelContext, index) => (
           <React.Fragment key={panelContext.id}>
-            {this.getPanelForContext(panelContext, index !== panelContexts.length - 1)}
+            {this.getPanelForContext(panelContext, index !== this.state.panelContexts.length - 1)}
           </React.Fragment>
         ))}
       </StackView>

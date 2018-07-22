@@ -1,6 +1,6 @@
 import React from 'react'
 import {Image} from '../../common'
-import {Point, PointLike} from '@karma.run/editor-common/geometry'
+import {Point, PointLike} from '@karma.run/editor-common'
 
 declare function require(module: string): any
 

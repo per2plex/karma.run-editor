@@ -1,5 +1,5 @@
 import {CommitResponse, Image, CopyResponse} from '../interface'
-import {PointLike} from '@karma.run/editor-common/geometry'
+import {PointLike} from '@karma.run/editor-common'
 
 export interface CloudinaryResponse {
   public_id: string

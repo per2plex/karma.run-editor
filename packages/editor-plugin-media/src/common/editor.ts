@@ -1,4 +1,4 @@
-import {PointLike} from '@karma.run/editor-common/geometry'
+import {PointLike} from '@karma.run/editor-common'
 import {CommitResponse, MediaType} from './interface'
 
 export type Media<T = any> = CommitResponse<T> & {

@@ -143,7 +143,7 @@ export async function getUserContext(
   )
 
   return {
-    editorContexts: editorContexts || [
+    editorContexts: editorContexts && editorContexts.length > 0 ? editorContexts : [
       {name: 'Default', modelGroups: [{name: 'Models', models: models.map(model => model.id)}]}
     ],
     viewContexts

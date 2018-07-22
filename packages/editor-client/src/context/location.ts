@@ -56,17 +56,17 @@ export function EntryNewLocation(slug: string): EntryNewLocation {
 export interface EntryEditLocation {
   type: LocationType.EntryEdit
   slug: string
-  id: string
+  id?: string
 }
 
-export function EntryEditLocation(slug: string, id: string): EntryEditLocation {
+export function EntryEditLocation(slug: string, id?: string): EntryEditLocation {
   return {type: LocationType.EntryEdit, slug, id}
 }
 
 export interface EntryDeleteLocation {
   type: LocationType.EntryDelete
   slug: string
-  id: string
+  id?: string
 }
 
 export function EntryDeleteLocation(slug: string, id: string): EntryDeleteLocation {
