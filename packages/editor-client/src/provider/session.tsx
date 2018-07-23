@@ -118,6 +118,7 @@ export async function getUserContext(
   if (userModelRef && !overrideViewContextMap.has(userModelRef)) {
     overrideViewContextMap.set(userModelRef, {
       field: {
+        layout: 'tabbed',
         fields: [['username'], ['password', {type: 'password'}], ['roles']]
       }
     })
@@ -143,9 +144,15 @@ export async function getUserContext(
   )
 
   return {
-    editorContexts: editorContexts && editorContexts.length > 0 ? editorContexts : [
-      {name: 'Default', modelGroups: [{name: 'Models', models: models.map(model => model.id)}]}
-    ],
+    editorContexts:
+      editorContexts && editorContexts.length > 0
+        ? editorContexts
+        : [
+            {
+              name: 'Default',
+              modelGroups: [{name: 'Models', models: models.map(model => model.id)}]
+            }
+          ],
     viewContexts
   }
 }
@@ -159,6 +166,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     this.state = {
       ...initialEditorData,
       canRestoreSessionFromStorage: storage.get(sessionStorageKey) != undefined,
+      unsavedChangesCount: 0,
       restoreSessionFromLocalStorage: this.restoreSessionFromLocalStorage,
       restoreSession: this.restoreSession,
       authenticate: this.authenticate,
@@ -167,8 +175,19 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       getRecordList: this.getRecordList,
       getReferrers: this.getReferrers,
       saveRecord: this.saveRecord,
-      deleteRecord: this.deleteRecord
+      deleteRecord: this.deleteRecord,
+      increaseUnsavedChangesCount: this.increaseUnsavedChangesCount,
+      decreaseUnsavedChangesCount: this.decreaseUnsavedChangesCount
     }
+  }
+
+  public increaseUnsavedChangesCount = () => {
+    this.setState({unsavedChangesCount: this.state.unsavedChangesCount + 1})
+  }
+
+  public decreaseUnsavedChangesCount = () => {
+    if (this.state.unsavedChangesCount - 1 < 0) throw new Error('Unbalanced saved changes count!')
+    this.setState({unsavedChangesCount: this.state.unsavedChangesCount - 1})
   }
 
   public restoreSessionFromLocalStorage = async () => {
@@ -455,6 +474,16 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
   public componentDidMount() {
     this.refreshSessionIntervalID = setInterval(() => this.refreshSession(), sessionRenewalInterval)
+
+    window.addEventListener('beforeunload', e => {
+      if (this.state.unsavedChangesCount > 0) {
+        const message = 'You have unsaved changes, are you sure you want to leave the site?'
+        e.returnValue = message
+        return message
+      }
+
+      return undefined
+    })
   }
 
   public componentWillUnmount() {

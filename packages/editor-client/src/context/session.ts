@@ -44,6 +44,8 @@ export interface ReferrersResponse {
 export interface SessionContext extends EditorData {
   session?: EditorSession
   canRestoreSessionFromStorage: boolean
+  unsavedChangesCount: number
+
   restoreSessionFromLocalStorage(): Promise<EditorSession>
   restoreSession(session: EditorSession): Promise<EditorSession>
   authenticate(username: string, password: string): Promise<EditorSession>
@@ -61,11 +63,15 @@ export interface SessionContext extends EditorData {
   getReferrers(id: Ref, limit: number, offset: number): Promise<ModelRecord[]>
   saveRecord(model: Ref, id: Ref | undefined, value: any): Promise<ModelRecord>
   deleteRecord(model: Ref, id: Ref, value: any): Promise<void>
+
+  increaseUnsavedChangesCount(): void
+  decreaseUnsavedChangesCount(): void
 }
 
 export const SessionContext = React.createContext<SessionContext>({
   ...initialEditorData,
   canRestoreSessionFromStorage: false,
+  unsavedChangesCount: 0,
 
   async restoreSessionFromLocalStorage() {
     throw new Error('No SessionProvider found!')
@@ -100,6 +106,14 @@ export const SessionContext = React.createContext<SessionContext>({
   },
 
   async deleteRecord() {
+    throw new Error('No SessionProvider found!')
+  },
+
+  increaseUnsavedChangesCount() {
+    throw new Error('No SessionProvider found!')
+  },
+
+  decreaseUnsavedChangesCount() {
     throw new Error('No SessionProvider found!')
   }
 })

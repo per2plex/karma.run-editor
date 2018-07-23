@@ -29,9 +29,9 @@ f.function(['param'], e.tag(e.scope('param')))
 ### Query Builder API
 
 ```ts
-import { build, buildFunction } from '@karma.run/sdk'
+import { buildExpression, buildFunction } from '@karma.run/sdk'
 
-build(e => e.filterList(
+buildExpression(e => e.filterList(
     e.data(d => d.list(d.int8(3), d.int8(2), d.int8(1))),
     (_, value) => e.gtInt8(value, e.data(d => d.int8(2)))
   )

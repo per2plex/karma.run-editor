@@ -68,6 +68,8 @@ export interface EditComponentRenderProps<F extends Field = Field, V = any>
 }
 
 export interface Field<V = any> {
+  readonly label?: string
+
   readonly defaultValue: V
   readonly sortConfigurations: SortConfiguration[]
   readonly filterConfigurations: FilterConfiguration[]

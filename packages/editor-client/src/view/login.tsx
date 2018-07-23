@@ -11,10 +11,12 @@ import {
   FontWeight,
   Button,
   TextInput,
-  CenteredLoadingIndicator
+  CenteredLoadingIndicator,
+  MessageBar,
+  MessageBarType
 } from '../ui'
 
-import {NotificationContext, NotificationType, withNotification} from '../context/notification'
+import {NotificationContext, withNotification} from '../context/notification'
 import {SessionContext, withSession, EditorSession} from '../context/session'
 import {LocaleContext, withLocale} from '../context/locale'
 import {Theme, withTheme} from '../context/theme'
@@ -140,7 +142,7 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
   }
 
   private handleSubmitClick = async () => {
-    this.setState({isSubmitting: true})
+    this.setState({isSubmitting: true, error: undefined})
 
     try {
       await this.props.sessionContext.authenticate(this.state.username, this.state.password)
@@ -150,23 +152,13 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
 
       if (karmaError.type === KarmaErrorType.PermissionDeniedError) {
         this.setState({
-          isSubmitting: false
-          // error: 'Invalid login'
-        })
-
-        this.props.notificationContext.notify({
-          type: NotificationType.Error,
-          message: 'Invalid login'
+          isSubmitting: false,
+          error: 'Invalid login'
         })
       } else {
         this.setState({
-          isSubmitting: false
-          // error: karmaError.message
-        })
-
-        this.props.notificationContext.notify({
-          type: NotificationType.Error,
-          message: karmaError.message
+          isSubmitting: false,
+          error: karmaError.message
         })
       }
     }
@@ -236,6 +228,9 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
                       type={TextInputType.Lighter}
                     />
                   </div>
+                  {this.state.error && (
+                    <MessageBar type={MessageBarType.Error} message={this.state.error} />
+                  )}
                 </div>
                 <Button
                   type={ButtonType.Primary}
@@ -244,8 +239,6 @@ export class Login extends React.Component<LoginFormProps, LoginFormState> {
                   disabled={this.state.isSubmitting}
                   loading={this.state.isSubmitting}
                 />
-                {/* TODO: Wrap in container */}
-                {this.state.error}
               </form>
             )}
           </div>

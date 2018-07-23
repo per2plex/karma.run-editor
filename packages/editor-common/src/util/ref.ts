@@ -14,6 +14,10 @@ export function refToPrettyString(ref: Ref): string {
   return ref.join(' / ')
 }
 
+export function isRefEqual(refA: Ref, refB: Ref) {
+  return refA[0] === refB[0] && refA[1] === refB[1]
+}
+
 export class RefMap<V> extends Map<string, V> {
   public constructor(iterable?: Iterable<[Ref | string, V]>) {
     const mappedEntries: [string, V][] = []

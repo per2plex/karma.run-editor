@@ -1,4 +1,5 @@
 import React from 'react'
+import {style} from 'typestyle'
 import {data as d} from '@karma.run/sdk'
 
 import {
@@ -28,12 +29,13 @@ import {
 
 import {ErrorField} from './error'
 import {FieldWrapper, FieldComponent, FieldLabel, FieldInset} from '../ui/field'
+import {TabList} from '../ui/tabList'
 
 export type StructFieldChildTuple = [string, Field]
 export type StructFieldOptionsTuple = [string, TypedFieldOptions]
 export type StructFieldSerializedTuple = [string, SerializedField]
 
-export class StructFieldEditComponent extends React.PureComponent<
+export class LinearStructFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StructField>
 > {
   private handleValueChange = (value: any, key: string | undefined) => {
@@ -45,6 +47,8 @@ export class StructFieldEditComponent extends React.PureComponent<
   }
 
   public render() {
+    if (this.props.field.fields.length === 0) return null
+
     const fields = this.props.field.fields.map(([key, field], index) => (
       <React.Fragment key={key}>
         {field.renderEditComponent({
@@ -60,8 +64,6 @@ export class StructFieldEditComponent extends React.PureComponent<
         })}
       </React.Fragment>
     ))
-
-    if (fields.length === 0) return null
 
     if (this.props.isWrapped) {
       return fields
@@ -83,30 +85,114 @@ export class StructFieldEditComponent extends React.PureComponent<
   }
 }
 
+export interface TabbedStructFieldEditComponentState {
+  selectedTabIndex: number
+}
+
+export class TabbedStructFieldEditComponent extends React.PureComponent<
+  EditComponentRenderProps<StructField>,
+  TabbedStructFieldEditComponentState
+> {
+  public constructor(props: EditComponentRenderProps<StructField>) {
+    super(props)
+    this.state = {selectedTabIndex: 0}
+  }
+
+  private handleValueChange = (value: any, key: string | undefined) => {
+    if (key == undefined) {
+      throw new Error('Child field did not call onValueChange with changeKey!')
+    }
+
+    this.props.onValueChange({...this.props.value, [key]: value}, this.props.changeKey)
+  }
+
+  private handleTabChange = (index: number) => {
+    this.setState({selectedTabIndex: index})
+  }
+
+  public render() {
+    if (this.props.field.fields.length === 0) return null
+
+    const tabValues = this.props.field.fields.map(([key, field]) => ({
+      key,
+      value: field.label || convertKeyToLabel(key)
+    }))
+
+    const [fieldKey, field] = this.props.field.fields[this.state.selectedTabIndex]
+
+    return (
+      <FieldWrapper depth={this.props.depth} index={this.props.index}>
+        <FieldComponent
+          className={TabbedStructFieldEditComponentLabelStyle}
+          depth={this.props.depth}
+          index={this.props.index}>
+          <FieldLabel
+            label={this.props.label}
+            description={this.props.description}
+            depth={this.props.depth}
+            index={this.props.index}
+          />
+          <TabList
+            values={tabValues}
+            selectedIndex={this.state.selectedTabIndex}
+            onChangeActiveTab={this.handleTabChange}
+          />
+        </FieldComponent>
+        <FieldInset>
+          {field.renderEditComponent({
+            index: 0,
+            depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
+            isWrapped: false,
+            disabled: this.props.disabled,
+            value: this.props.value[fieldKey],
+            onValueChange: this.handleValueChange,
+            onEditRecord: this.props.onEditRecord,
+            onSelectRecord: this.props.onSelectRecord,
+            changeKey: fieldKey
+          })}
+        </FieldInset>
+      </FieldWrapper>
+    )
+  }
+}
+
+export const TabbedStructFieldEditComponentLabelStyle = style({
+  paddingBottom: 0
+})
+
+export enum StructLayout {
+  Linear = 'linear',
+  Tabbed = 'tabbed'
+}
+
 export interface StructFieldOptions extends FieldOptions {
   readonly description?: string
   readonly fields?: StructFieldOptionsTuple[]
+  readonly layout?: StructLayout
 }
 
 export interface StructFieldConstructorOptions {
   readonly label?: string
   readonly description?: string
+  readonly layout?: StructLayout
   readonly fields: StructFieldChildTuple[]
 }
 
 export type SerializedStructField = SerializedField & {
   readonly label?: string
   readonly description?: string
+  readonly layout?: StructLayout
   readonly fields: StructFieldSerializedTuple[]
 }
 
 export type StructFieldValue = {[key: string]: any}
 
 export class StructField implements Field<StructFieldValue> {
-  public label?: string
-  public description?: string
+  public readonly label?: string
+  public readonly description?: string
+  public readonly layout?: StructLayout
 
-  public fields: StructFieldChildTuple[]
+  public readonly fields: StructFieldChildTuple[]
   public fieldMap!: ReadonlyMap<string, Field>
 
   public defaultValue!: StructFieldValue
@@ -116,6 +202,7 @@ export class StructField implements Field<StructFieldValue> {
   public constructor(opts: StructFieldConstructorOptions) {
     this.label = opts.label
     this.description = opts.description
+    this.layout = opts.layout
     this.fields = opts.fields
   }
 
@@ -148,14 +235,25 @@ export class StructField implements Field<StructFieldValue> {
   }
 
   public renderEditComponent(props: EditRenderProps) {
-    return (
-      <StructFieldEditComponent
-        label={this.label}
-        description={this.description}
-        field={this}
-        {...props}
-      />
-    )
+    if (this.layout === StructLayout.Linear) {
+      return (
+        <LinearStructFieldEditComponent
+          label={this.label}
+          description={this.description}
+          field={this}
+          {...props}
+        />
+      )
+    } else {
+      return (
+        <TabbedStructFieldEditComponent
+          label={this.label}
+          description={this.description}
+          field={this}
+          {...props}
+        />
+      )
+    }
   }
 
   public transformRawValue(value: any) {

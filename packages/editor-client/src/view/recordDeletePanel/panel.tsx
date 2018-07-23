@@ -27,7 +27,7 @@ export interface RecordDeletePanelProps {
   localeContext: LocaleContext
   disabled: boolean
   onBack: (mode: Ref) => void
-  onPostDelete: () => void
+  onPostDelete: (model: Ref, id: Ref) => void
   onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
   onDeleteRecord: (model: Ref, id: Ref) => Promise<void>
 }
@@ -75,7 +75,11 @@ export class RecordDeletePanel extends React.PureComponent<
       this.state.record!.value
     )
 
-    this.props.onPostDelete()
+    this.props.onPostDelete(this.props.model, this.props.recordID)
+  }
+
+  private handleBack = async () => {
+    this.props.onBack(this.props.model)
   }
 
   private get viewContext(): ViewContext | undefined {
@@ -142,7 +146,7 @@ export class RecordDeletePanel extends React.PureComponent<
               <Button
                 type={ButtonType.Icon}
                 icon={IconName.Back}
-                onTrigger={this.props.onBack}
+                onTrigger={this.handleBack}
                 disabled={this.props.disabled}
                 label={_('back')}
               />

@@ -1,7 +1,7 @@
 import React from 'react'
 import shortid from 'shortid'
 import {Ref} from '@karma.run/sdk'
-import {Deferred, lastItemThrow, refToString} from '@karma.run/editor-common'
+import {Deferred, lastItemThrow} from '@karma.run/editor-common'
 
 import {RootRecordListPanelContainer, SelectRecordListPanelContainer} from './recordListPanel'
 import {RecordEditPanelContainer} from './recordEditPanel'
@@ -9,7 +9,17 @@ import {RecordDeletePanelContainer} from './recordDeletePanel'
 import {FieldPanelContainer} from './fieldPanel'
 
 import {ModelRecord, SessionContext, withSession} from '../context/session'
-import {LocationContext, AppLocation, LocationType, withLocation} from '../context/location'
+import {
+  LocationContext,
+  AppLocation,
+  LocationType,
+  withLocation,
+  EntryEditLocation,
+  EntryNewLocation,
+  NotFoundLocation,
+  EntryListLocation,
+  EntryDeleteLocation
+} from '../context/location'
 
 import {Field} from '../api/field'
 import {StackView} from '../ui'
@@ -152,6 +162,7 @@ export interface MainPanelState {
 
 export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
   public state: MainPanelState
+  public ignoreNextLocationUpdate: boolean = false
 
   public constructor(props: MainPanelProps) {
     super(props)
@@ -161,30 +172,52 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     }
   }
 
-  // TODO: Handle
+  // TODO: Callbacks don't work for contexts created by location, find a way to fix this.
   private getPanelContextsForLocation(location: AppLocation): PanelContext[] {
     const sessionContext = this.props.sessionContext
     switch (location.type) {
       case LocationType.EntryList: {
         const viewContext = sessionContext.viewContextSlugMap.get(location.slug)
         if (!viewContext) return [NotFoundContext('notFound')]
+        return [RootListPanelContext(viewContext.model, `rootList/${viewContext.model[1]}`)]
+      }
 
-        const modelRefString = refToString(viewContext.model)
-        return [RootListPanelContext(viewContext.model, `rootList/${modelRefString}`)]
+      case LocationType.EntryNew: {
+        const viewContext = sessionContext.viewContextSlugMap.get(location.slug)
+        if (!viewContext) return [NotFoundContext('notFound')]
+
+        return [
+          RootListPanelContext(viewContext.model, `rootList/${viewContext.model[1]}`),
+          EditPanelContext(viewContext.model, undefined, `new/${viewContext.model[1]}`)
+        ]
       }
 
       case LocationType.EntryEdit: {
         const viewContext = sessionContext.viewContextSlugMap.get(location.slug)
         if (!viewContext) return [NotFoundContext('notFound')]
 
-        const modelRefString = refToString(viewContext.model)
-        const editContext: EditPanelContext | undefined = EditPanelContext(
-          viewContext.model,
-          location.id ? [viewContext.model[1], location.id] : undefined,
-          `edit/${modelRefString}`
-        )
+        return [
+          RootListPanelContext(viewContext.model, `rootList/${viewContext.model[1]}`),
+          EditPanelContext(
+            viewContext.model,
+            [viewContext.model[1], location.id],
+            `edit/${viewContext.model[1]}/${location.id}`
+          )
+        ]
+      }
 
-        return [RootListPanelContext(viewContext.model, `rootList/${modelRefString}`), editContext]
+      case LocationType.EntryDelete: {
+        const viewContext = sessionContext.viewContextSlugMap.get(location.slug)
+        if (!viewContext) return [NotFoundContext('notFound')]
+
+        return [
+          RootListPanelContext(viewContext.model, `rootList/${viewContext.model[1]}`),
+          DeletePanelContext(
+            viewContext.model,
+            [viewContext.model[1], location.id],
+            `delete/${viewContext.model[1]}/${location.id}`
+          )
+        ]
       }
 
       default:
@@ -194,13 +227,34 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
   }
 
   private handleEditRecord = async (model: Ref, id?: Ref) => {
+    if (this.state.panelContexts.length === 1) {
+      const viewContext = this.props.sessionContext.viewContextMap.get(model)
+      this.ignoreNextLocationUpdate = true
+
+      viewContext
+        ? this.props.locationContext.pushLocation(
+            id ? EntryEditLocation(viewContext.slug, id[1]) : EntryNewLocation(viewContext.slug)
+          )
+        : this.props.locationContext.pushLocation(NotFoundLocation())
+    }
+
     const context = EditPanelContext(model, id)
     this.pushPanelContext(context)
 
     return await context.result
   }
 
-  private handleBack = (_model: Ref, record?: ModelRecord) => {
+  private handleBack = (model: Ref, record?: ModelRecord) => {
+    if (this.state.panelContexts.length === 2) {
+      this.ignoreNextLocationUpdate = true
+
+      const viewContext = this.props.sessionContext.viewContextMap.get(model)
+
+      viewContext
+        ? this.props.locationContext.pushLocation(EntryListLocation(viewContext.slug))
+        : this.props.locationContext.pushLocation(NotFoundLocation())
+    }
+
     const context = this.popPanelContext()
 
     switch (context.type) {
@@ -220,6 +274,16 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
   }
 
   private handleDeleteRecord = async (model: Ref, id: Ref) => {
+    if (this.state.panelContexts.length === 1) {
+      this.ignoreNextLocationUpdate = true
+
+      const viewContext = this.props.sessionContext.viewContextMap.get(model)
+
+      viewContext
+        ? this.props.locationContext.pushLocation(EntryDeleteLocation(viewContext.slug, id[1]))
+        : this.props.locationContext.pushLocation(NotFoundLocation())
+    }
+
     const context = DeletePanelContext(model, id)
     this.pushPanelContext(context)
 
@@ -233,7 +297,28 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     return await context.result
   }
 
-  private handlePostDelete = async () => {
+  private handlePostSave = async (model: Ref, id: Ref) => {
+    if (this.state.panelContexts.length === 2) {
+      this.ignoreNextLocationUpdate = true
+      const viewContext = this.props.sessionContext.viewContextMap.get(model)
+
+      viewContext
+        ? this.props.locationContext.pushLocation(EntryEditLocation(viewContext.slug, id[1]))
+        : this.props.locationContext.pushLocation(NotFoundLocation())
+    }
+  }
+
+  private handlePostDelete = async (model: Ref, _id: Ref) => {
+    if (this.state.panelContexts.length === 2) {
+      this.ignoreNextLocationUpdate = true
+
+      const viewContext = this.props.sessionContext.viewContextMap.get(model)
+
+      viewContext
+        ? this.props.locationContext.pushLocation(EntryListLocation(viewContext.slug))
+        : this.props.locationContext.pushLocation(NotFoundLocation())
+    }
+
     const context = this.popPanelContext()
 
     switch (context.type) {
@@ -289,6 +374,7 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
             onBack={this.handleBack}
             onEditRecord={this.handleEditRecord}
             onSelectRecord={this.handleSelectRecord}
+            onPostSave={this.handlePostSave}
           />
         )
 
@@ -324,7 +410,19 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     }
   }
 
-  public componentDidUpdate() {}
+  public componentDidUpdate(prevProps: MainPanelProps) {
+    if (prevProps.locationContext.location === this.props.locationContext.location) return
+    if (!this.props.locationContext.location) return
+
+    if (this.ignoreNextLocationUpdate) {
+      this.ignoreNextLocationUpdate = false
+      return
+    }
+
+    this.setState({
+      panelContexts: this.getPanelContextsForLocation(this.props.locationContext.location)
+    })
+  }
 
   public render() {
     return (

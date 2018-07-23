@@ -16,16 +16,19 @@ import {
 
 import {SessionContext, ModelRecord, withSession} from '../../context/session'
 import {LocaleContext, withLocale} from '../../context/locale'
+import {NotificationContext, withNotification, NotificationType} from '../../context/notification'
 
 export interface RecordEditPanelProps {
   recordID?: Ref
   model: Ref
   sessionContext: SessionContext
   localeContext: LocaleContext
+  notificationContext: NotificationContext
   disabled: boolean
   onBack: (model: Ref, record?: ModelRecord) => void
   onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
   onSelectRecord: (model: Ref) => Promise<ModelRecord | undefined>
+  onPostSave: (model: Ref, id: Ref) => void
 }
 
 export interface RecordEditPanelState {
@@ -63,6 +66,10 @@ export class RecordEditPanel extends React.PureComponent<
   }
 
   private handleValueChange = (value: any) => {
+    if (!this.state.hasUnsavedChanges) {
+      this.props.sessionContext.increaseUnsavedChangesCount()
+    }
+
     this.setState({
       hasUnsavedChanges: true,
       value
@@ -70,45 +77,84 @@ export class RecordEditPanel extends React.PureComponent<
   }
 
   private handleBack = () => {
-    this.props.onBack(this.props.model, this.state.record)
+    let confirmed = true
+
+    if (this.state.hasUnsavedChanges) {
+      confirmed = window.confirm('You have unsaved changes, are you sure you want to go back?')
+    }
+
+    if (confirmed) {
+      if (this.state.hasUnsavedChanges) {
+        this.props.sessionContext.decreaseUnsavedChangesCount()
+      }
+
+      this.props.onBack(this.props.model, this.state.record)
+    }
   }
 
   private handleSave = async () => {
-    this.setState({
-      isSaving: true
-    })
+    this.props.sessionContext.decreaseUnsavedChangesCount()
+    this.setState({isSaving: true})
 
-    const record = await this.props.sessionContext.saveRecord(
-      this.props.model,
-      this.props.recordID,
-      this.state.value
-    )
+    try {
+      const record = await this.props.sessionContext.saveRecord(
+        this.props.model,
+        this.state.record && this.state.record.id,
+        this.state.value
+      )
 
-    this.setState({
-      isSaving: false,
-      hasUnsavedChanges: false,
-      record: record,
-      value: record.value
-    })
+      this.props.notificationContext.notify({
+        type: NotificationType.Success,
+        message: 'Successfully saved!'
+      })
+
+      this.props.onPostSave(this.props.model, record.id)
+
+      this.setState({
+        isSaving: false,
+        hasUnsavedChanges: false,
+        record: record,
+        value: record.value
+      })
+    } catch (err) {
+      console.error(err)
+      this.props.notificationContext.notify({type: NotificationType.Error, message: err.message})
+      this.setState({isSaving: false})
+    }
   }
 
   private handleSaveAsCopy = async () => {
-    this.setState({
-      isSaving: true
-    })
+    if (this.state.hasUnsavedChanges) {
+      this.props.sessionContext.decreaseUnsavedChangesCount()
+    }
 
-    const record = await this.props.sessionContext.saveRecord(
-      this.props.model,
-      undefined,
-      this.state.value
-    )
+    this.setState({isSaving: true})
 
-    this.setState({
-      isSaving: false,
-      hasUnsavedChanges: false,
-      record: record,
-      value: record.value
-    })
+    try {
+      const record = await this.props.sessionContext.saveRecord(
+        this.props.model,
+        undefined,
+        this.state.value
+      )
+
+      this.props.notificationContext.notify({
+        type: NotificationType.Success,
+        message: 'Successfully saved as copy!'
+      })
+
+      this.props.onPostSave(this.props.model, record.id)
+
+      this.setState({
+        isSaving: false,
+        hasUnsavedChanges: false,
+        record: record,
+        value: record.value
+      })
+    } catch (err) {
+      console.error(err)
+      this.props.notificationContext.notify({type: NotificationType.Error, message: err.message})
+      this.setState({isSaving: false})
+    }
   }
 
   private handleOpenJSONEditor = () => {}
@@ -206,4 +252,4 @@ export class RecordEditPanel extends React.PureComponent<
   }
 }
 
-export const RecordEditPanelContainer = withLocale(withSession(RecordEditPanel))
+export const RecordEditPanelContainer = withNotification(withLocale(withSession(RecordEditPanel)))

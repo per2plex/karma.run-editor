@@ -376,7 +376,7 @@ export namespace TabList {
 
   export interface Props {
     values: Value[]
-    activeTab?: number
+    selectedIndex?: number
     onChangeActiveTab: (index: number) => void
   }
 }
@@ -395,7 +395,7 @@ export class TabList extends React.Component<TabList.Props> {
         <Tab
           key={value.key}
           value={value.value}
-          active={this.props.activeTab === index}
+          active={this.props.selectedIndex === index}
           index={index}
           onClick={this.handleTabClick}
         />

@@ -30,9 +30,7 @@
     "build:sdk": "cd packages/sdk && npm run build",
     "watch:sdk": "cd packages/sdk && npm run watch",
     "clean": "run-p clean:*",
-    "build:libraries": "run-s clean build:sdk build:editor-common build:editor-worker build:editor-client build:editor-server",
-    "build:plugins": "run-s build:editor-plugin-media build:editor-plugin-draft-js build:editor-plugin-slate",
-    "build": "run-s clean build:libraries build:editor",
+    "build": "run-s clean build:sdk build:editor-common build:editor-worker build:editor-client build:editor-server build:editor-plugin-media build:editor-plugin-draft-js build:editor-plugin-slate build:editor",
     "prettier": "prettier packages/**/*.{ts,tsx,js} --write",
     "prettier-check": "prettier packages/**/*.{ts,tsx,js} --list-different"
   },

@@ -8,6 +8,7 @@ import {deleteNullValues} from '@karma.run/editor-common'
 import {ThemeProvider} from './provider/theme'
 import {ConfigProvider} from './provider/config'
 
+import {WorkerProviderContainer} from './provider/worker'
 import {SessionProviderContainer} from './provider/session'
 import {LocaleProvider} from './provider/locale'
 import {LocationProviderContainer} from './provider/location'
@@ -44,17 +45,6 @@ export class EditorComponent extends React.Component<EditorProps> {
       false
     )
 
-    window.addEventListener('beforeunload', e => {
-      if (false) {
-        // TODO: Check for unsafed changed
-        const message = 'Changes that you made may not be saved'
-        e.returnValue = message
-        return message
-      }
-
-      return undefined
-    })
-
     // To prevent FOUC on initial render
     forceRenderStyles()
   }
@@ -67,17 +57,19 @@ export class EditorComponent extends React.Component<EditorProps> {
       <React.StrictMode>
         <ErrorBoundary>
           <ConfigProvider config={config}>
-            <LocaleProvider>
-              <SessionProviderContainer>
-                <LocationProviderContainer>
-                  <ThemeProvider theme={theme}>
-                    <NotificationProvider>
-                      <RootViewContainer />
-                    </NotificationProvider>
-                  </ThemeProvider>
-                </LocationProviderContainer>
-              </SessionProviderContainer>
-            </LocaleProvider>
+            <WorkerProviderContainer>
+              <LocaleProvider>
+                <SessionProviderContainer>
+                  <LocationProviderContainer>
+                    <ThemeProvider theme={theme}>
+                      <NotificationProvider>
+                        <RootViewContainer />
+                      </NotificationProvider>
+                    </ThemeProvider>
+                  </LocationProviderContainer>
+                </SessionProviderContainer>
+              </LocaleProvider>
+            </WorkerProviderContainer>
           </ConfigProvider>
         </ErrorBoundary>
       </React.StrictMode>

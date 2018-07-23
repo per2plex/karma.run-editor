@@ -151,7 +151,7 @@ export class RefFieldEditComponent extends React.PureComponent<
 
     let editButtons: React.ReactNode
 
-    if (this.props.field.disableEditing) {
+    if (!this.props.field.disableEditing) {
       editButtons = (
         <>
           <Button

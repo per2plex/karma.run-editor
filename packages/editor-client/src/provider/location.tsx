@@ -190,8 +190,7 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
 
   public componentDidMount() {
     window.addEventListener('popstate', () => {
-      // TODO: Check for unsaved changes
-      if (false) {
+      if (this.props.sessionContext.unsavedChangesCount > 0) {
         const confirmed = window.confirm(
           'You have unsaved changes, are you sure you want to go back?'
         )

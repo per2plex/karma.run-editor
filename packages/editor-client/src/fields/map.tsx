@@ -115,7 +115,7 @@ export class MapFieldEditComponent extends React.PureComponent<
     return (
       <FieldWrapper depth={this.props.depth} index={this.props.index}>
         <FieldComponent
-          className={MapFieldRendererStyle}
+          className={MapFieldEditComponentLabelStyle}
           depth={this.props.depth}
           index={this.props.index}>
           {!this.props.isWrapped && (
@@ -157,7 +157,7 @@ export class MapFieldEditComponent extends React.PureComponent<
   }
 }
 
-export const MapFieldRendererStyle = style({
+export const MapFieldEditComponentLabelStyle = style({
   paddingBottom: 0
 })
 
