@@ -1,8 +1,10 @@
 import React from 'react'
 import Slate from 'slate'
+import {style} from 'typestyle'
 
 import {Editor as SlateEditor} from 'slate-react'
 import plainTextSerializer from 'slate-plain-serializer'
+
 import {expression as e} from '@karma.run/sdk'
 
 import {Model, SortConfiguration, FilterConfiguration} from '@karma.run/editor-common'
@@ -16,12 +18,18 @@ import {
   FieldComponent,
   FieldLabel,
   CardSection,
-  SerializedField
+  SerializedField,
+  DefaultBorderRadiusPx,
+  Color
 } from '@karma.run/editor-client'
 
 export class SlateFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<SlateField, SlateFieldValue>
 > {
+  private handleChange = (value: Slate.Change) => {
+    this.props.onValueChange(value.value, this.props.changeKey)
+  }
+
   public render() {
     return (
       <FieldComponent depth={this.props.depth} index={this.props.index}>
@@ -33,11 +41,25 @@ export class SlateFieldEditComponent extends React.PureComponent<
             index={this.props.index}
           />
         )}
-        <SlateEditor value={this.props.value} />
+        <SlateEditor
+          className={StateFieldEditComponentEditorStyle}
+          value={this.props.value}
+          onChange={this.handleChange}
+        />
       </FieldComponent>
     )
   }
 }
+
+export const StateFieldEditComponentEditorStyle = style({
+  padding: '0.6rem 1rem',
+
+  fontSize: '1em',
+  lineHeight: 1.2,
+  border: `1px solid ${Color.neutral.light1}`,
+  backgroundColor: Color.neutral.white,
+  borderRadius: DefaultBorderRadiusPx
+})
 
 export interface SlateFieldOptions {
   readonly label?: string
@@ -56,7 +78,7 @@ export class SlateField implements Field<SlateFieldValue> {
   public readonly minLength?: number
   public readonly maxLength?: number
 
-  public readonly defaultValue: SlateFieldValue = Slate.Value.create()
+  public readonly defaultValue: SlateFieldValue = plainTextSerializer.deserialize('')
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 

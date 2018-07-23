@@ -118,7 +118,6 @@ export async function getUserContext(
   if (userModelRef && !overrideViewContextMap.has(userModelRef)) {
     overrideViewContextMap.set(userModelRef, {
       field: {
-        layout: 'tabbed',
         fields: [['username'], ['password', {type: 'password'}], ['roles']]
       }
     })
