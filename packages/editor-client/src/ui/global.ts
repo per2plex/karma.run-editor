@@ -1,5 +1,5 @@
 import {cssRule} from 'typestyle'
-import {Color, FontFamily} from '../ui'
+import {Color, FontFamily, FontWeight} from './style'
 
 cssRule('html', {
   boxSizing: 'border-box',
@@ -45,7 +45,7 @@ cssRule('h1, h2, h3, h4, h5, h6, p', {
 })
 
 cssRule('strong, bold', {
-  fontWeight: 500
+  fontWeight: FontWeight.bold
 })
 
 cssRule('h1', {

@@ -141,7 +141,7 @@ export class TabbedStructFieldEditComponent extends React.PureComponent<
         <FieldInset>
           {field.renderEditComponent({
             index: 0,
-            depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
+            depth: this.props.depth + 1,
             isWrapped: false,
             disabled: this.props.disabled,
             value: this.props.value[fieldKey],
@@ -235,24 +235,27 @@ export class StructField implements Field<StructFieldValue> {
   }
 
   public renderEditComponent(props: EditRenderProps) {
-    if (this.layout === StructLayout.Linear) {
-      return (
-        <LinearStructFieldEditComponent
-          label={this.label}
-          description={this.description}
-          field={this}
-          {...props}
-        />
-      )
-    } else {
-      return (
-        <TabbedStructFieldEditComponent
-          label={this.label}
-          description={this.description}
-          field={this}
-          {...props}
-        />
-      )
+    switch (this.layout) {
+      case StructLayout.Tabbed:
+        return (
+          <TabbedStructFieldEditComponent
+            label={this.label}
+            description={this.description}
+            field={this}
+            {...props}
+          />
+        )
+
+      default:
+      case StructLayout.Linear:
+        return (
+          <LinearStructFieldEditComponent
+            label={this.label}
+            description={this.description}
+            field={this}
+            {...props}
+          />
+        )
     }
   }
 

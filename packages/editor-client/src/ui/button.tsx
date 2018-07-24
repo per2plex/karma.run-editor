@@ -244,25 +244,21 @@ export namespace Button {
   export const Light = style({
     $debugName: 'ButtonLight',
 
-    border: solidBorderWithColor(Color.primary.base),
-    backgroundColor: Color.neutral.light5,
+    border: solidBorderWithColor('rgba(0, 0, 0, 0.1)'),
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
 
     padding: `${Spacing.small} ${Spacing.medium}`,
     borderRadius: DefaultBorderRadiusPx,
 
     $nest: {
       '&:hover': {
-        borderColor: Color.neutral.base,
-        backgroundColor: Color.neutral.light1
+        borderColor: 'rgba(0, 0, 0, 0.2)',
+        backgroundColor: 'rgba(0, 0, 0, 0.1)'
       },
 
       '&:active, &[data-active]': {
-        borderColor: Color.neutral.dark1,
-        backgroundColor: Color.neutral.base
-      },
-
-      '&:hover, &:active, &[data-active]': {
-        color: Color.primary.light1
+        borderColor: 'rgba(0, 0, 0, 0.25)',
+        backgroundColor: 'rgba(0, 0, 0, 0.15)'
       },
 
       '&:focus': {
@@ -270,13 +266,17 @@ export namespace Button {
       },
 
       '&, &:link, &:visited': {
-        color: Color.primary.light1
+        color: 'rgba(0, 0, 0, 0.8)'
+      },
+
+      '&:hover, &:active, &[data-active]': {
+        color: 'rgba(0, 0, 0, 0.5)'
       },
 
       '> .content': {
         $nest: {
           [`> .${Icon.Style}`]: {
-            fill: Color.primary.light1
+            fill: 'rgba(0, 0, 0, 0.8)'
           }
         }
       }

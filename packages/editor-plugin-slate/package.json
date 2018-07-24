@@ -23,15 +23,15 @@
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "slate": "^0.34.6",
-    "slate-react": "^0.13.3",
-    "slate-plain-serializer": "^0.5.21"
+    "slate-plain-serializer": "^0.5.21",
+    "slate-react": "^0.13.3"
   },
   "devDependencies": {
     "@types/react": "^16.4.6",
     "@types/react-dom": "^16.0.6",
     "@types/slate": "^0.33.1",
-    "@types/slate-react": "^0.12.1",
     "@types/slate-plain-serializer": "^0.5.1",
+    "@types/slate-react": "^0.12.1",
     "typescript": "^3.0.0-rc"
   },
   "peerDependencies": {

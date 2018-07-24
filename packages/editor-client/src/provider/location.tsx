@@ -282,13 +282,11 @@ export class LocationProvider extends React.Component<LocationProviderProps, Loc
   }
 
   public static getDerivedStateFromProps(
-    props: LocationProviderProps,
-    state: LocationContext
+    nextProps: Readonly<LocationProviderProps>,
+    prevState: LocationContext
   ): Partial<LocationContext> | null {
-    if (state.location) {
-      return {
-        location: sessionContextMiddleware(state.location, props.sessionContext)
-      }
+    if (prevState.location) {
+      return {location: sessionContextMiddleware(prevState.location, nextProps.sessionContext)}
     }
 
     return null

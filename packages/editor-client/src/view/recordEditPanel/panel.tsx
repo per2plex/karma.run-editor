@@ -93,7 +93,6 @@ export class RecordEditPanel extends React.PureComponent<
   }
 
   private handleSave = async () => {
-    this.props.sessionContext.decreaseUnsavedChangesCount()
     this.setState({isSaving: true})
 
     try {
@@ -109,6 +108,7 @@ export class RecordEditPanel extends React.PureComponent<
       })
 
       this.props.onPostSave(this.props.model, record.id)
+      this.props.sessionContext.decreaseUnsavedChangesCount()
 
       this.setState({
         isSaving: false,
@@ -124,10 +124,6 @@ export class RecordEditPanel extends React.PureComponent<
   }
 
   private handleSaveAsCopy = async () => {
-    if (this.state.hasUnsavedChanges) {
-      this.props.sessionContext.decreaseUnsavedChangesCount()
-    }
-
     this.setState({isSaving: true})
 
     try {
@@ -143,6 +139,10 @@ export class RecordEditPanel extends React.PureComponent<
       })
 
       this.props.onPostSave(this.props.model, record.id)
+
+      if (this.state.hasUnsavedChanges) {
+        this.props.sessionContext.decreaseUnsavedChangesCount()
+      }
 
       this.setState({
         isSaving: false,

@@ -101,6 +101,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
     return res.sendFile(reactDateTimeCSSPath, cacheOptions)
   })
 
+  // TODO: Move into draft plugin
   router.get(`${basePath}/css/draft-js.css`, (_, res) => {
     return res.sendFile(draftJSCSSPath, cacheOptions)
   })
@@ -172,22 +173,19 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
       <html>
         <head>
           <title>{title}</title>
-
           <link href={`${basePath}/static/favicon.ico`} rel="icon" type="image/x-icon" />
+          {/* TODO: Move into draft plugin */}
           <link href={`${basePath}/css/draft-js.css`} rel="stylesheet" />
           <link href={`${basePath}/css/react-datetime.css`} rel="stylesheet" />
-
           <link
             href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i"
             rel="stylesheet"
           />
-
           <script
             id="Config"
             type="application/json"
             dangerouslySetInnerHTML={{__html: configJSON}}
           />
-
           <script src={`${basePath}/static/${opts.clientName}`} defer />
         </head>
         <body>

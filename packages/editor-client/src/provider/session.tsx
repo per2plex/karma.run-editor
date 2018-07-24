@@ -85,7 +85,7 @@ export function getTagsAndModels(
 }
 
 // TODO: Find better name
-export async function getUserContext(
+export async function getContexts(
   karmaDataURL: string,
   signature: string,
   registry: FieldRegistry,
@@ -415,7 +415,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     storage.set(sessionStorageKey, session)
   }
 
-  private async getContext(session: EditorSession): Promise<UserContext> {
+  private async getContextOptions(session: EditorSession): Promise<UserContext> {
     const response = await axios.get(`${this.props.config.basePath}/api/context`, {
       headers: {[SignatureHeader]: session.signature}
     })
@@ -424,8 +424,11 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   }
 
   private async getEditorData(session: EditorSession): Promise<EditorData> {
-    const {editorContexts: userEditorContexts, viewContextOptions} = await this.getContext(session)
-    const {editorContexts, viewContexts} = await getUserContext(
+    const {editorContexts: userEditorContexts, viewContextOptions} = await this.getContextOptions(
+      session
+    )
+
+    const {editorContexts, viewContexts} = await getContexts(
       this.props.config.karmaDataURL,
       session.signature,
       this.props.config.fieldRegistry,
