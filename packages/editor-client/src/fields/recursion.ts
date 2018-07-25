@@ -7,17 +7,16 @@ import {
   FilterConfiguration,
   reduceToMap,
   ObjectMap,
-  FieldOptions
+  FieldOptions,
+  TypedFieldOptions
 } from '@karma.run/editor-common'
 
 import {ErrorField} from './error'
 
 import {
-  SerializedField,
   EditRenderProps,
   Field,
   CreateFieldFunction,
-  UnserializeFieldFunction,
   ListRenderProps,
   SaveContext,
   DeleteContext
@@ -34,11 +33,6 @@ export interface RecursiveFieldOptions extends FieldOptions {
 export interface RecursiveFieldConstructorOptions {
   readonly topRecursionLabel: string
   readonly fields: ReadonlyMap<string, Field>
-}
-
-export type SerializedRecursiveField = SerializedField & {
-  readonly topRecursionLabel: string
-  readonly fields: ObjectMap<SerializedField>
 }
 
 export class RecursiveField implements Field<any> {
@@ -86,13 +80,13 @@ export class RecursiveField implements Field<any> {
     return this.topField.isValidValue(value)
   }
 
-  public serialize(): SerializedRecursiveField {
+  public fieldOptions(): RecursiveFieldOptions & TypedFieldOptions {
     return {
       type: RecursiveField.type,
       topRecursionLabel: this.topRecursionLabel,
       fields: reduceToMap(Array.from(this.fields.entries()), ([key, field]) => [
         key,
-        field.serialize()
+        field.fieldOptions()
       ])
     }
   }
@@ -149,20 +143,6 @@ export class RecursiveField implements Field<any> {
       )
     })
   }
-
-  static unserialize(
-    rawField: SerializedRecursiveField,
-    unserializeField: UnserializeFieldFunction
-  ) {
-    return new this({
-      topRecursionLabel: rawField.topRecursionLabel,
-      fields: new Map(
-        Object.entries(rawField.fields).map(([key, field]) => {
-          return [key, unserializeField(field)] as [string, Field]
-        })
-      )
-    })
-  }
 }
 
 export interface RecursionFieldOptions extends FieldOptions {
@@ -172,11 +152,6 @@ export interface RecursionFieldOptions extends FieldOptions {
 export interface RecursionFieldConstructorOptions {
   readonly recursionLabel: string
   readonly field: Field
-}
-
-export type SerializedRecursionField = SerializedField & {
-  readonly recursionLabel: string
-  readonly field: SerializedField
 }
 
 export class RecursionField implements Field<any> {
@@ -219,11 +194,11 @@ export class RecursionField implements Field<any> {
     return this.field.isValidValue(value)
   }
 
-  public serialize(): SerializedRecursionField {
+  public fieldOptions(): RecursionFieldOptions & TypedFieldOptions {
     return {
       type: RecursionField.type,
       recursionLabel: this.recursionLabel,
-      field: this.field.serialize()
+      field: this.field.fieldOptions()
     }
   }
 
@@ -274,16 +249,6 @@ export class RecursionField implements Field<any> {
       field: createField(model.model, opts && opts.field)
     })
   }
-
-  static unserialize(
-    rawField: SerializedRecursionField,
-    unserializeField: UnserializeFieldFunction
-  ) {
-    return new this({
-      recursionLabel: rawField.recursionLabel,
-      field: unserializeField(rawField.field)
-    })
-  }
 }
 
 export interface RecurseFieldOptions extends FieldOptions {
@@ -295,8 +260,6 @@ export interface RecurseFieldConstructorOptions {
   readonly description?: string
   readonly recursionLabel: string
 }
-
-export type SerializedRecurseField = SerializedField & RecurseFieldConstructorOptions
 
 export class RecurseField implements Field<any> {
   public readonly recursionLabel: string
@@ -363,7 +326,7 @@ export class RecurseField implements Field<any> {
     return this.field.isValidValue(value)
   }
 
-  public serialize(): SerializedRecurseField {
+  public fieldOptions(): RecurseFieldOptions & TypedFieldOptions {
     return {
       type: RecurseField.type,
       recursionLabel: this.recursionLabel,
@@ -413,9 +376,5 @@ export class RecurseField implements Field<any> {
     }
 
     return new this({...opts, recursionLabel: model.label})
-  }
-
-  public static unserialize(rawField: SerializedRecurseField) {
-    return new this(rawField)
   }
 }

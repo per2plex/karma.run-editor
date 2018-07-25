@@ -2,16 +2,16 @@ import React from 'react'
 import shortid from 'shortid'
 import {data as d} from '@karma.run/sdk'
 
-import {Model, SortType, SortConfiguration, FilterConfiguration} from '@karma.run/editor-common'
+import {
+  Model,
+  SortType,
+  SortConfiguration,
+  FilterConfiguration,
+  TypedFieldOptions
+} from '@karma.run/editor-common'
 import {ErrorField} from './error'
 
-import {
-  SerializedField,
-  EditComponentRenderProps,
-  EditRenderProps,
-  Field,
-  ListRenderProps
-} from '../api/field'
+import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {TextAreaInput, TextInput, TextInputType} from '../ui/input'
@@ -64,8 +64,6 @@ export interface StringFieldOptions {
   readonly maxLength?: number
   readonly multiline?: boolean
 }
-
-export type SerializedStringField = SerializedField & StringFieldOptions
 
 export class StringField implements Field<string> {
   public readonly label?: string
@@ -127,7 +125,7 @@ export class StringField implements Field<string> {
     return errors
   }
 
-  public serialize(): SerializedStringField {
+  public fieldOptions(): StringFieldOptions & TypedFieldOptions {
     return {
       type: StringField.type,
       label: this.label,
@@ -162,9 +160,5 @@ export class StringField implements Field<string> {
     }
 
     return new this(opts)
-  }
-
-  static unserialize(rawField: SerializedStringField) {
-    return new this(rawField)
   }
 }

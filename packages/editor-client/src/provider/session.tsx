@@ -84,7 +84,6 @@ export function getTagsAndModels(
   )
 }
 
-// TODO: Find better name
 export async function getContexts(
   karmaDataURL: string,
   signature: string,

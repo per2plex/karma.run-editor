@@ -1,11 +1,15 @@
 import React from 'react'
 import {expression as e, DataExpression} from '@karma.run/sdk'
 
-import {Model, SortConfiguration, FilterConfiguration} from '@karma.run/editor-common'
+import {
+  Model,
+  SortConfiguration,
+  FilterConfiguration,
+  TypedFieldOptions
+} from '@karma.run/editor-common'
 import {ErrorField} from './error'
 
 import {
-  SerializedField,
   EditComponentRenderProps,
   EditRenderProps,
   Field,
@@ -78,8 +82,6 @@ export interface PasswordFieldOptions {
   readonly description?: string
   readonly costFactor?: number
 }
-
-export type SerializedPasswordField = SerializedField & PasswordFieldOptions
 
 export interface PasswordFieldValue {
   hash?: string
@@ -158,7 +160,7 @@ export class PasswordField implements Field<PasswordFieldValue> {
     return null
   }
 
-  public serialize(): SerializedPasswordField {
+  public fieldOptions(): PasswordFieldOptions & TypedFieldOptions {
     return {
       type: PasswordField.type,
       label: this.label,
@@ -187,9 +189,5 @@ export class PasswordField implements Field<PasswordFieldValue> {
     }
 
     return new this(opts)
-  }
-
-  static unserialize(rawField: SerializedPasswordField) {
-    return new this(rawField)
   }
 }

@@ -269,7 +269,25 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
 
     switch (context.type) {
       case PanelType.Field:
-        return context.result.resolve(value)
+        return context.result.resolve({value: value})
+    }
+  }
+
+  private handleFieldBack = () => {
+    const context = this.popPanelContext()
+
+    switch (context.type) {
+      case PanelType.Field:
+        return context.result.resolve(context.value ? {value: context.value} : undefined)
+    }
+  }
+
+  private handleFieldRemove = () => {
+    const context = this.popPanelContext()
+
+    switch (context.type) {
+      case PanelType.Field:
+        return context.result.resolve()
     }
   }
 
@@ -327,6 +345,13 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     }
   }
 
+  private handleFieldEdit = async (field: Field, value?: any) => {
+    const context = FieldPanelContext(field, value)
+    this.pushPanelContext(context)
+
+    return await context.result
+  }
+
   private pushPanelContext(context: PanelContext) {
     this.setState({
       panelContexts: [...this.state.panelContexts, context]
@@ -374,6 +399,7 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
             onBack={this.handleBack}
             onEditRecord={this.handleEditRecord}
             onSelectRecord={this.handleSelectRecord}
+            onEditField={this.handleFieldEdit}
             onPostSave={this.handlePostSave}
           />
         )
@@ -397,10 +423,12 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
             value={context.value}
             field={context.field}
             disabled={disabled}
-            onBack={this.handleFieldApply}
+            onBack={this.handleFieldBack}
             onApply={this.handleFieldApply}
+            onRemove={this.handleFieldRemove}
             onEditRecord={this.handleEditRecord}
             onSelectRecord={this.handleSelectRecord}
+            onEditField={this.handleFieldEdit}
           />
         )
 

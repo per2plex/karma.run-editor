@@ -2,7 +2,12 @@ import React from 'react'
 import {EditorState, convertFromRaw} from 'draft-js'
 import {expression as e} from '@karma.run/sdk'
 
-import {Model, SortConfiguration, FilterConfiguration} from '@karma.run/editor-common'
+import {
+  Model,
+  SortConfiguration,
+  FilterConfiguration,
+  TypedFieldOptions
+} from '@karma.run/editor-common'
 
 import {
   ErrorField,
@@ -12,8 +17,7 @@ import {
   ListRenderProps,
   FieldComponent,
   FieldLabel,
-  CardSection,
-  SerializedField
+  CardSection
 } from '@karma.run/editor-client'
 
 import {RichTextInput, Control, LinkType, BlockType, StyleGroup, CustomElement} from './input'
@@ -65,7 +69,6 @@ export interface DraftJSFieldOptions {
 }
 
 export type DraftJSFieldValue = EditorState
-export type SerializedDraftJSField = SerializedField & DraftJSFieldOptions
 
 export class DraftJSField implements Field<DraftJSFieldValue> {
   public readonly label?: string
@@ -129,7 +132,7 @@ export class DraftJSField implements Field<DraftJSFieldValue> {
     return errors
   }
 
-  public serialize(): SerializedDraftJSField {
+  public fieldOptions(): DraftJSFieldOptions & TypedFieldOptions {
     return {
       type: DraftJSField.type,
       label: this.label,
@@ -171,9 +174,5 @@ export class DraftJSField implements Field<DraftJSFieldValue> {
     }
 
     return new this(opts)
-  }
-
-  static unserialize(rawField: SerializedDraftJSField) {
-    return new this(rawField)
   }
 }

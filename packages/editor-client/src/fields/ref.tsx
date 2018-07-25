@@ -1,15 +1,15 @@
 import React from 'react'
 import {style} from 'typestyle'
 import {data as d, Ref} from '@karma.run/sdk'
-import {Model, SortConfiguration, FilterConfiguration, FieldOptions} from '@karma.run/editor-common'
-
 import {
-  SerializedField,
-  EditComponentRenderProps,
-  EditRenderProps,
-  Field,
-  ListRenderProps
-} from '../api/field'
+  Model,
+  SortConfiguration,
+  FilterConfiguration,
+  FieldOptions,
+  TypedFieldOptions
+} from '@karma.run/editor-common'
+
+import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {CardSection, Card, CardFooter} from '../ui/card'
@@ -247,7 +247,6 @@ export interface RefFieldConstructorOptions extends RefFieldOptions {
   readonly model: Ref
 }
 
-export type SerializedRefField = SerializedField & RefFieldConstructorOptions
 export type RefFieldValue = Ref | undefined
 
 export class RefField implements Field<RefFieldValue> {
@@ -300,7 +299,7 @@ export class RefField implements Field<RefFieldValue> {
     return value == undefined ? ['emptyRefError'] : null
   }
 
-  public serialize(): SerializedRefField {
+  public fieldOptions(): RefFieldOptions & TypedFieldOptions {
     return {
       type: RefField.type,
       model: this.model,
@@ -335,14 +334,6 @@ export class RefField implements Field<RefFieldValue> {
     return new this({
       ...opts,
       model: model.model
-    })
-  }
-
-  static unserialize(rawField: SerializedRefField) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      model: rawField.model
     })
   }
 }

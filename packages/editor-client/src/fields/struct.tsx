@@ -20,8 +20,6 @@ import {
   EditComponentRenderProps,
   Field,
   EditRenderProps,
-  SerializedField,
-  UnserializeFieldFunction,
   CreateFieldFunction,
   SaveContext,
   DeleteContext
@@ -33,7 +31,6 @@ import {TabList} from '../ui/tabList'
 
 export type StructFieldChildTuple = [string, Field]
 export type StructFieldOptionsTuple = [string, TypedFieldOptions]
-export type StructFieldSerializedTuple = [string, SerializedField]
 
 export class LinearStructFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StructField>
@@ -60,6 +57,7 @@ export class LinearStructFieldEditComponent extends React.PureComponent<
           onValueChange: this.handleValueChange,
           onEditRecord: this.props.onEditRecord,
           onSelectRecord: this.props.onSelectRecord,
+          onEditField: this.props.onEditField,
           changeKey: key
         })}
       </React.Fragment>
@@ -148,6 +146,7 @@ export class TabbedStructFieldEditComponent extends React.PureComponent<
             onValueChange: this.handleValueChange,
             onEditRecord: this.props.onEditRecord,
             onSelectRecord: this.props.onSelectRecord,
+            onEditField: this.props.onEditField,
             changeKey: fieldKey
           })}
         </FieldInset>
@@ -176,13 +175,6 @@ export interface StructFieldConstructorOptions {
   readonly description?: string
   readonly layout?: StructLayout
   readonly fields: StructFieldChildTuple[]
-}
-
-export type SerializedStructField = SerializedField & {
-  readonly label?: string
-  readonly description?: string
-  readonly layout?: StructLayout
-  readonly fields: StructFieldSerializedTuple[]
 }
 
 export type StructFieldValue = {[key: string]: any}
@@ -276,13 +268,13 @@ export class StructField implements Field<StructFieldValue> {
     return null
   }
 
-  public serialize(): SerializedStructField {
+  public fieldOptions(): StructFieldOptions & TypedFieldOptions {
     return {
       type: StructField.type,
       label: this.label,
       description: this.description,
       fields: this.fields.map(
-        ([key, field]) => [key, field.serialize()] as StructFieldSerializedTuple
+        ([key, field]) => [key, field.fieldOptions()] as StructFieldOptionsTuple
       )
     }
   }
@@ -358,15 +350,5 @@ export class StructField implements Field<StructFieldValue> {
     }
 
     return new this({...opts, fields})
-  }
-
-  static unserialize(rawField: SerializedStructField, unserializeField: UnserializeFieldFunction) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      fields: rawField.fields.map(
-        ([key, field]) => [key, unserializeField(field)] as StructFieldChildTuple
-      )
-    })
   }
 }

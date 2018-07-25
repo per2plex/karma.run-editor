@@ -17,8 +17,6 @@ import {
   EditComponentRenderProps,
   Field,
   EditRenderProps,
-  SerializedField,
-  UnserializeFieldFunction,
   CreateFieldFunction,
   SaveContext,
   DeleteContext
@@ -244,6 +242,7 @@ export class ListFieldEditComponent extends React.PureComponent<
                     onValueChange: this.handleValueChange,
                     onEditRecord: this.props.onEditRecord,
                     onSelectRecord: this.props.onSelectRecord,
+                    onEditField: this.props.onEditField,
                     changeKey: index
                   })}
                 </ListFieldItem>
@@ -267,13 +266,6 @@ export interface ListFieldConstructorOptions {
   readonly description?: string
   readonly field: Field
 }
-
-export type SerializedListField = SerializedField & {
-  readonly label?: string
-  readonly description?: string
-  readonly field: SerializedField
-}
-
 export type ListFieldValue = {id: string; value: any}[]
 
 export class ListField implements Field<ListFieldValue> {
@@ -328,12 +320,12 @@ export class ListField implements Field<ListFieldValue> {
     return null
   }
 
-  public serialize(): SerializedListField {
+  public fieldOptions(): ListFieldOptions & TypedFieldOptions {
     return {
       type: ListField.type,
       label: this.label,
       description: this.description,
-      field: this.field.serialize()
+      field: this.field.fieldOptions()
     }
   }
 
@@ -388,13 +380,5 @@ export class ListField implements Field<ListFieldValue> {
     }
 
     return new this({...opts, field: createField(model.model, opts && opts.field)})
-  }
-
-  static unserialize(rawField: SerializedListField, unserializeField: UnserializeFieldFunction) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      field: unserializeField(rawField.field)
-    })
   }
 }

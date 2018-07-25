@@ -1,16 +1,16 @@
 import React from 'react'
 import {expression as e} from '@karma.run/sdk'
 
-import {Model, ModelType, SortConfiguration, FilterConfiguration} from '@karma.run/editor-common'
+import {
+  Model,
+  ModelType,
+  SortConfiguration,
+  FilterConfiguration,
+  TypedFieldOptions
+} from '@karma.run/editor-common'
 import {ErrorField} from './error'
 
-import {
-  SerializedField,
-  EditComponentRenderProps,
-  EditRenderProps,
-  Field,
-  ListRenderProps
-} from '../api/field'
+import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {NumberInput} from '../ui/input'
@@ -56,8 +56,6 @@ export interface NumberFieldOptions {
 export interface NumberFieldConstructorOptions extends NumberFieldOptions {
   readonly storageType: StorageType
 }
-
-export type SerializedNumberField = SerializedField & NumberFieldConstructorOptions
 
 export const enum StorageType {
   Float = 'float',
@@ -172,7 +170,7 @@ export class NumberField implements Field<string> {
     return errors
   }
 
-  public serialize(): SerializedNumberField {
+  public fieldOptions(): NumberFieldOptions & TypedFieldOptions {
     return {
       type: NumberField.type,
       storageType: this.storageType,
@@ -208,9 +206,5 @@ export class NumberField implements Field<string> {
     }
 
     return new this({...opts, storageType: model.type as StorageType})
-  }
-
-  static unserialize(rawField: SerializedNumberField) {
-    return new this(rawField)
   }
 }

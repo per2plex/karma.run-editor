@@ -1,15 +1,14 @@
 import React from 'react'
 import {expression as e} from '@karma.run/sdk'
 
-import {Model, SortConfiguration, FilterConfiguration} from '@karma.run/editor-common'
-
 import {
-  SerializedField,
-  EditComponentRenderProps,
-  EditRenderProps,
-  Field,
-  ListRenderProps
-} from '../api/field'
+  Model,
+  SortConfiguration,
+  FilterConfiguration,
+  TypedFieldOptions
+} from '@karma.run/editor-common'
+
+import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {DateTimeInput} from '../ui/input'
@@ -49,7 +48,6 @@ export interface DateTimeFieldOptions {
   readonly description?: string
 }
 
-export type SerializedDateTimeField = SerializedField & DateTimeFieldOptions
 export type DateTimeValue = string | Date | undefined
 
 export class DateTimeField implements Field<DateTimeValue> {
@@ -97,7 +95,7 @@ export class DateTimeField implements Field<DateTimeValue> {
     return []
   }
 
-  public serialize(): SerializedDateTimeField {
+  public fieldOptions(): DateTimeFieldOptions & TypedFieldOptions {
     return {
       type: DateTimeField.type,
       label: this.label,
@@ -129,12 +127,5 @@ export class DateTimeField implements Field<DateTimeValue> {
     }
 
     return new this(opts)
-  }
-
-  static unserialize(rawField: SerializedDateTimeField) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description
-    })
   }
 }

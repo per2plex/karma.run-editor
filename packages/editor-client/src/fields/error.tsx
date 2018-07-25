@@ -1,8 +1,13 @@
 import React from 'react'
 import {expression as e} from '@karma.run/sdk'
-import {Model, SortConfiguration, FilterConfiguration} from '@karma.run/editor-common'
+import {
+  Model,
+  SortConfiguration,
+  FilterConfiguration,
+  TypedFieldOptions
+} from '@karma.run/editor-common'
 
-import {Field, SerializedField, EditComponentRenderProps, EditRenderProps} from '../api/field'
+import {Field, EditComponentRenderProps, EditRenderProps} from '../api/field'
 import {FieldErrors, FieldComponent, FieldLabel} from '../ui/field'
 import {CardError} from '../ui/card'
 
@@ -29,8 +34,6 @@ export interface ErrorFieldOptions {
   readonly description?: string
   readonly message?: string
 }
-
-export type SerializedErrorField = SerializedField & ErrorFieldOptions
 
 export class ErrorField implements Field<null> {
   public readonly label?: string
@@ -66,7 +69,7 @@ export class ErrorField implements Field<null> {
     )
   }
 
-  public serialize(): SerializedErrorField {
+  public fieldOptions(): ErrorFieldOptions & TypedFieldOptions {
     return {
       type: ErrorField.type,
       label: this.label,
@@ -103,9 +106,5 @@ export class ErrorField implements Field<null> {
 
   static create(_model: Model, opts?: ErrorFieldOptions) {
     return new this(opts)
-  }
-
-  static unserialize(rawField: SerializedErrorField) {
-    return new this(rawField)
   }
 }

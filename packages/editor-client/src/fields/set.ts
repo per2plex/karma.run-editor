@@ -1,21 +1,21 @@
 import {data as d, DataExpression} from '@karma.run/sdk'
 
-import {Model} from '@karma.run/editor-common'
+import {Model, TypedFieldOptions} from '@karma.run/editor-common'
 import {ErrorField} from './error'
-import {ListFieldValue, ListField, ListFieldOptions, SerializedListField} from './list'
-import {UnserializeFieldFunction, CreateFieldFunction} from '../api/field'
+import {ListFieldValue, ListField, ListFieldOptions} from './list'
+import {CreateFieldFunction} from '../api/field'
 
 export class SetField extends ListField {
   public transformValueToExpression(value: ListFieldValue): DataExpression {
     return d.set(...value.map(({value}) => this.field.transformValueToExpression(value)))
   }
 
-  public serialize(): SerializedListField {
+  public fieldOptions(): ListFieldOptions & TypedFieldOptions {
     return {
       type: SetField.type,
       label: this.label,
       description: this.description,
-      field: this.field.serialize()
+      field: this.field.fieldOptions()
     }
   }
 
@@ -39,13 +39,5 @@ export class SetField extends ListField {
     }
 
     return new this({...opts, field: createField(model.model, opts && opts.field)})
-  }
-
-  static unserialize(rawField: SerializedListField, unserializeField: UnserializeFieldFunction) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      field: unserializeField(rawField.field)
-    })
   }
 }

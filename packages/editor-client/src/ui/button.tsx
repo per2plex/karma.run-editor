@@ -261,6 +261,10 @@ export namespace Button {
         backgroundColor: 'rgba(0, 0, 0, 0.15)'
       },
 
+      '&:disabled, &[data-disabled]': {
+        opacity: 0.4
+      },
+
       '&:focus': {
         boxShadow: `0 0 0 2px ${Color.focus}`
       },

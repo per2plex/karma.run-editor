@@ -1,8 +1,15 @@
 import {expression as e, data as d} from '@karma.run/sdk'
-import {Model, SortConfiguration, FilterConfiguration, FieldOptions} from '@karma.run/editor-common'
+
+import {
+  Model,
+  SortConfiguration,
+  FilterConfiguration,
+  FieldOptions,
+  TypedFieldOptions
+} from '@karma.run/editor-common'
 
 import {ErrorField} from './error'
-import {Field, SerializedField} from '../api/field'
+import {Field} from '../api/field'
 
 export class CurrentUserField implements Field<null> {
   public readonly defaultValue: null = null
@@ -33,7 +40,7 @@ export class CurrentUserField implements Field<null> {
     return null
   }
 
-  public serialize(): SerializedField {
+  public fieldOptions(): TypedFieldOptions {
     return {type: CurrentUserField.type}
   }
 

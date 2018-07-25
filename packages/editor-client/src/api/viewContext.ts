@@ -14,17 +14,8 @@ import {
   TypedFieldOptions
 } from '@karma.run/editor-common'
 
-import {Field, FieldRegistry, SerializedField} from './field'
+import {Field, FieldRegistry} from './field'
 import {ErrorField} from '../fields/error'
-
-export interface SerializedViewContext {
-  readonly name?: string
-  readonly description?: string
-  readonly slug?: string
-  readonly color?: string
-  readonly field?: SerializedField
-  readonly displayKeyPaths?: KeyPath[]
-}
 
 export interface ViewContextConstructorOptions {
   readonly model: Ref
@@ -82,21 +73,9 @@ export class ViewContext {
       color: this.color,
       name: this.name,
       slug: this.slug,
-      field: this.field.serialize(),
+      field: this.field.fieldOptions(),
       displayKeyPaths: this.displayKeyPaths
     }
-  }
-
-  public static unserialize(rawViewContext: any, regisry: FieldRegistry): ViewContext {
-    // TODO: Validate
-    return new ViewContext({
-      model: rawViewContext.model,
-      color: rawViewContext.color,
-      name: rawViewContext.name,
-      slug: rawViewContext.slug,
-      field: unserializeViewContextField(rawViewContext.field, regisry),
-      displayKeyPaths: rawViewContext.displayKeyPaths
-    })
   }
 
   public static inferFromModel(
@@ -175,31 +154,4 @@ export function inferDisplayKeyPaths(model: Model) {
   }
 
   return []
-}
-
-export function unserializeViewContextField(rawField: any, registry: FieldRegistry): Field {
-  function unserialize(rawField: any): Field {
-    if (typeof rawField.type !== 'string') {
-      return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: `Coulnd't unserialize field.`
-      })
-    }
-
-    const fieldClass = registry.get(rawField.type)
-
-    if (!fieldClass) {
-      return new ErrorField({
-        label: rawField.label,
-        description: rawField.description,
-        message: `No field registed with type: ${rawField.type}`
-      })
-    }
-
-    return fieldClass.unserialize(rawField, unserialize)
-  }
-
-  const field = unserialize(rawField)
-  return field.initialize(new Map())
 }

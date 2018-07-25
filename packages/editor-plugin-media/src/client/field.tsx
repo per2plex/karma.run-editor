@@ -4,7 +4,8 @@ import {
   SortConfiguration,
   FilterConfiguration,
   Model,
-  firstKeyOptional
+  firstKeyOptional,
+  TypedFieldOptions
 } from '@karma.run/editor-common'
 
 import {
@@ -31,8 +32,7 @@ import {
   Field,
   EditComponentRenderProps,
   FieldComponent,
-  FieldLabel,
-  SerializedField
+  FieldLabel
 } from '@karma.run/editor-client'
 
 import {data as d, DataExpression} from '@karma.run/sdk'
@@ -213,8 +213,6 @@ export interface MediaFieldOptions {
   readonly description?: string
 }
 
-export type SerializedMediaField = SerializedField & MediaFieldOptions
-
 export interface MediaFieldValue {
   media?: Media
   uploadedMedia?: UploadResponse
@@ -336,7 +334,7 @@ export class MediaField implements Field<MediaFieldValue> {
     return null
   }
 
-  public serialize(): SerializedMediaField {
+  public fieldOptions(): MediaFieldOptions & TypedFieldOptions {
     return {
       type: MediaField.type,
       label: this.label,
@@ -410,12 +408,5 @@ export class MediaField implements Field<MediaFieldValue> {
     }
 
     return new this(opts)
-  }
-
-  static unserialize(rawField: SerializedMediaField) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description
-    })
   }
 }

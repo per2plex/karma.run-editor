@@ -18,8 +18,6 @@ import {
   EditComponentRenderProps,
   Field,
   EditRenderProps,
-  SerializedField,
-  UnserializeFieldFunction,
   CreateFieldFunction,
   SaveContext,
   DeleteContext
@@ -148,6 +146,7 @@ export class MapFieldEditComponent extends React.PureComponent<
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
               onSelectRecord: this.props.onSelectRecord,
+              onEditField: this.props.onEditField,
               changeKey: this.state.activeTabIndex
             })}
           </FieldInset>
@@ -172,12 +171,6 @@ export interface MapFieldConstructorOptions {
   readonly description?: string
   readonly restrictedToKeys?: string[]
   readonly field: Field
-}
-
-export type SerializedMapField = SerializedField & {
-  readonly label?: string
-  readonly description?: string
-  readonly field: SerializedField
 }
 
 export type MapFieldValue = {id: string; key: string; value: any}[]
@@ -238,12 +231,12 @@ export class MapField implements Field<MapFieldValue> {
     return null
   }
 
-  public serialize(): SerializedMapField {
+  public fieldOptions(): MapFieldOptions & TypedFieldOptions {
     return {
       type: MapField.type,
       label: this.label,
       description: this.description,
-      field: this.field.serialize()
+      field: this.field.fieldOptions()
     }
   }
 
@@ -294,13 +287,5 @@ export class MapField implements Field<MapFieldValue> {
     }
 
     return new this({...opts, field: createField(model.model, opts && opts.field)})
-  }
-
-  static unserialize(rawField: SerializedMapField, unserializeField: UnserializeFieldFunction) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      field: unserializeField(rawField.field)
-    })
   }
 }

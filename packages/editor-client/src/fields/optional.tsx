@@ -12,12 +12,10 @@ import {
 import {ErrorField} from './error'
 
 import {
-  SerializedField,
   EditRenderProps,
   Field,
   CreateFieldFunction,
   EditComponentRenderProps,
-  UnserializeFieldFunction,
   SaveContext,
   DeleteContext
 } from '../api/field'
@@ -77,7 +75,8 @@ export class OptionalFieldEditComponent extends React.PureComponent<
               value: this.props.value.value,
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
-              onSelectRecord: this.props.onSelectRecord
+              onSelectRecord: this.props.onSelectRecord,
+              onEditField: this.props.onEditField
             })}
           </FieldInset>
         )}
@@ -102,9 +101,6 @@ export interface OptionalFieldConstructorOptions {
   readonly description?: string
   readonly field: Field
 }
-
-export type SerializedOptionalField = SerializedField &
-  OptionalFieldOptions & {readonly field: SerializedField}
 
 export class OptionalField implements Field<OptionalFieldValue> {
   public label?: string
@@ -168,12 +164,12 @@ export class OptionalField implements Field<OptionalFieldValue> {
     return value.isPresent ? this.field.isValidValue(value) : null
   }
 
-  public serialize(): SerializedOptionalField {
+  public fieldOptions(): OptionalFieldOptions & TypedFieldOptions {
     return {
       type: OptionalField.type,
       label: this.label,
       description: this.description,
-      field: this.field.serialize()
+      field: this.field.fieldOptions()
     }
   }
 
@@ -229,17 +225,6 @@ export class OptionalField implements Field<OptionalFieldValue> {
     return new this({
       ...opts,
       field: createField(model.model, opts && opts.field)
-    })
-  }
-
-  static unserialize(
-    rawField: SerializedOptionalField,
-    unserializeField: UnserializeFieldFunction
-  ) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      field: unserializeField(rawField.field)
     })
   }
 }

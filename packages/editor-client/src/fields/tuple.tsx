@@ -16,8 +16,6 @@ import {
   EditComponentRenderProps,
   Field,
   EditRenderProps,
-  SerializedField,
-  UnserializeFieldFunction,
   CreateFieldFunction,
   SaveContext,
   DeleteContext
@@ -28,7 +26,6 @@ import {ErrorField} from './error'
 
 export type TupleFieldChildTuple = [number, Field]
 export type TupleFieldOptionsTuple = [number, TypedFieldOptions]
-export type TupleFieldSerializedTuple = [number, SerializedField]
 
 export class TupleFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<TupleField, TupleFieldValue>
@@ -53,6 +50,7 @@ export class TupleFieldEditComponent extends React.PureComponent<
           onValueChange: this.handleValueChange,
           onEditRecord: this.props.onEditRecord,
           onSelectRecord: this.props.onSelectRecord,
+          onEditField: this.props.onEditField,
           changeKey: tupleIndex
         })}
       </React.Fragment>
@@ -89,12 +87,6 @@ export interface TupleFieldConstructorOptions {
   readonly label?: string
   readonly description?: string
   readonly fields: TupleFieldChildTuple[]
-}
-
-export type SerializedTupleField = SerializedField & {
-  readonly label?: string
-  readonly description?: string
-  readonly fields: TupleFieldSerializedTuple[]
 }
 
 export type TupleFieldValue = any[]
@@ -181,13 +173,13 @@ export class TupleField implements Field<TupleFieldValue> {
     return null
   }
 
-  public serialize(): SerializedTupleField {
+  public fieldOptions(): TupleFieldOptions & TypedFieldOptions {
     return {
       type: TupleField.type,
       label: this.label,
       description: this.description,
       fields: this.fields.map(
-        ([key, field]) => [key, field.serialize()] as TupleFieldSerializedTuple
+        ([key, field]) => [key, field.fieldOptions()] as TupleFieldOptionsTuple
       )
     }
   }
@@ -274,15 +266,5 @@ export class TupleField implements Field<TupleFieldValue> {
     }
 
     return new this({...opts, fields})
-  }
-
-  static unserialize(rawField: SerializedTupleField, unserializeField: UnserializeFieldFunction) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      fields: rawField.fields.map(
-        ([key, field]) => [key, unserializeField(field)] as TupleFieldChildTuple
-      )
-    })
   }
 }

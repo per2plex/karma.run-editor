@@ -23,10 +23,12 @@ export interface FieldPanelProps {
   sessionContext: SessionContext
   localeContext: LocaleContext
   disabled: boolean
-  onBack: (value?: any) => void
+  onBack: () => void
   onApply: (value: any) => void
+  onRemove: () => void
   onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
   onSelectRecord: (model: Ref) => Promise<ModelRecord | undefined>
+  onEditField: (field: Field, value?: any) => Promise<any>
 }
 
 export interface FieldPanelState {
@@ -55,6 +57,10 @@ export class FieldPanel extends React.PureComponent<FieldPanelProps, FieldPanelS
     this.props.onBack()
   }
 
+  private handleRemove = () => {
+    this.props.onRemove()
+  }
+
   private handleApply = async () => {
     this.props.onApply(this.state.value || this.props.value || this.props.field.defaultValue)
   }
@@ -76,6 +82,15 @@ export class FieldPanel extends React.PureComponent<FieldPanelProps, FieldPanelS
           disabled={disabled}
           label="Apply"
         />
+        {this.props.value && (
+          <Button
+            type={ButtonType.Icon}
+            icon={IconName.DeleteDocument}
+            onTrigger={this.handleRemove}
+            disabled={disabled}
+            label="Remove"
+          />
+        )}
       </FlexList>
     )
   })
@@ -94,10 +109,11 @@ export class FieldPanel extends React.PureComponent<FieldPanelProps, FieldPanelS
             index: 0,
             isWrapped: true,
             disabled: disabled,
-            value: this.props.value || this.state.value || this.props.field.defaultValue,
+            value: this.state.value || this.props.value || this.props.field.defaultValue,
             onValueChange: this.handleValueChange,
             onEditRecord: this.props.onEditRecord,
-            onSelectRecord: this.props.onSelectRecord
+            onSelectRecord: this.props.onSelectRecord,
+            onEditField: this.props.onEditField
           })}
         </PanelContent>
       </Panel>

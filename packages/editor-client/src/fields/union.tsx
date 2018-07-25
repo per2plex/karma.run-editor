@@ -6,8 +6,6 @@ import {
   EditComponentRenderProps,
   Field,
   EditRenderProps,
-  SerializedField,
-  UnserializeFieldFunction,
   CreateFieldFunction,
   SaveContext,
   DeleteContext
@@ -33,7 +31,6 @@ import {Select, SelectType} from '../ui/select'
 
 export type UnionFieldChildTuple = [string, string, Field]
 export type UnionFieldOptionsTuple = [string, string, TypedFieldOptions]
-export type UnionFieldSerializedTuple = [string, string, SerializedField]
 
 export class UnionFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<UnionField, UnionFieldValue>
@@ -99,6 +96,7 @@ export class UnionFieldEditComponent extends React.PureComponent<
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
               onSelectRecord: this.props.onSelectRecord,
+              onEditField: this.props.onEditField,
               changeKey: this.props.value!.selectedKey
             })}
         </FieldInset>
@@ -117,12 +115,6 @@ export interface UnionFieldConstructorOptions {
   readonly label?: string
   readonly description?: string
   readonly fields: UnionFieldChildTuple[]
-}
-
-export type SerializedUnionField = SerializedField & {
-  readonly label?: string
-  readonly description?: string
-  readonly fields: UnionFieldSerializedTuple[]
 }
 
 export type UnionFieldValue = {selectedKey?: string; values: ObjectMap<any>}
@@ -193,13 +185,13 @@ export class UnionField implements Field<UnionFieldValue> {
     return null
   }
 
-  public serialize(): SerializedUnionField {
+  public fieldOptions(): UnionFieldOptions & TypedFieldOptions {
     return {
       type: UnionField.type,
       label: this.label,
       description: this.description,
       fields: this.fields.map(
-        ([key, label, field]) => [key, label, field.serialize()] as UnionFieldSerializedTuple
+        ([key, label, field]) => [key, label, field.fieldOptions()] as UnionFieldOptionsTuple
       )
     }
   }
@@ -291,15 +283,5 @@ export class UnionField implements Field<UnionFieldValue> {
     }
 
     return new this({...opts, fields})
-  }
-
-  static unserialize(rawField: SerializedUnionField, unserializeField: UnserializeFieldFunction) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description,
-      fields: rawField.fields.map(
-        ([key, label, field]) => [key, label, unserializeField(field)] as UnionFieldChildTuple
-      )
-    })
   }
 }

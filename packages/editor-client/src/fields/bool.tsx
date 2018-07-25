@@ -1,14 +1,14 @@
 import React from 'react'
 import {expression as e} from '@karma.run/sdk'
-import {Model, SortConfiguration, FilterConfiguration} from '@karma.run/editor-common'
 
 import {
-  SerializedField,
-  EditComponentRenderProps,
-  EditRenderProps,
-  Field,
-  ListRenderProps
-} from '../api/field'
+  Model,
+  SortConfiguration,
+  FilterConfiguration,
+  TypedFieldOptions
+} from '@karma.run/editor-common'
+
+import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
 
 import {CheckboxInput} from '../ui/input'
 import {CardSection} from '../ui/card'
@@ -50,8 +50,6 @@ export interface BoolFieldOptions {
   readonly maxLength?: number
   readonly multiline?: boolean
 }
-
-export type SerializedBoolField = SerializedField & BoolFieldOptions
 
 export class BoolField implements Field<boolean> {
   public readonly label?: string
@@ -98,7 +96,7 @@ export class BoolField implements Field<boolean> {
     return null
   }
 
-  public serialize(): SerializedBoolField {
+  public fieldOptions(): BoolFieldOptions & TypedFieldOptions {
     return {
       type: BoolField.type,
       label: this.label,
@@ -130,12 +128,5 @@ export class BoolField implements Field<boolean> {
     }
 
     return new this(opts)
-  }
-
-  static unserialize(rawField: SerializedBoolField) {
-    return new this({
-      label: rawField.label,
-      description: rawField.description
-    })
   }
 }

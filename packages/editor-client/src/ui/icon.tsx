@@ -1,6 +1,6 @@
 import * as React from 'react'
-import {style} from 'typestyle'
-import {StatelessComponent} from 'react'
+import { style } from 'typestyle'
+import { StatelessComponent } from 'react'
 
 const ArrowDownIcon: StatelessComponent = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21">
@@ -216,7 +216,7 @@ const SelectDocumentIcon: StatelessComponent = () => (
   </svg>
 )
 
-export const enum IconName {
+export enum IconName {
   Edit = 'edit',
   Exit = 'exit',
   SectionCollapse = 'sectionCollapse',

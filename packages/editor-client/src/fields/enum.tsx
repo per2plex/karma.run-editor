@@ -6,18 +6,13 @@ import {
   Model,
   SortConfiguration,
   FilterConfiguration,
-  convertKeyToLabel
+  convertKeyToLabel,
+  TypedFieldOptions
 } from '@karma.run/editor-common'
 
 import {ErrorField} from './error'
 
-import {
-  SerializedField,
-  EditComponentRenderProps,
-  EditRenderProps,
-  Field,
-  ListRenderProps
-} from '../api/field'
+import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {CardSection} from '../ui/card'
@@ -75,8 +70,6 @@ export interface EnumFieldConstructorOptions {
   readonly options: EnumFieldOption[]
 }
 
-export type SerializedEnumField = SerializedField & EnumFieldConstructorOptions
-
 export class EnumField implements Field<EnumFieldValue> {
   public readonly label?: string
   public readonly description?: string
@@ -123,7 +116,7 @@ export class EnumField implements Field<EnumFieldValue> {
     return []
   }
 
-  public serialize(): SerializedEnumField {
+  public fieldOptions(): EnumFieldOptions & TypedFieldOptions {
     return {
       type: EnumField.type,
       label: this.label,
@@ -169,9 +162,5 @@ export class EnumField implements Field<EnumFieldValue> {
         missingOptions.map(option => [option, convertKeyToLabel(option)] as [string, string])
       )
     })
-  }
-
-  static unserialize(rawField: SerializedEnumField) {
-    return new this(rawField)
   }
 }
