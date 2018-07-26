@@ -127,10 +127,7 @@ export const CardSectionStyle = style({
   display: 'flex',
   flexDirection: 'column',
   padding: Spacing.medium,
-  fontWeight: FontWeight.bold,
-
   marginTop: '-1px',
-
   color: Color.primary.base,
 
   $nest: {

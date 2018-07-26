@@ -29,9 +29,13 @@ export function contentForViewContext(
 
     if (field) {
       const objectPath = viewContext.field.valuePathForKeyPath(keyPath)
-      const value = getValuesForValuePath(record.value, objectPath) // TODO: Add into Field interface
+      const value = getValuesForValuePath(record.value, objectPath)
 
-      return <React.Fragment key={key}>{field.renderListComponent({value})}</React.Fragment>
+      return value.map((value, index) => (
+        <React.Fragment key={`${key}.${index}`}>
+          {field.renderListComponent({value})}
+        </React.Fragment>
+      ))
     } else {
       return <React.Fragment key={key}>Invalid keyPath: {key}</React.Fragment>
     }

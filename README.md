@@ -2,14 +2,12 @@
 
 A collection of tools for karma.run services.
 
-## karma.data Editor CLI
+## karma.data
+
+### [Editor CLI](packages/editor/README.md)
 
 Administrative editor for karma.data.
 
-[Documentation](packages/editor/README.md)
-
-## karma.data SDK
+## [SDK](packages/sdk/README.md)
 
 JS SDK for karma.data.
-
-[Documentation](packages/sdk/README.md)

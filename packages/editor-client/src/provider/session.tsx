@@ -88,8 +88,8 @@ export async function getContexts(
   karmaDataURL: string,
   signature: string,
   registry: FieldRegistry,
-  editorContexts?: EditorContext[],
-  viewContextOptions?: ViewContextOptionsWithModel[]
+  editorContexts: EditorContext[] = [],
+  viewContextOptions: ViewContextOptionsWithModel[] = []
 ) {
   const {tags, models} = await getTagsAndModels(karmaDataURL, signature)
 
@@ -98,16 +98,20 @@ export async function getContexts(
 
   const overrideViewContextMap = new RefMap(
     viewContextOptions
-      ? viewContextOptions.map(
-          viewContext =>
-            [
-              typeof viewContext.model === 'string'
-                ? tagMap.get(viewContext.model)
-                : viewContext.model,
-              viewContext
-            ] as [Ref, ViewContextOptions]
-        )
-      : []
+      .filter(viewContextOption => {
+        return typeof viewContextOption.model === 'string'
+          ? tagMap.has(viewContextOption.model)
+          : true
+      })
+      .map(
+        viewContextOption =>
+          [
+            typeof viewContextOption.model === 'string'
+              ? tagMap.get(viewContextOption.model)
+              : true,
+            viewContextOption
+          ] as [Ref, ViewContextOptions]
+      )
   )
 
   // Set ViewContextOptions for default models if needed

@@ -6,19 +6,24 @@
 npm install -g @karma.run/editor
 ```
 
-## Usage
+## Basic Usage
 
 ```
-$ karma-editor --help
+$ karmaeditor --help
 
-  Usage: karma-editor [options]
+  Usage: karma-editor [options] [command]
 
   Options:
 
-    -V, --version        output the version number
-    -p --port [port]     set port the server runs on. (environment: PORT) (default: 3000)
-    -u --karmaURL [url]  set karma.run API URL. (environment: KARMA_URL or KARMA_API_URL)
-    -h, --help           output usage information
+    -V, --version          output the version number
+    -h, --help             output usage information
+
+  Commands:
+
+    run [options]          Run editor server.
+    build [options]        Pre-build editor client.
+    viewcontext [options]  Output inferred view context for all models.
+    clean [options]        Clean client cache.
 ```
 
 ## Configuration

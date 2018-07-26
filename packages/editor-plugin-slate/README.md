@@ -8,7 +8,7 @@
         type: {optional: {string: {}}},
         data: {
           optional: {
-            struct: {}
+            union: {}
           }
         },
         isVoid: {optional: {bool: {}}},

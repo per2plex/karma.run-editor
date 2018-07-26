@@ -38,6 +38,7 @@ import {
   CreateFieldFunction
 } from '@karma.run/editor-client'
 
+// TODO: Wrapped type for lists
 export enum ControlType {
   Mark = 'mark',
   Inline = 'inline',
@@ -97,7 +98,7 @@ export interface InlineControl {
   label?: string
   icon?: IconName
   dataKey?: string
-  render: (children: React.ReactNode, data: any) => React.ReactNode
+  render: (children: React.ReactNode, data: ObjectMap<any>) => React.ReactNode
 }
 
 export interface BlockControl {
@@ -105,7 +106,7 @@ export interface BlockControl {
   label?: string
   icon?: IconName
   dataKey?: string
-  render: (children: React.ReactNode, data: any) => React.ReactNode
+  render: (children: React.ReactNode, data: ObjectMap<any>) => React.ReactNode
 }
 
 export interface InlineElementControl {
@@ -113,7 +114,12 @@ export interface InlineElementControl {
   label?: string
   icon?: IconName
   dataKey?: string
-  render: (children: React.ReactNode, data: any) => React.ReactNode
+  render: (
+    data: ObjectMap<any>,
+    isSelected: boolean,
+    key: string,
+    onEdit: (key: string) => void
+  ) => React.ReactNode
 }
 
 export interface BlockElementControl {
@@ -121,7 +127,12 @@ export interface BlockElementControl {
   label?: string
   icon?: IconName
   dataKey?: string
-  render: (children: React.ReactNode, data: any) => React.ReactNode
+  render: (
+    data: ObjectMap<any>,
+    isSelected: boolean,
+    key: string,
+    onEdit: (key: string) => void
+  ) => React.ReactNode
 }
 
 export type Control =
@@ -145,8 +156,9 @@ export class SlateFieldEditComponent extends React.PureComponent<
 
   public editorRef = React.createRef<SlateEditor>()
 
-  private handleChange = (value: Slate.Change) => {
-    this.props.onValueChange(value.value, this.props.changeKey)
+  private handleChange = (change: Slate.Change) => {
+    // TODO: Will be called on mount, check if this can be disabled so hasUnsavedChanges works.
+    this.props.onValueChange(change.value, this.props.changeKey)
   }
 
   private handleWrapperPointerDown = () => {
@@ -223,6 +235,102 @@ export class SlateFieldEditComponent extends React.PureComponent<
     }
   }
 
+  private handleBlockElement = async ([type, control]: [string, BlockElementControl]) => {
+    const newFieldValue = control.dataKey
+      ? await this.props.onEditField(this.props.field.dataFields[control.dataKey])
+      : undefined
+
+    if (control.dataKey) this.editorRef.current!.focus()
+
+    // Pressed back in FieldEditor.
+    if (control.dataKey && !newFieldValue) return
+
+    const data = control.dataKey ? {[control.dataKey]: newFieldValue!.value} : undefined
+    const newValue = this.props.value.change().insertBlock({type, data, isVoid: true}).value
+
+    this.props.onValueChange(newValue, this.props.changeKey)
+  }
+
+  private handleBlockElementEdit = async (blockKey: string) => {
+    const node = this.props.value.document.getDescendant(blockKey)
+    if (!node || node.object !== 'block') return
+
+    const control = this.props.field.controlsMap.get(node.type)
+    if (!control || control.type !== ControlType.BlockElement || !control.dataKey) return
+
+    const newFieldValue = await this.props.onEditField(
+      this.props.field.dataFields[control.dataKey],
+      node.data.get(control.dataKey)
+    )
+
+    if (newFieldValue) {
+      this.props.onValueChange(
+        this.props.value.change().replaceNodeByKey(
+          blockKey,
+          Slate.Block.create({
+            type: node.type,
+            data: {[control.dataKey]: newFieldValue.value},
+            isVoid: true
+          })
+        ).value,
+        this.props.changeKey
+      )
+    } else {
+      this.props.onValueChange(
+        this.props.value.change().removeNodeByKey(blockKey).value,
+        this.props.changeKey
+      )
+    }
+  }
+
+  private handleInlineElement = async ([type, control]: [string, InlineElementControl]) => {
+    const newFieldValue = control.dataKey
+      ? await this.props.onEditField(this.props.field.dataFields[control.dataKey])
+      : undefined
+
+    if (control.dataKey) this.editorRef.current!.focus()
+
+    // Pressed back in FieldEditor.
+    if (control.dataKey && !newFieldValue) return
+
+    const data = control.dataKey ? {[control.dataKey]: newFieldValue!.value} : undefined
+    const newValue = this.props.value.change().insertInline({type, data, isVoid: true}).value
+
+    this.props.onValueChange(newValue, this.props.changeKey)
+  }
+
+  private handleInlineElementEdit = async (inlineKey: string) => {
+    const node = this.props.value.document.getDescendant(inlineKey)
+    if (!node || node.object !== 'inline') return
+
+    const control = this.props.field.controlsMap.get(node.type)
+    if (!control || control.type !== ControlType.InlineElement || !control.dataKey) return
+
+    const newFieldValue = await this.props.onEditField(
+      this.props.field.dataFields[control.dataKey],
+      node.data.get(control.dataKey)
+    )
+
+    if (newFieldValue) {
+      this.props.onValueChange(
+        this.props.value.change().replaceNodeByKey(
+          inlineKey,
+          Slate.Inline.create({
+            type: node.type,
+            data: {[control.dataKey]: newFieldValue.value},
+            isVoid: true
+          })
+        ).value,
+        this.props.changeKey
+      )
+    } else {
+      this.props.onValueChange(
+        this.props.value.change().removeNodeByKey(inlineKey).value,
+        this.props.changeKey
+      )
+    }
+  }
+
   private hasMark = (type: string) => {
     return this.props.value.activeMarks.some(mark => mark!.type === type)
   }
@@ -255,7 +363,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
   }
 
   private renderNode = (props: RenderNodeProps) => {
-    const {attributes, children, node} = props
+    const {attributes, children, node, isSelected} = props
 
     if (!node.type) return null
 
@@ -265,12 +373,24 @@ export class SlateFieldEditComponent extends React.PureComponent<
 
     switch (control.type) {
       case ControlType.Inline:
+        return <span {...attributes}>{control.render(children, node.data.toJS())}</span>
+
       case ControlType.InlineElement:
-        return <span {...attributes}>{control.render(children, node.data)}</span>
+        return (
+          <span {...attributes}>
+            {control.render(node.data.toJS(), isSelected, node.key, this.handleInlineElementEdit)}
+          </span>
+        )
 
       case ControlType.Block:
+        return <div {...attributes}>{control.render(children, node.data.toJS())}</div>
+
       case ControlType.BlockElement:
-        return <div {...attributes}>{control.render(children, node.data)}</div>
+        return (
+          <div {...attributes}>
+            {control.render(node.data.toJS(), isSelected, node.key, this.handleBlockElementEdit)}
+          </div>
+        )
 
       case ControlType.Mark:
         throw new Error('Tried to render mark as node.')
@@ -346,6 +466,18 @@ export class SlateFieldEditComponent extends React.PureComponent<
           />
         )
 
+      case ControlType.InlineElement:
+        return (
+          <Button
+            disabled={!this.state.hasFocus}
+            type={ButtonType.Light}
+            icon={control.icon}
+            label={control.label}
+            data={[key, control]}
+            onMouseDown={this.handleInlineElement}
+          />
+        )
+
       case ControlType.Block:
         const hasBlock = this.hasBlockOfType(key)
 
@@ -358,6 +490,18 @@ export class SlateFieldEditComponent extends React.PureComponent<
             label={control.label}
             data={[key, control]}
             onMouseDown={this.handleBlock}
+          />
+        )
+
+      case ControlType.BlockElement:
+        return (
+          <Button
+            disabled={!this.state.hasFocus}
+            type={ButtonType.Light}
+            icon={control.icon}
+            label={control.label}
+            data={[key, control]}
+            onMouseDown={this.handleBlockElement}
           />
         )
 
@@ -393,6 +537,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
             renderMark={this.renderMark}
             renderNode={this.renderNode}
             onChange={this.handleChange}
+            schema={this.props.field.schema as any}
           />
         </div>
       </FieldComponent>
@@ -437,6 +582,7 @@ export interface SlateFieldOptions {
   readonly minLength?: number
   readonly maxLength?: number
   readonly controlKeys?: string[][]
+  readonly schemaKey?: string
   readonly dataFields?: ObjectMap<TypedFieldOptions>
 }
 
@@ -446,7 +592,11 @@ export interface SlateFieldConstructorOptions {
   readonly minLength?: number
   readonly maxLength?: number
 
+  readonly schema?: Slate.SchemaProperties
+  readonly defaultValue?: Slate.Value
+
   readonly controlKeys: string[][]
+
   readonly controlMap: ReadonlyMap<string, Control>
   readonly dataFields: ObjectMap<Field>
 }
@@ -458,6 +608,10 @@ export type SlateMarkJSON = {object: 'mark'; type: string}
 export type SlateLeaveJSON = {object: 'leaf'; text: string; marks?: SlateMarkJSON[]}
 export type SlateJSON = Slate.NodeJSON | SlateLeaveJSON | SlateMarkJSON
 
+export const blankDefaultValue = Slate.Value.create({
+  document: Slate.Document.create([Slate.Block.create('')])
+})
+
 export class SlateField implements Field<SlateFieldValue> {
   public readonly label?: string
   public readonly description?: string
@@ -465,13 +619,12 @@ export class SlateField implements Field<SlateFieldValue> {
   public readonly minLength?: number
   public readonly maxLength?: number
 
+  public readonly schema?: Slate.SchemaProperties
   public readonly controlKeys: string[][]
   public readonly controlsMap: ReadonlyMap<string, Control>
   public readonly dataFields: ObjectMap<Field>
 
-  public readonly defaultValue: SlateFieldValue = Slate.Value.create({
-    document: Slate.Document.create([Slate.Block.create('')])
-  })
+  public readonly defaultValue: SlateFieldValue
 
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
@@ -485,6 +638,9 @@ export class SlateField implements Field<SlateFieldValue> {
     this.controlKeys = opts.controlKeys
     this.controlsMap = opts.controlMap
     this.dataFields = opts.dataFields
+
+    this.schema = opts.schema
+    this.defaultValue = opts.defaultValue || blankDefaultValue
   }
 
   public initialize() {
@@ -521,8 +677,7 @@ export class SlateField implements Field<SlateFieldValue> {
         case 'document':
           return d.struct({
             object: d.string('document'),
-            data: d.null(),
-            nodes: node.nodes ? d.list(...node.nodes.map(node => recurse(node))) : d.null()
+            nodes: node.nodes ? d.list(...node.nodes.map(node => recurse(node))) : undefined
           })
 
         case 'inline':
@@ -539,13 +694,14 @@ export class SlateField implements Field<SlateFieldValue> {
                 control!.dataKey!,
                 dataField.transformValueToExpression(node.data![control!.dataKey!])
               )
-            : d.null()
+            : undefined
 
           return d.struct({
             object: d.string(node.object),
-            type: node.type ? d.string(node.type) : d.null(),
+            type: d.string(node.type),
+            isVoid: d.bool(node.isVoid || false),
             data: data,
-            nodes: node.nodes ? d.list(...node.nodes.map(node => recurse(node))) : d.null()
+            nodes: node.nodes ? d.list(...node.nodes.map(node => recurse(node))) : undefined
           })
 
         case 'text':
@@ -553,14 +709,14 @@ export class SlateField implements Field<SlateFieldValue> {
             object: d.string('text'),
             leaves: node.leaves
               ? d.list(...node.leaves.map(leave => recurse(leave as SlateLeaveJSON)))
-              : d.null()
+              : undefined
           })
 
         case 'leaf':
           return d.struct({
             object: d.string('leaf'),
             text: d.string(node.text),
-            marks: node.marks ? d.list(...node.marks.map(mark => recurse(mark))) : d.null()
+            marks: node.marks ? d.list(...node.marks.map(mark => recurse(mark))) : undefined
           })
 
         case 'mark':
@@ -610,7 +766,12 @@ export class SlateField implements Field<SlateFieldValue> {
 
 export const SlateFieldType = 'richText'
 
-export const SlateFieldConstructor = (controlMap: ReadonlyMap<string, Control>) => {
+export type SchemaDefaultValueTuple = [Slate.SchemaProperties, Slate.ValueJSON]
+
+export const SlateFieldConstructor = (
+  controlMap: ReadonlyMap<string, Control>,
+  schemaMap: ReadonlyMap<string, SchemaDefaultValueTuple>
+) => {
   return {
     type: SlateFieldType,
 
@@ -677,13 +838,32 @@ export const SlateFieldConstructor = (controlMap: ReadonlyMap<string, Control>) 
         })
       }
 
+      let schemaTuple: SchemaDefaultValueTuple | undefined
+
+      if (opts && opts.schemaKey) {
+        schemaTuple = schemaMap.get(opts.schemaKey)
+
+        if (!schemaTuple) {
+          return new ErrorField({
+            label: opts && opts.label,
+            description: opts && opts.description,
+            message: `Coulnd't find schema for key: "${opts.schemaKey}"`
+          })
+        }
+      }
+
       return new SlateField({
-        ...opts,
+        label: opts && opts.label,
+        description: opts && opts.description,
+        minLength: opts && opts.minLength,
+        maxLength: opts && opts.maxLength,
         controlKeys: (opts && opts.controlKeys) || [],
-        controlMap: controlMap,
         dataFields: mapObject(unionModel.fields, (field, key) =>
           createField(field, opts && opts.dataFields && opts.dataFields[key])
-        )
+        ),
+        controlMap: controlMap,
+        schema: schemaTuple && schemaTuple[0],
+        defaultValue: schemaTuple && Slate.Value.fromJSON(schemaTuple[1])
       })
     }
   } as FieldConstructor
