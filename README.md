@@ -4,10 +4,10 @@ A collection of tools for karma.run services.
 
 ## karma.data
 
-### [Editor](packages/editor/README.md)
+### [Editor](packages/editor)
 
 Administrative editor for karma.data.
 
-## [SDK](packages/sdk/README.md)
+## [SDK](packages/sdk)
 
 JS SDK for karma.data.
