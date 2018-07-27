@@ -1,4 +1,4 @@
-# Karma.data Editor CLI
+# karma.data / Editor CLI
 
 ## Install
 
