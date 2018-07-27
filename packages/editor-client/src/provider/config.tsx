@@ -7,17 +7,27 @@ import {defaultFieldRegistry} from '../fields/defaultRegistry'
 
 export interface ConfigProviderProps {
   config: {
-    karmaDataURL: string
-    basePath: string
-    title: string
-    plugins: ClientPlugin[]
+    karmaDataURL?: string
+    basePath?: string
+    title?: string
+    plugins?: ClientPlugin[]
   }
 }
 
 export class ConfigProvider extends React.Component<ConfigProviderProps, Config> {
-  public state: Config = defaultConfig
-  public async componentDidMount() {
-    const plugins = this.props.config.plugins
+  public constructor(props: ConfigProviderProps) {
+    super(props)
+
+    this.state = {
+      ...defaultConfig,
+      karmaDataURL: props.config.karmaDataURL || defaultConfig.karmaDataURL,
+      basePath: props.config.basePath || defaultConfig.basePath,
+      title: props.config.title || defaultConfig.title
+    }
+  }
+
+  public componentDidMount() {
+    const plugins = this.props.config.plugins || []
     const fields: FieldConstructor[] = []
 
     for (const plugin of plugins) {
@@ -29,7 +39,6 @@ export class ConfigProvider extends React.Component<ConfigProviderProps, Config>
     }
 
     this.setState({
-      ...this.props.config,
       fieldRegistry: mergeFieldRegistries(createFieldRegistry(...fields), defaultFieldRegistry)
     })
   }

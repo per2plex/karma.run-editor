@@ -54,7 +54,7 @@ export interface MiddlewareOptions {
   tempDirPath?: string
 }
 
-export const defaultOptions: Partial<MiddlewareOptions> = Object.freeze({
+export const defaultOptions: Partial<MiddlewareOptions> = {
   tempDirPath: path.join(os.tmpdir(), 'karma.run-media'),
   backend: new LocalBackend(),
   allowedMediaTypes: [
@@ -64,7 +64,7 @@ export const defaultOptions: Partial<MiddlewareOptions> = Object.freeze({
     MediaType.Document,
     MediaType.Other
   ]
-})
+}
 
 export function uploadMediaMiddleware(opts: UploadMiddlewareOptions): RequestHandler {
   // Create temp dir if it doesn't exist

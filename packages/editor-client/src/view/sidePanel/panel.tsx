@@ -18,11 +18,12 @@ import {
 import * as storage from '../../util/storage'
 
 import {version} from '../../version'
-import {SidePanelFooterContainer} from './footer'
+import {SidePanelFooter} from './footer'
 import {SidePanelSection, SidePanelSectionItem} from './section'
 
 import {Theme, withTheme, Colors} from '../../context/theme'
 import {SessionContext, withSession} from '../../context/session'
+import {LocaleContext, withLocale} from '../../context/locale'
 import {LocationActionContext, EntryListLocation, withLocationAction} from '../../context/location'
 import {ViewContext} from '../../api/viewContext'
 
@@ -44,6 +45,7 @@ export interface SidePanelState {
 export interface SidePanelProps {
   theme: Theme
   sessionContext: SessionContext
+  localeContext: LocaleContext
   locationActionContext: LocationActionContext
 }
 
@@ -223,8 +225,10 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
           <div className="modelGroups">{groupSections}</div>
           {editorContextSelect}
         </div>
-        <SidePanelFooterContainer
+        <SidePanelFooter
           username={sessionContext.session!.username}
+          developmentMode={sessionContext.developmentMode}
+          localeContext={this.props.localeContext}
           onLogoutTrigger={this.handleLogoutClick}
         />
       </div>
@@ -232,7 +236,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
   }
 }
 
-export const SidePanelContainer = withSession(withLocationAction(withTheme(SidePanel)))
+export const SidePanelContainer = withSession(withLocationAction(withTheme(withLocale(SidePanel))))
 
 export const SidePanelStyle = (colors: Colors) =>
   style({

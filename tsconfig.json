@@ -1,4 +1,8 @@
 {
+  "include": [
+    "editor.client.config.tsx",
+    "editor.server.config.ts",
+  ],
   "compilerOptions": {
     "target": "es2017",
     "module": "commonjs",

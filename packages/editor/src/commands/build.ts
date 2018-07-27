@@ -7,7 +7,6 @@ import {
 } from './helper'
 
 export interface BuildCommandOptions {
-  cwd?: string
   karmaDataURL?: string
   watch?: boolean
   serverConfigPath?: string

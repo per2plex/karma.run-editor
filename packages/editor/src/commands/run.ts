@@ -3,7 +3,6 @@ import compression from 'compression'
 import editorMiddleware from '@karma.run/editor-server'
 
 import {
-  loadPlugins,
   build,
   getCachedBuild,
   watchBuild,
@@ -15,14 +14,11 @@ import {
 export const defaultPort = 3000
 
 export interface RunCommandOptions {
-  cwd?: string
   karmaDataURL?: string
   watch?: boolean
   serverConfigPath?: string
   clientConfigPath?: string
-  require?: string
   port: number
-  plugins?: string[]
 }
 
 export default async function runCommand(opts: RunCommandOptions): Promise<void> {
@@ -44,7 +40,7 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
     ? parseInt(process.env.PORT)
     : opts.port || (config && config.port) || defaultPort
 
-  const plugins = loadPlugins([...(opts.plugins || []), ...(config.plugins || [])])
+  const plugins = config.plugins || []
   const cachePath = getCachePath()
 
   let clientBundlePath: string | undefined

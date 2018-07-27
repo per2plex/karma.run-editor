@@ -12,13 +12,13 @@ export interface Config {
   fieldRegistry: FieldRegistry
 }
 
-export const defaultConfig: Config = Object.freeze({
+export const defaultConfig: Config = {
   karmaDataURL: '',
   basePath: '',
   title: '',
   plugins: [],
   fieldRegistry: defaultFieldRegistry
-})
+}
 
 export const ConfigContext = React.createContext<Config>(defaultConfig)
 export const withConfig = createContextHOC(ConfigContext, 'config', 'withConfig')

@@ -13,12 +13,13 @@ import {SessionProviderContainer} from './provider/session'
 import {LocaleProvider} from './provider/locale'
 import {LocationProviderContainer} from './provider/location'
 import {NotificationProvider} from './provider/notification'
+import {ProviderExposerContainer} from './provider/exposer'
 
 import {RootViewContainer} from './view/rootView'
 import {ErrorBoundary} from './error/boundary'
 
-import {Config, defaultConfig} from './context/config'
-import {Theme, defaultTheme} from './context/theme'
+import {Config} from './context/config'
+import {Theme} from './context/theme'
 import {ClientPlugin} from './plugin'
 
 export interface EditorProps {
@@ -50,8 +51,8 @@ export class EditorComponent extends React.Component<EditorProps> {
   }
 
   public render() {
-    const config = {...defaultConfig, ...deleteNullValues(this.props.config)}
-    const theme = {...defaultTheme, ...deleteNullValues(this.props.theme)}
+    const config = deleteNullValues(this.props.config) || {}
+    const theme = deleteNullValues(this.props.theme) || {}
 
     return (
       <React.StrictMode>
@@ -63,6 +64,7 @@ export class EditorComponent extends React.Component<EditorProps> {
                   <LocationProviderContainer>
                     <ThemeProvider theme={theme}>
                       <NotificationProvider>
+                        <ProviderExposerContainer />
                         <RootViewContainer />
                       </NotificationProvider>
                     </ThemeProvider>

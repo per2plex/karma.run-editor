@@ -166,7 +166,14 @@ export class RecordEditPanel extends React.PureComponent<
   }
 
   private getToolbarButtons = memoizeOne(
-    (disabled: boolean, hasChanges: boolean, isNewRecord: boolean) => {
+    (
+      disabled: boolean,
+      hasChanges: boolean,
+      isNewRecord: boolean,
+      localeContext: LocaleContext
+    ) => {
+      const _ = localeContext.get
+
       return (
         <FlexList spacing="large">
           <Button
@@ -174,14 +181,14 @@ export class RecordEditPanel extends React.PureComponent<
             icon={IconName.Back}
             onTrigger={this.handleBack}
             disabled={disabled}
-            label="Back"
+            label={_('back')}
           />
           <Button
             type={ButtonType.Icon}
             icon={IconName.SaveDocument}
             onTrigger={this.handleSave}
             disabled={disabled || !hasChanges}
-            label="Save"
+            label={_('save')}
           />
           {!isNewRecord && (
             <Button
@@ -189,7 +196,7 @@ export class RecordEditPanel extends React.PureComponent<
               icon={IconName.CopyDocument}
               onTrigger={this.handleSaveAsCopy}
               disabled={disabled}
-              label="Save as Copy"
+              label={_('saveAsCopy')}
             />
           )}
         </FlexList>
@@ -197,11 +204,13 @@ export class RecordEditPanel extends React.PureComponent<
     }
   )
 
-  private getDeveloperButtons = memoizeOne((isDeveloper: boolean) => {
+  private getDeveloperButtons = memoizeOne((isDeveloper: boolean, localeContext: LocaleContext) => {
     if (!isDeveloper) return undefined
+    const _ = localeContext.get
 
     return (
       <Button
+        label={_('expressionEditor')}
         icon={IconName.CodeView}
         type={ButtonType.Icon}
         onTrigger={this.handleOpenJSONEditor}
@@ -228,8 +237,16 @@ export class RecordEditPanel extends React.PureComponent<
           }
         />
         <PanelToolbar
-          left={this.getToolbarButtons(disabled, hasUnsavedChanges, isNewRecord)}
-          right={this.getDeveloperButtons(false)} // TODO: Developer mode
+          left={this.getToolbarButtons(
+            disabled,
+            hasUnsavedChanges,
+            isNewRecord,
+            this.props.localeContext
+          )}
+          right={this.getDeveloperButtons(
+            this.props.sessionContext.developmentMode,
+            this.props.localeContext
+          )}
         />
         <PanelContent>
           {this.state.isLoadingRecord ? (

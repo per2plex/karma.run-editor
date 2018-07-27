@@ -3,11 +3,13 @@ import {style} from 'typestyle'
 import {stringToColor} from '@karma.run/editor-common'
 
 import {Button, ButtonType, IconName, Color, Spacing, FontSize, FontWeight} from '../../ui'
-import {LocaleContext, withLocale} from '../../context/locale'
+import {LocaleContext} from '../../context/locale'
+import {boolAttr} from '../../util/react'
 
 export interface SidePanelFooterProps {
   username: string
   localeContext: LocaleContext
+  developmentMode: boolean
   onLogoutTrigger: () => void
 }
 
@@ -24,7 +26,9 @@ export class SidePanelFooter extends React.Component<SidePanelFooterProps> {
     }
 
     return (
-      <div className={SidePanelFooterStyle}>
+      <div
+        className={SidePanelFooterStyle}
+        data-development-mode={boolAttr(this.props.developmentMode)}>
         <div className="image" style={imageStyle}>
           {this.props.username[0].toUpperCase()}
         </div>
@@ -49,11 +53,10 @@ export class SidePanelFooter extends React.Component<SidePanelFooterProps> {
   }
 }
 
-export const SidePanelFooterContainer = withLocale(SidePanelFooter)
-
 export const SidePanelFooterStyle = style({
   $debugName: 'SidePanelFooter',
 
+  position: 'relative',
   backgroundColor: Color.primary.dark1,
   padding: Spacing.medium,
 
@@ -106,6 +109,12 @@ export const SidePanelFooterStyle = style({
     [`> .${Button.Style}`]: {
       color: Color.neutral.white,
       fontSize: FontSize.large
+    },
+
+    '&[data-development-mode]': {
+      background:
+        `linear-gradient(to top, transparent 0, ${Color.primary.dark1}),` +
+        `repeating-linear-gradient(-45deg, rgba(255, 255, 0, 0.2), rgba(255, 255, 0, 0.2) 1rem, transparent 1rem, transparent 2rem)`
     }
   }
 })

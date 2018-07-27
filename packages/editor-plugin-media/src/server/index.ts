@@ -1,5 +1,5 @@
 import {Router} from 'express'
-import {ServerPlugin} from '@karma.run/editor-server'
+import {ServerPlugin, PluginContext} from '@karma.run/editor-server'
 
 import {name, version} from '../common/version'
 import {mediaMiddleware} from './middleware'
@@ -21,7 +21,6 @@ export interface MediaPluginOptions {
 export class MediaServerPlugin implements ServerPlugin {
   public name: string = name
   public version: string = version
-  public clientModule = '@karma.run/editor-plugin-media/client'
 
   private options: MediaPluginOptions
 
@@ -29,11 +28,11 @@ export class MediaServerPlugin implements ServerPlugin {
     this.options = opts
   }
 
-  public registerRoutes(karmaDataURL: string, router: Router) {
+  public registerRoutes(context: PluginContext, router: Router) {
     router.use(
       mediaMiddleware({
         ...this.options,
-        karmaDataURL,
+        karmaDataURL: context.karmaDataURL,
         hostname: `${this.options.hostname}/api/plugin/${name}`
       })
     )

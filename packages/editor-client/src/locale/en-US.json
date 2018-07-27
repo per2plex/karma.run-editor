@@ -21,5 +21,9 @@
   "selectRecord": "Select",
   "noRecordSelected": "No Record Selected",
   "recordIsStillBeingReferred": "This record is still being referred by the records below and cannot be deleted.",
-  "recordSafeToDelete": "This record is not referred in any records and can be deleted."
+  "recordSafeToDelete": "This record is not referred in any records and can be deleted.",
+  "viewContextEditor": "View Context Editor",
+  "expressionEditor": "Expression Editor",
+  "save": "Save",
+  "saveAsCopy": "Save as Copy"
 }

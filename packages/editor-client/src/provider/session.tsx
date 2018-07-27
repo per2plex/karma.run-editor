@@ -56,6 +56,8 @@ export const defaultEditorContextID: string = 'default'
 export const sessionStorageKey = 'session'
 export const sessionRenewalInterval = 5 * (60 * 1000) // 5min
 
+export const developmentModeStorageKey = 'developmentMode'
+
 export interface SessionProviderProps {
   config: Config
   workerContext: WorkerContext
@@ -169,6 +171,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       ...initialEditorData,
       canRestoreSessionFromStorage: storage.get(sessionStorageKey) != undefined,
       unsavedChangesCount: 0,
+      developmentMode: storage.get(developmentModeStorageKey) || false,
       restoreSessionFromLocalStorage: this.restoreSessionFromLocalStorage,
       restoreSession: this.restoreSession,
       authenticate: this.authenticate,
@@ -179,7 +182,8 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       saveRecord: this.saveRecord,
       deleteRecord: this.deleteRecord,
       increaseUnsavedChangesCount: this.increaseUnsavedChangesCount,
-      decreaseUnsavedChangesCount: this.decreaseUnsavedChangesCount
+      decreaseUnsavedChangesCount: this.decreaseUnsavedChangesCount,
+      setDevelopmentMode: this.setDevelopmentMode
     }
   }
 
@@ -190,6 +194,11 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
   public decreaseUnsavedChangesCount = () => {
     if (this.state.unsavedChangesCount - 1 < 0) throw new Error('Unbalanced saved changes count!')
     this.setState({unsavedChangesCount: this.state.unsavedChangesCount - 1})
+  }
+
+  private setDevelopmentMode = (developmentMode: boolean) => {
+    this.setState({developmentMode})
+    storage.set(developmentModeStorageKey, developmentMode)
   }
 
   public restoreSessionFromLocalStorage = async () => {

@@ -13,14 +13,10 @@ import express from 'express'
 import {SignatureHeader, Tag, query, buildFunction, getTags, Ref} from '@karma.run/sdk'
 import {EditorContext, ViewContextOptionsWithModel} from '@karma.run/editor-common'
 
+import {ServerPlugin} from './plugin'
+export * from './plugin'
+
 const cacheOptions = {maxAge: '1d'}
-
-export interface ServerPlugin {
-  readonly name: string
-  readonly version: string
-
-  registerRoutes?(karmaDataURL: string, router: express.Router): void
-}
 
 export type EditorContextsForRolesFn = (
   roles: string[],
@@ -76,10 +72,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
 
   const router = express.Router()
   const reactDateTimePath = require.resolve('react-datetime')
-  const draftJSPath = require.resolve('draft-js')
-
   const reactDateTimeCSSPath = path.join(path.dirname(reactDateTimePath), 'css/react-datetime.css')
-  const draftJSCSSPath = path.join(path.dirname(draftJSPath), '../dist/Draft.css')
 
   const pluginIdentifiers: string[] = []
 
@@ -87,7 +80,7 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
     for (const plugin of opts.plugins) {
       if (plugin.registerRoutes) {
         const pluginRouter = express.Router()
-        plugin.registerRoutes(opts.karmaDataURL, pluginRouter)
+        plugin.registerRoutes({karmaDataURL: opts.karmaDataURL}, pluginRouter)
         router.use(`${basePath}/api/plugin/${plugin.name}`, pluginRouter)
       }
 
@@ -99,11 +92,6 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
 
   router.get(`${basePath}/css/react-datetime.css`, (_, res) => {
     return res.sendFile(reactDateTimeCSSPath, cacheOptions)
-  })
-
-  // TODO: Move into draft plugin
-  router.get(`${basePath}/css/draft-js.css`, (_, res) => {
-    return res.sendFile(draftJSCSSPath, cacheOptions)
   })
 
   router.use(
@@ -174,8 +162,6 @@ export function editorMiddleware(opts: MiddlewareOptions): express.Router {
         <head>
           <title>{title}</title>
           <link href={`${basePath}/static/favicon.ico`} rel="icon" type="image/x-icon" />
-          {/* TODO: Move into draft plugin */}
-          <link href={`${basePath}/css/draft-js.css`} rel="stylesheet" />
           <link href={`${basePath}/css/react-datetime.css`} rel="stylesheet" />
           <link
             href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i"

@@ -45,6 +45,7 @@ export interface SessionContext extends EditorData {
   session?: EditorSession
   canRestoreSessionFromStorage: boolean
   unsavedChangesCount: number
+  developmentMode: boolean
 
   restoreSessionFromLocalStorage(): Promise<EditorSession>
   restoreSession(session: EditorSession): Promise<EditorSession>
@@ -66,12 +67,15 @@ export interface SessionContext extends EditorData {
 
   increaseUnsavedChangesCount(): void
   decreaseUnsavedChangesCount(): void
+
+  setDevelopmentMode(developmentMode: boolean): void
 }
 
 export const SessionContext = React.createContext<SessionContext>({
   ...initialEditorData,
   canRestoreSessionFromStorage: false,
   unsavedChangesCount: 0,
+  developmentMode: false,
 
   async restoreSessionFromLocalStorage() {
     throw new Error('No SessionProvider found!')
@@ -114,6 +118,10 @@ export const SessionContext = React.createContext<SessionContext>({
   },
 
   decreaseUnsavedChangesCount() {
+    throw new Error('No SessionProvider found!')
+  },
+
+  setDevelopmentMode() {
     throw new Error('No SessionProvider found!')
   }
 })

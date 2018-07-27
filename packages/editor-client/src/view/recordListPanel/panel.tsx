@@ -361,20 +361,30 @@ export class RootRecordListPanel extends React.PureComponent<RootRecordListPanel
 
   public render() {
     const _ = this.props.localeContext.get
+    const toolbarActions: ToolbarAction[] = [
+      {
+        key: 'new',
+        icon: IconName.NewDocument,
+        label: _('newRecord'),
+        onTrigger: this.handleNewRecord
+      }
+    ]
+
+    if (this.props.sessionContext.developmentMode) {
+      toolbarActions.push({
+        key: 'viewContextEditor',
+        icon: IconName.CodeView,
+        label: _('viewContextEditor'),
+        onTrigger: () => {}
+      })
+    }
 
     return (
       <RecordListPanel
         {...this.props}
         ref={this.listRef}
         headerPrefix={_('listRecordPrefix')}
-        toolbarActions={[
-          {
-            key: 'new',
-            icon: IconName.NewDocument,
-            label: _('newRecord'),
-            onTrigger: this.handleNewRecord
-          }
-        ]}
+        toolbarActions={toolbarActions}
         recordActions={[
           {
             key: 'edit',

@@ -61,26 +61,6 @@ export function loadServerConfig(serverConfigPath?: string): ServerConfiguration
   return module.default || module
 }
 
-export function loadPlugins(plugins: (ServerPlugin | string)[]): ServerPlugin[] {
-  return plugins.map(plugin => {
-    if (typeof plugin === 'string') {
-      try {
-        const module = require(plugin)
-
-        if (typeof module === 'function') {
-          return new module()
-        }
-
-        return new module.default()
-      } catch (err) {
-        return process.exit(1)
-      }
-    }
-
-    return plugin
-  })
-}
-
 export interface BuildOptions {
   plugins: ServerPlugin[]
 }
