@@ -10,12 +10,12 @@
   "license": "MIT",
   "repository": "github:karmarun/karma.tools",
   "scripts": {
-    "start": "node ./dist/index.js run",
+    "start": "node ./dist/index.js server",
     "cli": "node ./dist/index.js",
     "watch": "npm-run-all build --parallel watch:*",
     "build": "tsc",
     "watch:build": "tsc --watch",
-    "watch:run": "nodemon --watch \"./dist/**/*\" --exec \"node ./dist/index.js run --watch\"",
+    "watch:run": "nodemon --watch \"./dist/**/*\" --exec \"node ./dist/index.js server --watch\"",
     "copy:license": "shx cp ../../LICENSE ./",
     "clean": "shx rm -rf ./LICENSE ./dist",
     "prepare": "run-s clean copy:license build"

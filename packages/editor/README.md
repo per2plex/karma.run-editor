@@ -1,14 +1,21 @@
-# karma.data / Editor CLI
+# karma.data / Editor
+
+[![License][license_shield]][license_link]
+[![NPM Package][npm_shield]][npm_link]
+
+Administrative editor for karma.data.
+
+![Preview](./docs/media/preview.png)
 
 ## Install
 
-```bash
+```sh
 npm install -g @karma.run/editor
 ```
 
 ## Basic Usage
 
-```bash
+```sh
 $ karma-editor --help
 
   Usage: karma-editor [options] [command]
@@ -36,3 +43,8 @@ The CLI will automatically search for `editor.client.config.{js,ts,tsx}` and `ed
 ### Client Configuration
 
 ### Server Configuration
+
+[license_shield]: https://img.shields.io/github/license/karmarun/karma.tools.svg
+[license_link]: https://github.com/karmarun/karma.tools/blob/master/LICENSE
+[npm_shield]: https://img.shields.io/npm/v/@karma.run/editor.svg
+[npm_link]: https://www.npmjs.com/package/@karma.run/editor
