@@ -146,7 +146,7 @@ export async function build(
       devtool: 'source-map',
       output: {path: bundlePath, publicPath: '/static/'},
       resolve: {extensions: ['.ts', '.tsx', '.js']},
-      module: {rules: [{test: /\.tsx?$/, loader: 'ts-loader', options: {transpileOnly: true}}]}
+      module: {rules: [{test: /\.tsx?$/, loader: 'ts-loader'}]}
     } as import('webpack').Configuration)
 
     if (onProgress) compiler.apply(new webpack.ProgressPlugin(onProgress))
@@ -190,7 +190,7 @@ export async function watchBuild(
     devtool: 'cheap-module-eval-source-map',
     output: {path: bundlePath, publicPath: '/static/'},
     resolve: {extensions: ['.ts', '.tsx', '.js']},
-    module: {rules: [{test: /\.tsx?$/, loader: 'ts-loader', options: {transpileOnly: true}}]}
+    module: {rules: [{test: /\.tsx?$/, loader: 'ts-loader'}]}
   } as import('webpack').Configuration)
 
   if (onProgress) compiler.apply(new webpack.ProgressPlugin(onProgress))

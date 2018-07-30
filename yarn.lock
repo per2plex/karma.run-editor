@@ -167,13 +167,7 @@
     "@types/slate" "*"
     immutable "^3.8.2"
 
-"@types/slate@*":
-  version "0.33.1"
-  resolved "https://registry.yarnpkg.com/@types/slate/-/slate-0.33.1.tgz#985de7705f4e6f17b416410812b35236c92d47b5"
-  dependencies:
-    immutable "^3.8.2"
-
-"@types/slate@^0.33.1":
+"@types/slate@*", "@types/slate@^0.33.1":
   version "0.33.2"
   resolved "https://registry.yarnpkg.com/@types/slate/-/slate-0.33.2.tgz#717e2f0e9bdf6bee099518a2d2b24c5e90c7323f"
   dependencies:

@@ -38,63 +38,27 @@ import {
   CreateFieldFunction
 } from '@karma.run/editor-client'
 
-// TODO: Wrapped type for lists
+import {SlateControl, SlateData} from './controls'
+
 export enum ControlType {
   Mark = 'mark',
   Inline = 'inline',
   Block = 'block',
   InlineElement = 'inlineElement',
-  BlockElement = 'blockElement'
-}
-
-export const boldMarkControl: MarkControl = {
-  type: ControlType.Mark,
-  icon: IconName.FormatBold,
-  render: children => {
-    return <strong>{children}</strong>
-  }
-}
-
-export const italicMarkControl: MarkControl = {
-  type: ControlType.Mark,
-  icon: IconName.FormatItalic,
-  render: children => {
-    return <em>{children}</em>
-  }
-}
-
-export const underlineMarkControl: MarkControl = {
-  type: ControlType.Mark,
-  icon: IconName.FormatUnderline,
-  render: children => {
-    return <span style={{textDecoration: 'underline'}}>{children}</span>
-  }
-}
-
-export const strikethroughMarkControl: MarkControl = {
-  type: ControlType.Mark,
-  icon: IconName.FormatStrikethrough,
-  render: children => {
-    return <span style={{textDecoration: 'line-through'}}>{children}</span>
-  }
-}
-
-export const commonMarkControls = {
-  bold: boldMarkControl,
-  italic: italicMarkControl,
-  underline: underlineMarkControl,
-  strikethrough: strikethroughMarkControl
+  BlockElement = 'blockElement',
+  Custom = 'custom'
 }
 
 export interface MarkControl {
-  type: ControlType.Mark
-  label?: string
-  icon?: IconName
-  render: (children: React.ReactNode) => React.ReactNode
+  readonly controlType: ControlType.Mark
+  readonly type: string
+  readonly label?: string
+  readonly icon?: IconName
+  readonly render: (children: React.ReactNode) => React.ReactNode
 }
 
 export interface InlineControl {
-  type: ControlType.Inline
+  controlType: ControlType.Inline
   label?: string
   icon?: IconName
   dataKey?: string
@@ -102,15 +66,28 @@ export interface InlineControl {
 }
 
 export interface BlockControl {
-  type: ControlType.Block
+  controlType: ControlType.Block
+  type: string
   label?: string
   icon?: IconName
   dataKey?: string
   render: (children: React.ReactNode, data: ObjectMap<any>) => React.ReactNode
 }
 
+export interface CustomControl {
+  controlType: ControlType.Custom
+  types: string
+  label?: string
+  icon?: IconName
+  dataKey?: string
+
+  wrap: (value: Slate.Value, type: string, data?: ObjectMap<any>) => Slate.Value
+  unwrap: (value: Slate.Value, type: string, data?: ObjectMap<any>) => Slate.Value
+  render: (type: string, children: React.ReactNode, data: ObjectMap<any>) => React.ReactNode
+}
+
 export interface InlineElementControl {
-  type: ControlType.InlineElement
+  controlType: ControlType.InlineElement
   label?: string
   icon?: IconName
   dataKey?: string
@@ -123,7 +100,7 @@ export interface InlineElementControl {
 }
 
 export interface BlockElementControl {
-  type: ControlType.BlockElement
+  controlType: ControlType.BlockElement
   label?: string
   icon?: IconName
   dataKey?: string
@@ -141,6 +118,7 @@ export type Control =
   | BlockControl
   | InlineElementControl
   | BlockElementControl
+  | CustomControl
 
 export interface SlateFieldEditComponentState {
   hasFocus: boolean
@@ -256,7 +234,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
     if (!node || node.object !== 'block') return
 
     const control = this.props.field.controlsMap.get(node.type)
-    if (!control || control.type !== ControlType.BlockElement || !control.dataKey) return
+    if (!control || control.controlType !== ControlType.BlockElement || !control.dataKey) return
 
     const newFieldValue = await this.props.onEditField(
       this.props.field.dataFields[control.dataKey],
@@ -304,7 +282,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
     if (!node || node.object !== 'inline') return
 
     const control = this.props.field.controlsMap.get(node.type)
-    if (!control || control.type !== ControlType.InlineElement || !control.dataKey) return
+    if (!control || control.controlType !== ControlType.InlineElement || !control.dataKey) return
 
     const newFieldValue = await this.props.onEditField(
       this.props.field.dataFields[control.dataKey],
@@ -331,6 +309,22 @@ export class SlateFieldEditComponent extends React.PureComponent<
     }
   }
 
+  private handleCustomControl = async ([type, control]: [string, CustomControl]) => {
+    const activeBlock = this.activeBlockOfType(type)
+
+    const newFieldValue = control.dataKey
+      ? await this.props.onEditField(
+          this.props.field.dataFields[control.dataKey],
+          activeBlock ? activeBlock.data.get(control.dataKey) : undefined
+        )
+      : undefined
+
+    this.props.onValueChange(
+      control.wrap(this.props.value, type, newFieldValue),
+      this.props.changeKey
+    )
+  }
+
   private hasMark = (type: string) => {
     return this.props.value.activeMarks.some(mark => mark!.type === type)
   }
@@ -351,15 +345,29 @@ export class SlateFieldEditComponent extends React.PureComponent<
     return this.props.value.blocks.find(block => block!.type === type)
   }
 
-  private renderMark = (props: RenderMarkProps) => {
-    const {attributes, children, mark} = props
-    const control = this.props.field.controlsMap.get(mark.type)
+  private handleControlValueChange = (changeFn: (change: Slate.Change) => Slate.Change) => {
+    this.props.onValueChange(changeFn(this.props.value.change()).value, this.props.changeKey)
+  }
 
-    if (!control || control.type !== ControlType.Mark) {
-      return null
+  private handleControlEditData = async (dataKey: string, data?: SlateData) => {
+    const newData = await this.props.onEditField(
+      this.props.field.dataFields[dataKey],
+      data ? data.get(dataKey) : undefined
+    )
+
+    return newData ? {[dataKey]: newData} : undefined
+  }
+
+  private handleRenderMark = (props: RenderMarkProps): React.ReactNode => {
+    for (const [, control] of this.props.field.controlsMap) {
+      if (control.renderMark) {
+        const element = control.renderMark(props)
+        if (!element) continue
+        return element
+      }
     }
 
-    return <span {...attributes}>{control.render(children)}</span>
+    return undefined
   }
 
   private renderNode = (props: RenderNodeProps) => {
@@ -371,7 +379,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
 
     if (!control) return null
 
-    switch (control.type) {
+    switch (control.controlType) {
       case ControlType.Inline:
         return <span {...attributes}>{control.render(children, node.data.toJS())}</span>
 
@@ -382,6 +390,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
           </span>
         )
 
+      case ControlType.Custom:
       case ControlType.Block:
         return <div {...attributes}>{control.render(children, node.data.toJS())}</div>
 
@@ -398,9 +407,11 @@ export class SlateFieldEditComponent extends React.PureComponent<
   }
 
   private controlGroups = memoizeOne(
-    (controlKeys: string[][], controlsMap: ReadonlyMap<string, Control>) => {
+    (controlKeys: string[][], controlsMap: ReadonlyMap<string, SlateControl>) => {
       return controlKeys.map(keys =>
-        keys.map(key => [key, controlsMap.get(key)] as [string, Control])
+        keys
+          .filter(key => controlsMap.has(key))
+          .map(key => [key, controlsMap.get(key)] as [string, SlateControl])
       )
     }
   )
@@ -423,21 +434,32 @@ export class SlateFieldEditComponent extends React.PureComponent<
       this.props.field.controlKeys,
       this.props.field.controlsMap
     )
+
     return (
       <FlexList spacing="large">
-        {controlGroups.map(controls => (
-          <FlexList key={controls.map(([key]) => key).join('.')}>
-            {controls.map(([key, control]) => (
-              <React.Fragment key={key}>{this.renderControl(key, control)}</React.Fragment>
-            ))}
-          </FlexList>
-        ))}
+        {controlGroups.map(
+          controls =>
+            controls.length !== 0 && (
+              <FlexList key={controls.map(([key]) => key).join('.')}>
+                {controls.map(([key, control]) => (
+                  <React.Fragment key={key}>
+                    {control.renderControl({
+                      disabled: !this.state.hasFocus,
+                      value: this.props.value,
+                      onEditData: this.handleControlEditData,
+                      onValueChange: this.handleControlValueChange
+                    })}
+                  </React.Fragment>
+                ))}
+              </FlexList>
+            )
+        )}
       </FlexList>
     )
   }
 
   private renderControl = (key: string, control: Control) => {
-    switch (control.type) {
+    switch (control.controlType) {
       case ControlType.Mark:
         return (
           <Button
@@ -505,6 +527,18 @@ export class SlateFieldEditComponent extends React.PureComponent<
           />
         )
 
+      case ControlType.Custom:
+        return (
+          <Button
+            disabled={!this.state.hasFocus}
+            type={ButtonType.Light}
+            icon={control.icon}
+            label={control.label}
+            data={[key, control]}
+            onMouseDown={this.handleCustomControl}
+          />
+        )
+
       default:
         return null
     }
@@ -534,7 +568,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
             ref={this.editorRef}
             className="editor"
             value={this.props.value}
-            renderMark={this.renderMark}
+            renderMark={this.handleRenderMark}
             renderNode={this.renderNode}
             onChange={this.handleChange}
             schema={this.props.field.schema as any}
@@ -597,7 +631,7 @@ export interface SlateFieldConstructorOptions {
 
   readonly controlKeys: string[][]
 
-  readonly controlMap: ReadonlyMap<string, Control>
+  readonly controlMap: ReadonlyMap<string, SlateControl>
   readonly dataFields: ObjectMap<Field>
 }
 
@@ -621,7 +655,7 @@ export class SlateField implements Field<SlateFieldValue> {
 
   public readonly schema?: Slate.SchemaProperties
   public readonly controlKeys: string[][]
-  public readonly controlsMap: ReadonlyMap<string, Control>
+  public readonly controlsMap: ReadonlyMap<string, SlateControl>
   public readonly dataFields: ObjectMap<Field>
 
   public readonly defaultValue: SlateFieldValue
@@ -769,7 +803,7 @@ export const SlateFieldType = 'richText'
 export type SchemaDefaultValueTuple = [Slate.SchemaProperties, Slate.ValueJSON]
 
 export const SlateFieldConstructor = (
-  controlMap: ReadonlyMap<string, Control>,
+  controlMap: ReadonlyMap<string, SlateControl>,
   schemaMap: ReadonlyMap<string, SchemaDefaultValueTuple>
 ) => {
   return {

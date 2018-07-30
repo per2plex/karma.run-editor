@@ -1,4 +1,4 @@
-export const enum ConditionType {
+export enum ConditionType {
   // List
   ListLengthEqual = 'listLengthEqual',
   ListLengthMin = 'listLengthMin',
@@ -37,14 +37,14 @@ export const enum ConditionType {
   RefEqual = 'refEqual'
 }
 
-export const enum TypeCompatibility {
+export enum TypeCompatibility {
   String = 'string',
   Number = 'number',
   Date = 'date',
   Boolean = 'boolean'
 }
 
-export const enum ValuePathSegmentType {
+export enum ValuePathSegmentType {
   List = 'list',
   Map = 'map',
   Optional = 'optional',
@@ -266,7 +266,7 @@ export function ValueFilter(condition: Condition): ValueFilter {
 
 export type Filter = CompositeFilter | FullTextFilter | ValueFilter
 
-export const enum SortType {
+export enum SortType {
   Date = 'date',
   String = 'string'
 }
