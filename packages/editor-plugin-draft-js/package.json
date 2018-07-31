@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@types/draft-js": "^0.10.16",
-    "typescript": "^3.0.0-rc"
+    "typescript": "^3.0.1"
   },
   "peerDependencies": {
     "@karma.run/editor-client": "^0.13.0",

@@ -33,7 +33,7 @@
     "@types/slate": "^0.33.1",
     "@types/slate-plain-serializer": "^0.5.1",
     "@types/slate-react": "^0.12.1",
-    "typescript": "^3.0.0-rc"
+    "typescript": "^3.0.1"
   },
   "peerDependencies": {
     "@karma.run/editor-client": "^0.13.0",

@@ -14,7 +14,8 @@ import {
   FilterConfiguration,
   TypedFieldOptions,
   ObjectMap,
-  mapObject
+  mapObject,
+  firstKeyOptional
 } from '@karma.run/editor-common'
 
 import {
@@ -30,95 +31,12 @@ import {
   Color,
   Spacing,
   boolAttr,
-  Button,
-  ButtonType,
-  IconName,
   FlexList,
   FieldConstructor,
   CreateFieldFunction
 } from '@karma.run/editor-client'
 
 import {SlateControl, SlateData} from './controls'
-
-export enum ControlType {
-  Mark = 'mark',
-  Inline = 'inline',
-  Block = 'block',
-  InlineElement = 'inlineElement',
-  BlockElement = 'blockElement',
-  Custom = 'custom'
-}
-
-export interface MarkControl {
-  readonly controlType: ControlType.Mark
-  readonly type: string
-  readonly label?: string
-  readonly icon?: IconName
-  readonly render: (children: React.ReactNode) => React.ReactNode
-}
-
-export interface InlineControl {
-  controlType: ControlType.Inline
-  label?: string
-  icon?: IconName
-  dataKey?: string
-  render: (children: React.ReactNode, data: ObjectMap<any>) => React.ReactNode
-}
-
-export interface BlockControl {
-  controlType: ControlType.Block
-  type: string
-  label?: string
-  icon?: IconName
-  dataKey?: string
-  render: (children: React.ReactNode, data: ObjectMap<any>) => React.ReactNode
-}
-
-export interface CustomControl {
-  controlType: ControlType.Custom
-  types: string
-  label?: string
-  icon?: IconName
-  dataKey?: string
-
-  wrap: (value: Slate.Value, type: string, data?: ObjectMap<any>) => Slate.Value
-  unwrap: (value: Slate.Value, type: string, data?: ObjectMap<any>) => Slate.Value
-  render: (type: string, children: React.ReactNode, data: ObjectMap<any>) => React.ReactNode
-}
-
-export interface InlineElementControl {
-  controlType: ControlType.InlineElement
-  label?: string
-  icon?: IconName
-  dataKey?: string
-  render: (
-    data: ObjectMap<any>,
-    isSelected: boolean,
-    key: string,
-    onEdit: (key: string) => void
-  ) => React.ReactNode
-}
-
-export interface BlockElementControl {
-  controlType: ControlType.BlockElement
-  label?: string
-  icon?: IconName
-  dataKey?: string
-  render: (
-    data: ObjectMap<any>,
-    isSelected: boolean,
-    key: string,
-    onEdit: (key: string) => void
-  ) => React.ReactNode
-}
-
-export type Control =
-  | MarkControl
-  | InlineControl
-  | BlockControl
-  | InlineElementControl
-  | BlockElementControl
-  | CustomControl
 
 export interface SlateFieldEditComponentState {
   hasFocus: boolean
@@ -155,196 +73,6 @@ export class SlateFieldEditComponent extends React.PureComponent<
     this.setState({hasFocus: false})
   }
 
-  private handleMarkToggle = (type: string) => {
-    this.props.onValueChange(this.props.value.change().toggleMark(type).value, this.props.changeKey)
-  }
-
-  private handleInline = async ([type, control]: [string, InlineControl]) => {
-    const activeInline = this.activeInlineOfType(type)
-
-    const newFieldValue = control.dataKey
-      ? await this.props.onEditField(
-          this.props.field.dataFields[control.dataKey],
-          activeInline ? activeInline.data.get(control.dataKey) : undefined
-        )
-      : undefined
-
-    if (control.dataKey) this.editorRef.current!.focus()
-
-    // Pressed back in FieldEditor.
-    if (control.dataKey && !newFieldValue && !activeInline) return
-
-    if (!newFieldValue && activeInline) {
-      const newValue = this.props.value.change().unwrapInline(type).value
-      this.props.onValueChange(newValue, this.props.changeKey)
-    } else {
-      const data = control.dataKey ? {[control.dataKey]: newFieldValue!.value} : undefined
-      const newValue = activeInline
-        ? this.props.value.change().setInlines({type, data}).value
-        : this.props.value.change().wrapInline({type, data}).value
-
-      this.props.onValueChange(newValue, this.props.changeKey)
-    }
-  }
-
-  private handleBlock = async ([type, control]: [string, BlockControl]) => {
-    const activeBlock = this.activeBlockOfType(type)
-
-    const newFieldValue = control.dataKey
-      ? await this.props.onEditField(
-          this.props.field.dataFields[control.dataKey],
-          activeBlock ? activeBlock.data.get(control.dataKey) : undefined
-        )
-      : undefined
-
-    if (control.dataKey) this.editorRef.current!.focus()
-
-    // Pressed back in FieldEditor.
-    if (control.dataKey && !newFieldValue && !activeBlock) return
-
-    if (!newFieldValue && activeBlock) {
-      const newValue = this.props.value.change().setBlocks('').value
-      this.props.onValueChange(newValue, this.props.changeKey)
-    } else {
-      const data = control.dataKey ? {[control.dataKey]: newFieldValue!.value} : undefined
-      const newValue = this.props.value.change().setBlocks({type, data}).value
-
-      this.props.onValueChange(newValue, this.props.changeKey)
-    }
-  }
-
-  private handleBlockElement = async ([type, control]: [string, BlockElementControl]) => {
-    const newFieldValue = control.dataKey
-      ? await this.props.onEditField(this.props.field.dataFields[control.dataKey])
-      : undefined
-
-    if (control.dataKey) this.editorRef.current!.focus()
-
-    // Pressed back in FieldEditor.
-    if (control.dataKey && !newFieldValue) return
-
-    const data = control.dataKey ? {[control.dataKey]: newFieldValue!.value} : undefined
-    const newValue = this.props.value.change().insertBlock({type, data, isVoid: true}).value
-
-    this.props.onValueChange(newValue, this.props.changeKey)
-  }
-
-  private handleBlockElementEdit = async (blockKey: string) => {
-    const node = this.props.value.document.getDescendant(blockKey)
-    if (!node || node.object !== 'block') return
-
-    const control = this.props.field.controlsMap.get(node.type)
-    if (!control || control.controlType !== ControlType.BlockElement || !control.dataKey) return
-
-    const newFieldValue = await this.props.onEditField(
-      this.props.field.dataFields[control.dataKey],
-      node.data.get(control.dataKey)
-    )
-
-    if (newFieldValue) {
-      this.props.onValueChange(
-        this.props.value.change().replaceNodeByKey(
-          blockKey,
-          Slate.Block.create({
-            type: node.type,
-            data: {[control.dataKey]: newFieldValue.value},
-            isVoid: true
-          })
-        ).value,
-        this.props.changeKey
-      )
-    } else {
-      this.props.onValueChange(
-        this.props.value.change().removeNodeByKey(blockKey).value,
-        this.props.changeKey
-      )
-    }
-  }
-
-  private handleInlineElement = async ([type, control]: [string, InlineElementControl]) => {
-    const newFieldValue = control.dataKey
-      ? await this.props.onEditField(this.props.field.dataFields[control.dataKey])
-      : undefined
-
-    if (control.dataKey) this.editorRef.current!.focus()
-
-    // Pressed back in FieldEditor.
-    if (control.dataKey && !newFieldValue) return
-
-    const data = control.dataKey ? {[control.dataKey]: newFieldValue!.value} : undefined
-    const newValue = this.props.value.change().insertInline({type, data, isVoid: true}).value
-
-    this.props.onValueChange(newValue, this.props.changeKey)
-  }
-
-  private handleInlineElementEdit = async (inlineKey: string) => {
-    const node = this.props.value.document.getDescendant(inlineKey)
-    if (!node || node.object !== 'inline') return
-
-    const control = this.props.field.controlsMap.get(node.type)
-    if (!control || control.controlType !== ControlType.InlineElement || !control.dataKey) return
-
-    const newFieldValue = await this.props.onEditField(
-      this.props.field.dataFields[control.dataKey],
-      node.data.get(control.dataKey)
-    )
-
-    if (newFieldValue) {
-      this.props.onValueChange(
-        this.props.value.change().replaceNodeByKey(
-          inlineKey,
-          Slate.Inline.create({
-            type: node.type,
-            data: {[control.dataKey]: newFieldValue.value},
-            isVoid: true
-          })
-        ).value,
-        this.props.changeKey
-      )
-    } else {
-      this.props.onValueChange(
-        this.props.value.change().removeNodeByKey(inlineKey).value,
-        this.props.changeKey
-      )
-    }
-  }
-
-  private handleCustomControl = async ([type, control]: [string, CustomControl]) => {
-    const activeBlock = this.activeBlockOfType(type)
-
-    const newFieldValue = control.dataKey
-      ? await this.props.onEditField(
-          this.props.field.dataFields[control.dataKey],
-          activeBlock ? activeBlock.data.get(control.dataKey) : undefined
-        )
-      : undefined
-
-    this.props.onValueChange(
-      control.wrap(this.props.value, type, newFieldValue),
-      this.props.changeKey
-    )
-  }
-
-  private hasMark = (type: string) => {
-    return this.props.value.activeMarks.some(mark => mark!.type === type)
-  }
-
-  private hasInlineOfType = (type: string) => {
-    return this.activeInlineOfType(type) != undefined
-  }
-
-  private activeInlineOfType = (type: string): Slate.Inline | undefined => {
-    return this.props.value.inlines.find(inline => inline!.type === type)
-  }
-
-  private hasBlockOfType = (type: string) => {
-    return this.activeBlockOfType(type) != undefined
-  }
-
-  private activeBlockOfType = (type: string): Slate.Block | undefined => {
-    return this.props.value.blocks.find(block => block!.type === type)
-  }
-
   private handleControlValueChange = (changeFn: (change: Slate.Change) => Slate.Change) => {
     this.props.onValueChange(changeFn(this.props.value.change()).value, this.props.changeKey)
   }
@@ -355,7 +83,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
       data ? data.get(dataKey) : undefined
     )
 
-    return newData ? {[dataKey]: newData} : undefined
+    return newData ? {[dataKey]: newData.value} : undefined
   }
 
   private handleRenderMark = (props: RenderMarkProps): React.ReactNode => {
@@ -370,40 +98,21 @@ export class SlateFieldEditComponent extends React.PureComponent<
     return undefined
   }
 
-  private renderNode = (props: RenderNodeProps) => {
-    const {attributes, children, node, isSelected} = props
+  private handleRenderNode = (props: RenderNodeProps) => {
+    for (const [, control] of this.props.field.controlsMap) {
+      if (control.renderNode) {
+        const element = control.renderNode({
+          ...props,
+          onEditData: this.handleControlEditData,
+          onValueChange: this.handleControlValueChange
+        })
 
-    if (!node.type) return null
-
-    const control = this.props.field.controlsMap.get(node.type)
-
-    if (!control) return null
-
-    switch (control.controlType) {
-      case ControlType.Inline:
-        return <span {...attributes}>{control.render(children, node.data.toJS())}</span>
-
-      case ControlType.InlineElement:
-        return (
-          <span {...attributes}>
-            {control.render(node.data.toJS(), isSelected, node.key, this.handleInlineElementEdit)}
-          </span>
-        )
-
-      case ControlType.Custom:
-      case ControlType.Block:
-        return <div {...attributes}>{control.render(children, node.data.toJS())}</div>
-
-      case ControlType.BlockElement:
-        return (
-          <div {...attributes}>
-            {control.render(node.data.toJS(), isSelected, node.key, this.handleBlockElementEdit)}
-          </div>
-        )
-
-      case ControlType.Mark:
-        throw new Error('Tried to render mark as node.')
+        if (!element) continue
+        return element
+      }
     }
+
+    return undefined
   }
 
   private controlGroups = memoizeOne(
@@ -458,92 +167,6 @@ export class SlateFieldEditComponent extends React.PureComponent<
     )
   }
 
-  private renderControl = (key: string, control: Control) => {
-    switch (control.controlType) {
-      case ControlType.Mark:
-        return (
-          <Button
-            disabled={!this.state.hasFocus}
-            selected={this.state.hasFocus && this.hasMark(key)}
-            type={ButtonType.Light}
-            icon={control.icon}
-            label={control.label}
-            data={key}
-            onMouseDown={this.handleMarkToggle}
-          />
-        )
-
-      case ControlType.Inline:
-        const hasInlines = this.hasInlineOfType(key)
-
-        return (
-          <Button
-            disabled={!this.state.hasFocus || (!this.props.value.isExpanded && !hasInlines)}
-            selected={hasInlines}
-            type={ButtonType.Light}
-            icon={control.icon}
-            label={control.label}
-            data={[key, control]}
-            onMouseDown={this.handleInline}
-          />
-        )
-
-      case ControlType.InlineElement:
-        return (
-          <Button
-            disabled={!this.state.hasFocus}
-            type={ButtonType.Light}
-            icon={control.icon}
-            label={control.label}
-            data={[key, control]}
-            onMouseDown={this.handleInlineElement}
-          />
-        )
-
-      case ControlType.Block:
-        const hasBlock = this.hasBlockOfType(key)
-
-        return (
-          <Button
-            disabled={!this.state.hasFocus}
-            selected={hasBlock}
-            type={ButtonType.Light}
-            icon={control.icon}
-            label={control.label}
-            data={[key, control]}
-            onMouseDown={this.handleBlock}
-          />
-        )
-
-      case ControlType.BlockElement:
-        return (
-          <Button
-            disabled={!this.state.hasFocus}
-            type={ButtonType.Light}
-            icon={control.icon}
-            label={control.label}
-            data={[key, control]}
-            onMouseDown={this.handleBlockElement}
-          />
-        )
-
-      case ControlType.Custom:
-        return (
-          <Button
-            disabled={!this.state.hasFocus}
-            type={ButtonType.Light}
-            icon={control.icon}
-            label={control.label}
-            data={[key, control]}
-            onMouseDown={this.handleCustomControl}
-          />
-        )
-
-      default:
-        return null
-    }
-  }
-
   public render() {
     return (
       <FieldComponent
@@ -569,7 +192,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
             className="editor"
             value={this.props.value}
             renderMark={this.handleRenderMark}
-            renderNode={this.renderNode}
+            renderNode={this.handleRenderNode}
             onChange={this.handleChange}
             schema={this.props.field.schema as any}
           />
@@ -716,18 +339,11 @@ export class SlateField implements Field<SlateFieldValue> {
 
         case 'inline':
         case 'block':
-          const control = node.type
-            ? (this.controlsMap.get(node.type) as BlockControl | InlineControl | undefined)
-            : undefined
-
-          const dataField =
-            control && control.dataKey && node.data ? this.dataFields[control.dataKey] : undefined
+          const dataKey = node.data ? firstKeyOptional(node.data) : undefined
+          const dataField = dataKey ? this.dataFields[dataKey] : undefined
 
           const data = dataField
-            ? d.union(
-                control!.dataKey!,
-                dataField.transformValueToExpression(node.data![control!.dataKey!])
-              )
+            ? d.union(dataKey!, dataField.transformValueToExpression(node.data![dataKey!]))
             : undefined
 
           return d.struct({
