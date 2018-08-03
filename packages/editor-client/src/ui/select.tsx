@@ -2,6 +2,7 @@ import React from 'react'
 
 import {style} from 'typestyle'
 import {Color, DefaultBorderRadiusPx} from './style'
+import {base64Encode} from '@karma.run/editor-common'
 
 const arrowDownSVG = `
   <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 21 21'>
@@ -28,7 +29,7 @@ export const SelectStyle = style({
   backgroundColor: Color.primary.light5,
   borderRadius: DefaultBorderRadiusPx,
 
-  backgroundImage: `url(data:image/svg+xml;base64,${btoa(arrowDownSVG)})`,
+  backgroundImage: `url(data:image/svg+xml;base64,${base64Encode(arrowDownSVG)})`,
   backgroundPosition: `right 1rem center`,
   backgroundRepeat: 'no-repeat',
   backgroundSize: '1em',

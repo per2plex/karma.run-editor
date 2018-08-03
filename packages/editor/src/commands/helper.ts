@@ -141,7 +141,10 @@ export async function build(
     const bundlePath = path.resolve(cachePath, './bundle')
 
     const compiler = webpack({
-      entry: {index: clientEntryPath, worker: workerEntryPath},
+      entry: {
+        index: ['babel-polyfill', 'intersection-observer-polyfill', clientEntryPath],
+        worker: workerEntryPath
+      },
       mode: 'production',
       devtool: 'source-map',
       output: {path: bundlePath, publicPath: '/static/'},
@@ -153,6 +156,7 @@ export async function build(
 
     compiler.run((err, stats) => {
       if (err) return reject(err)
+      fs.promises.writeFile('./stats.json', JSON.stringify(stats.toJson()))
       return resolve({path: bundlePath, stats})
     })
   })
@@ -185,7 +189,10 @@ export async function watchBuild(
   const bundlePath = path.resolve(cachePath, './bundle')
 
   const compiler = webpack({
-    entry: {index: clientEntryPath, worker: workerEntryPath},
+    entry: {
+      index: ['babel-polyfill', 'intersection-observer-polyfill', clientEntryPath],
+      worker: workerEntryPath
+    },
     mode: 'development',
     devtool: 'cheap-module-eval-source-map',
     output: {path: bundlePath, publicPath: '/static/'},

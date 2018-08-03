@@ -54,3 +54,28 @@ const escapeRegExpRegExp = /[-\/\\^$*+?.()|[\]{}]/g
 export function escapeRegExp(str: string) {
   return str.replace(escapeRegExpRegExp, '\\$&')
 }
+
+declare const window: any
+declare const Buffer: any
+
+export function base64Encode(str: string) {
+  const escapedStr = unescape(encodeURIComponent(str))
+
+  if (typeof window === 'object') {
+    return window.btoa(escapedStr)
+  } else {
+    return Buffer.from(escapedStr, 'binary').toString('base64')
+  }
+}
+
+export function base64Decode(base64Str: string) {
+  let encodedStr: string
+
+  if (typeof window === 'object') {
+    encodedStr = window.atob(base64Str)
+  } else {
+    encodedStr = Buffer.from(base64Str, 'base64').toString('binary')
+  }
+
+  return unescape(encodeURIComponent(encodedStr))
+}

@@ -371,12 +371,13 @@ export class RootRecordListPanel extends React.PureComponent<RootRecordListPanel
     ]
 
     if (this.props.sessionContext.developmentMode) {
-      toolbarActions.push({
-        key: 'viewContextEditor',
-        icon: IconName.CodeView,
-        label: _('viewContextEditor'),
-        onTrigger: () => {}
-      })
+      // TODO: Add View Context Editor
+      // toolbarActions.push({
+      //   key: 'viewContextEditor',
+      //   icon: IconName.CodeView,
+      //   label: _('viewContextEditor'),
+      //   onTrigger: () => {}
+      // })
     }
 
     return (

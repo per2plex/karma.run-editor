@@ -10,7 +10,6 @@ export interface ViewContextCommandOptions {
   instanceSecret: string
 }
 
-// TODO: Split field rendering and logic off into own modules so we don't have to import the client
 export default async function viewContextCommand(opts: ViewContextCommandOptions): Promise<void> {
   const {serverConfigPath, clientConfigPath} = findConfigsIfNeededAndSetCWD(
     opts.serverConfigPath,
@@ -22,6 +21,11 @@ export default async function viewContextCommand(opts: ViewContextCommandOptions
 
   if (!karmaDataURL) {
     console.error('No karma.data URL specified, set it via environment, CLI option or config.')
+    return process.exit(1)
+  }
+
+  if (!opts.instanceSecret) {
+    console.error('No instance secret specified.')
     return process.exit(1)
   }
 

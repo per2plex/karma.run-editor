@@ -4,7 +4,7 @@ import commander from 'commander'
 import run, {defaultPort} from './commands/run'
 import build from './commands/build'
 import clean from './commands/clean'
-// import viewContext from './commands/viewContext'
+import viewContext from './commands/viewContext'
 
 export * from './interface'
 
@@ -48,19 +48,18 @@ program
   )
   .action(opts => build({...opts, karmaDataURL: opts.karmaDataUrl}))
 
-// TODO: Split field rendering and logic off into own modules so we don't have to import the client
-// program
-//   .command('viewcontext')
-//   .description('Output inferred view context for all models.')
-//   .option(
-//     '-u --karma-data-url --karmaDataURL [karmaDataURL]',
-//     'Set karma.data URL. (environment: KARMA_DATA_URL)'
-//   )
-//   .option(
-//     '-s --instance-secret --instanceSecret [instanceSecret]',
-//     'Set karma.data instance secret'
-//   )
-//   .action(opts => viewContext({...opts, karmaDataURL: opts.karmaDataUrl}))
+program
+  .command('viewcontext')
+  .description('Output inferred view context for all models.')
+  .option(
+    '-u --karma-data-url --karmaDataURL [karmaDataURL]',
+    'Set karma.data URL. (environment: KARMA_DATA_URL)'
+  )
+  .option(
+    '-s --instance-secret --instanceSecret [instanceSecret]',
+    'Set karma.data instance secret'
+  )
+  .action(opts => viewContext({...opts, karmaDataURL: opts.karmaDataUrl}))
 
 program
   .command('clean')

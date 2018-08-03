@@ -1,8 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-import {forceRenderStyles} from 'typestyle'
-
 import {deleteNullValues} from '@karma.run/editor-common'
 
 import {ThemeProvider} from './provider/theme'
@@ -29,6 +27,8 @@ export interface EditorProps {
 
 export class EditorComponent extends React.Component<EditorProps> {
   public async componentDidMount() {
+    await import('./ui/global')
+
     // Prevent dropping files on window.
     window.addEventListener(
       'dragover',
@@ -45,9 +45,6 @@ export class EditorComponent extends React.Component<EditorProps> {
       },
       false
     )
-
-    // To prevent FOUC on initial render
-    forceRenderStyles()
   }
 
   public render() {
