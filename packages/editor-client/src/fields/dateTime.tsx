@@ -8,7 +8,13 @@ import {
   TypedFieldOptions
 } from '@karma.run/editor-common'
 
-import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
+import {
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps,
+  FieldValue
+} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {DateTimeInput} from '../ui/input'
@@ -16,10 +22,10 @@ import {CardSection} from '../ui/card'
 import {ErrorField} from './error'
 
 export class DateTimeFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<DateTimeField, string>
+  EditComponentRenderProps<DateTimeField, DateTimeValue>
 > {
-  private handleChange = (value: any) => {
-    this.props.onValueChange(value, this.props.changeKey)
+  private handleChange = (value: string | Date) => {
+    this.props.onValueChange({value, isValid: value instanceof Date}, this.props.changeKey)
   }
 
   public render() {
@@ -35,7 +41,7 @@ export class DateTimeFieldEditComponent extends React.PureComponent<
         )}
         <DateTimeInput
           onChange={this.handleChange}
-          value={this.props.value}
+          value={this.props.value.value}
           disabled={this.props.disabled}
         />
       </FieldComponent>
@@ -48,13 +54,13 @@ export interface DateTimeFieldOptions {
   readonly description?: string
 }
 
-export type DateTimeValue = string | Date | undefined
+export type DateTimeValue = FieldValue<string | Date, string>
 
 export class DateTimeField implements Field<DateTimeValue> {
   public readonly label?: string
   public readonly description?: string
 
-  public readonly defaultValue: DateTimeValue = undefined
+  public readonly defaultValue: DateTimeValue = {isValid: false, value: ''}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -67,11 +73,11 @@ export class DateTimeField implements Field<DateTimeValue> {
     return this
   }
 
-  public renderListComponent(props: ListRenderProps<string>) {
+  public renderListComponent(props: ListRenderProps<DateTimeValue>) {
     return <CardSection>{props.value}</CardSection>
   }
 
-  public renderEditComponent(props: EditRenderProps<string>) {
+  public renderEditComponent(props: EditRenderProps<DateTimeValue>) {
     return (
       <DateTimeFieldEditComponent
         label={this.label}
@@ -83,12 +89,12 @@ export class DateTimeField implements Field<DateTimeValue> {
   }
 
   public transformRawValue(value: any) {
-    return new Date(value)
+    return {value: new Date(value), isValid: true}
   }
 
   public transformValueToExpression(value: DateTimeValue) {
-    if (!value) return e.null()
-    return e.dateTime(value)
+    if (!(value.value instanceof Date)) return e.null()
+    return e.dateTime(value.value.toISOString())
   }
 
   public isValidValue() {

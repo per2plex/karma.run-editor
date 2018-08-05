@@ -44,6 +44,35 @@ The CLI will automatically search for `editor.client.config.{js,ts,tsx}` and `ed
 
 ### Server Configuration
 
+#### Editor Context
+
+```
+
+```
+
+#### View Context
+
+View Contexts define how
+
+**Interface:**
+
+```ts
+{
+  model: string
+  name?: string // Name that will be displayed in the list
+  description?: string
+  slug?: string
+  color?: string
+  field?: Field
+  displayKeyPaths?: string[][]
+}
+```
+
+#### Standard Fields
+
+```ts
+```
+
 [license_shield]: https://img.shields.io/github/license/karmarun/karma.tools.svg
 [license_link]: https://github.com/karmarun/karma.tools/blob/master/LICENSE
 [npm_shield]: https://img.shields.io/npm/v/@karma.run/editor.svg

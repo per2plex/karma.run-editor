@@ -7,11 +7,13 @@ import {
   TypedFieldOptions
 } from '@karma.run/editor-common'
 
-import {Field, EditComponentRenderProps, EditRenderProps} from '../api/field'
+import {Field, EditComponentRenderProps, EditRenderProps, FieldValue} from '../api/field'
 import {FieldErrors, FieldComponent, FieldLabel} from '../ui/field'
 import {CardError} from '../ui/card'
 
-export class ErrorEditComponent extends React.PureComponent<EditComponentRenderProps<ErrorField>> {
+export class ErrorEditComponent extends React.PureComponent<
+  EditComponentRenderProps<ErrorField, ErrorFieldValue>
+> {
   public render() {
     return (
       <FieldComponent depth={this.props.depth} index={this.props.index}>
@@ -35,12 +37,14 @@ export interface ErrorFieldOptions {
   readonly message?: string
 }
 
-export class ErrorField implements Field<null> {
+export type ErrorFieldValue = FieldValue<undefined, never>
+
+export class ErrorField implements Field<ErrorFieldValue> {
   public readonly label?: string
   public readonly description?: string
   public readonly message: string
 
-  public readonly defaultValue = null
+  public readonly defaultValue: ErrorFieldValue = {value: undefined, isValid: false}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -58,7 +62,7 @@ export class ErrorField implements Field<null> {
     return <CardError>{this.message}</CardError>
   }
 
-  public renderEditComponent(props: EditRenderProps<null>) {
+  public renderEditComponent(props: EditRenderProps<ErrorFieldValue>) {
     return (
       <ErrorEditComponent
         label={this.label}
@@ -79,7 +83,7 @@ export class ErrorField implements Field<null> {
   }
 
   public transformRawValue() {
-    return null
+    return this.defaultValue
   }
 
   public transformValueToExpression() {

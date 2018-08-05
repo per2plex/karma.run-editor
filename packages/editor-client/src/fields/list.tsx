@@ -19,7 +19,10 @@ import {
   EditRenderProps,
   CreateFieldFunction,
   SaveContext,
-  DeleteContext
+  DeleteContext,
+  FieldValue,
+  AnyField,
+  AnyFieldValue
 } from '../api/field'
 
 import {ErrorField} from './error'
@@ -128,48 +131,53 @@ export namespace ListFieldItem {
 export class ListFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<ListField, ListFieldValue>
 > {
-  private handleValueChange = (value: any, index: number) => {
+  private handleValueChange = (value: AnyFieldValue, index: number) => {
     if (index == undefined) {
       throw new Error('Child field did not call onValueChange with changeKey!')
     }
 
     this.props.onValueChange(
-      Object.assign([...this.props.value], {[index]: {...this.props.value[index], value}}),
+      {
+        value: Object.assign([...this.props.value.value], {
+          [index]: {...this.props.value.value[index], value}
+        }),
+        isValid: true
+      },
       this.props.changeKey
     )
   }
 
   public insertValueAt(index: number) {
-    if (index < 0 || index > this.props.value.length) throw new Error('Invalid Index!')
+    if (index < 0 || index > this.props.value.value.length) throw new Error('Invalid Index!')
 
-    const newValue = [...this.props.value]
+    const newValue = [...this.props.value.value]
 
     newValue.splice(index, 0, {
       id: shortid.generate(),
       value: this.props.field.field.defaultValue
     })
 
-    this.props.onValueChange(newValue, this.props.changeKey)
+    this.props.onValueChange({value: newValue, isValid: true}, this.props.changeKey)
   }
 
   public removeValueAt(index: number) {
-    if (index < 0 || index >= this.props.value.length) throw new Error('Invalid Index!')
+    if (index < 0 || index >= this.props.value.value.length) throw new Error('Invalid Index!')
 
-    const newValue = [...this.props.value]
+    const newValue = [...this.props.value.value]
     newValue.splice(index, 1)
 
-    this.props.onValueChange(newValue, this.props.changeKey)
+    this.props.onValueChange({value: newValue, isValid: true}, this.props.changeKey)
   }
 
   private moveFieldToIndex(index: number, toIndex: number) {
-    if (index < 0 || index >= this.props.value.length) throw new Error('Invalid Index!')
-    if (toIndex < 0 || toIndex >= this.props.value.length) throw new Error('Invalid Index!')
+    if (index < 0 || index >= this.props.value.value.length) throw new Error('Invalid Index!')
+    if (toIndex < 0 || toIndex >= this.props.value.value.length) throw new Error('Invalid Index!')
 
-    const newValue = [...this.props.value]
+    const newValue = [...this.props.value.value]
     const moveValue = newValue.splice(index, 1)
     newValue.splice(toIndex, 0, ...moveValue)
 
-    this.props.onValueChange(newValue, this.props.changeKey)
+    this.props.onValueChange({value: newValue, isValid: true}, this.props.changeKey)
   }
 
   private handleInsertFieldAt = (index: number) => {
@@ -212,15 +220,15 @@ export class ListFieldEditComponent extends React.PureComponent<
             }
           />
         </FieldComponent>
-        {this.props.value.length > 0 && (
+        {this.props.value.value.length > 0 && (
           <FieldInset>
-            {this.props.value.map((value, index) => {
+            {this.props.value.value.map((value, index) => {
               return (
                 <ListFieldItem
                   key={value.id}
                   index={index}
                   isFirst={index === 0}
-                  isLast={index === this.props.value.length - 1}
+                  isLast={index === this.props.value.value.length - 1}
                   disabled={this.props.disabled}
                   depth={this.props.depth + 1}
                   label={
@@ -238,7 +246,7 @@ export class ListFieldEditComponent extends React.PureComponent<
                     depth: this.props.depth + 1,
                     isWrapped: true,
                     disabled: this.props.disabled,
-                    value: this.props.value[index].value,
+                    value: value.value,
                     onValueChange: this.handleValueChange,
                     onEditRecord: this.props.onEditRecord,
                     onSelectRecord: this.props.onSelectRecord,
@@ -264,19 +272,20 @@ export interface ListFieldOptions {
 export interface ListFieldConstructorOptions {
   readonly label?: string
   readonly description?: string
-  readonly field: Field
+  readonly field: AnyField
 }
-export type ListFieldValue = {id: string; value: any}[]
+
+export type ListFieldValue = FieldValue<{id: string; value: AnyFieldValue}[], string[]>
 
 export class ListField implements Field<ListFieldValue> {
   public readonly label?: string
   public readonly description?: string
 
-  public readonly defaultValue: ListFieldValue = []
+  public readonly defaultValue: ListFieldValue = {value: [], isValid: true}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public readonly field: Field
+  public readonly field: AnyField
 
   public constructor(opts: ListFieldConstructorOptions) {
     this.label = opts.label
@@ -284,7 +293,7 @@ export class ListField implements Field<ListFieldValue> {
     this.field = opts.field
   }
 
-  public initialize(recursions: ReadonlyMap<string, Field>) {
+  public initialize(recursions: ReadonlyMap<string, AnyField>) {
     this.field.initialize(recursions)
     return this
   }
@@ -293,7 +302,7 @@ export class ListField implements Field<ListFieldValue> {
     return ''
   }
 
-  public renderEditComponent(props: EditRenderProps) {
+  public renderEditComponent(props: EditRenderProps<ListFieldValue>) {
     return (
       <ListFieldEditComponent
         label={this.label}
@@ -305,15 +314,18 @@ export class ListField implements Field<ListFieldValue> {
   }
 
   public transformRawValue(value: any): ListFieldValue {
-    return Object.entries(value).map(([key, value]) => ({
-      id: shortid.generate(),
-      key,
-      value: this.field.transformRawValue(value)
-    }))
+    return {
+      value: Object.entries(value).map(([key, value]) => ({
+        id: shortid.generate(),
+        key,
+        value: this.field.transformRawValue(value)
+      })),
+      isValid: true
+    }
   }
 
   public transformValueToExpression(value: ListFieldValue): DataExpression {
-    return d.list(...value.map(({value}) => this.field.transformValueToExpression(value)))
+    return d.list(...value.value.map(({value}) => this.field.transformValueToExpression(value)))
   }
 
   public isValidValue() {
@@ -342,22 +354,22 @@ export class ListField implements Field<ListFieldValue> {
     if (!this.field.onSave) return value
     let newValue = []
 
-    for (const {id, value: mapValue} of value) {
+    for (const {id, value: mapValue} of value.value) {
       newValue.push({id, value: await this.field.onSave(mapValue, context)})
     }
 
-    return newValue
+    return {value: newValue, isValid: true}
   }
 
   public async onDelete(value: ListFieldValue, context: DeleteContext): Promise<ListFieldValue> {
     if (!this.field.onDelete) return value
     let newValue = []
 
-    for (const {id, value: mapValue} of value) {
+    for (const {id, value: mapValue} of value.value) {
       newValue.push({id, value: await this.field.onDelete(mapValue, context)})
     }
 
-    return newValue
+    return {value: newValue, isValid: true}
   }
 
   public static type = 'list'

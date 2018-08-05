@@ -15,28 +15,28 @@ import {WorkerContext} from '../context/worker'
 import {Config} from '../context/config'
 
 export interface SaveContext {
-  model: Ref
-  id: Ref | undefined
-  config: Config
-  workerContext: WorkerContext
-  sessionContext: SessionContext
+  readonly model: Ref
+  readonly id: Ref | undefined
+  readonly config: Config
+  readonly workerContext: WorkerContext
+  readonly sessionContext: SessionContext
 }
 
 export interface DeleteContext {
-  model: Ref
-  id: Ref | undefined
-  config: Config
-  workerContext: WorkerContext
-  sessionContext: SessionContext
+  readonly model: Ref
+  readonly id: Ref | undefined
+  readonly config: Config
+  readonly workerContext: WorkerContext
+  readonly sessionContext: SessionContext
 }
 
-export type CreateFieldFunction = (model: Model, fieldOptions?: TypedFieldOptions) => Field
+export type CreateFieldFunction = (model: Model, fieldOptions?: TypedFieldOptions) => AnyField
 
-export interface ListRenderProps<V = any> {
+export interface ListRenderProps<V extends AnyFieldValue> {
   readonly value: V
 }
 
-export interface EditRenderProps<V = any> {
+export interface EditRenderProps<V extends AnyFieldValue> {
   readonly label?: string
   readonly description?: string
 
@@ -50,28 +50,38 @@ export interface EditRenderProps<V = any> {
   onValueChange(value: V, key: any): void
   onEditRecord(model: Ref, id?: Ref): Promise<ModelRecord | undefined>
   onSelectRecord(model: Ref): Promise<ModelRecord | undefined>
-  onEditField(field: Field, value?: any): Promise<{value: any} | undefined>
+  onEditField(field: AnyField, value?: AnyFieldValue): Promise<{value: AnyFieldValue} | undefined>
 }
 
-export interface ListComponentRenderProps<F extends Field = Field, V = any>
+export interface ListComponentRenderProps<F extends AnyField, V extends AnyFieldValue>
   extends ListRenderProps<V> {
   readonly field: F
 }
 
-export interface EditComponentRenderProps<F extends Field = Field, V = any>
+export interface EditComponentRenderProps<F extends AnyField, V extends AnyFieldValue>
   extends EditRenderProps<V> {
   readonly field: F
 }
 
-export interface Field<V = any> {
+export interface FieldValue<V, E> {
+  readonly value: V
+  readonly error?: E
+  readonly isValid: boolean
+}
+
+export type AnyFieldValue = FieldValue<any, any>
+export type AnyField = Field<AnyFieldValue>
+
+export interface Field<V extends AnyFieldValue> {
   readonly label?: string
   readonly description?: string
 
   readonly defaultValue: V
+
   readonly sortConfigurations: SortConfiguration[]
   readonly filterConfigurations: FilterConfiguration[]
 
-  initialize(recursions: ReadonlyMap<string, Field>): Field
+  initialize(recursions: ReadonlyMap<string, AnyField>): AnyField
   fieldOptions(): TypedFieldOptions
 
   renderListComponent(props: ListRenderProps<V>): React.ReactNode
@@ -80,26 +90,25 @@ export interface Field<V = any> {
   transformRawValue(value: unknown): V
   transformValueToExpression(value: V): DataExpression
 
-  isValidValue(value: V): string[] | null
-
-  traverse(keyPath: KeyPath): Field | undefined
+  traverse(keyPath: KeyPath): AnyField | undefined
   valuePathForKeyPath(keyPath: KeyPath): ValuePath
 
   onSave?(value: V, context: SaveContext): Promise<V>
   onDelete?(value: V, context: DeleteContext): Promise<V>
 }
 
-export interface FieldConstructor<V = any, O extends FieldOptions = FieldOptions> {
+export interface FieldConstructor<V extends AnyFieldValue, O extends FieldOptions> {
   readonly type: string
 
   canInferFromModel?(model: Model): boolean
   create(model: Model, options: O | undefined, createField: CreateFieldFunction): Readonly<Field<V>>
 }
 
-export type FieldRegistry = ReadonlyMap<string, FieldConstructor>
+export type AnyFieldConstructor = FieldConstructor<AnyFieldValue, FieldOptions>
+export type FieldRegistry = ReadonlyMap<string, AnyFieldConstructor>
 
-export function createFieldRegistry(...fieldClasses: FieldConstructor[]): FieldRegistry {
-  return new Map(fieldClasses.map(field => [field.type, field] as [string, FieldConstructor]))
+export function createFieldRegistry(...fieldClasses: AnyFieldConstructor[]): FieldRegistry {
+  return new Map(fieldClasses.map(field => [field.type, field] as [string, AnyFieldConstructor]))
 }
 
 export function mergeFieldRegistries(...registries: FieldRegistry[]): FieldRegistry {
@@ -107,7 +116,7 @@ export function mergeFieldRegistries(...registries: FieldRegistry[]): FieldRegis
     (acc, registry) => {
       return acc.concat(Array.from(registry.values()))
     },
-    [] as FieldConstructor[]
+    [] as AnyFieldConstructor[]
   )
 
   return createFieldRegistry(...values)

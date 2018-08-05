@@ -8,7 +8,13 @@ import {
   TypedFieldOptions
 } from '@karma.run/editor-common'
 
-import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
+import {
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps,
+  FieldValue
+} from '../api/field'
 
 import {CheckboxInput} from '../ui/input'
 import {CardSection} from '../ui/card'
@@ -16,10 +22,10 @@ import {FieldComponent, FieldLabel} from '../ui/field'
 import {ErrorField} from './error'
 
 export class BoolFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<BoolField, boolean>
+  EditComponentRenderProps<BoolField, BoolFieldValue>
 > {
   private handleChange = (value: boolean) => {
-    this.props.onValueChange(value, this.props.changeKey)
+    this.props.onValueChange({value, isValid: true}, this.props.changeKey)
   }
 
   public render() {
@@ -35,7 +41,7 @@ export class BoolFieldEditComponent extends React.PureComponent<
         )}
         <CheckboxInput
           onChange={this.handleChange}
-          value={this.props.value}
+          value={this.props.value.value}
           disabled={this.props.disabled}
         />
       </FieldComponent>
@@ -51,11 +57,17 @@ export interface BoolFieldOptions {
   readonly multiline?: boolean
 }
 
-export class BoolField implements Field<boolean> {
+export type BoolFieldValue = FieldValue<boolean, never>
+
+export class BoolField implements Field<BoolFieldValue> {
   public readonly label?: string
   public readonly description?: string
 
-  public readonly defaultValue: boolean = false
+  public readonly defaultValue: BoolFieldValue = {
+    value: false,
+    isValid: true
+  }
+
   public readonly sortConfigurations: SortConfiguration[]
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -69,11 +81,11 @@ export class BoolField implements Field<boolean> {
     return this
   }
 
-  public renderListComponent(props: ListRenderProps<boolean>) {
+  public renderListComponent(props: ListRenderProps<BoolFieldValue>) {
     return <CardSection>{props.value}</CardSection>
   }
 
-  public renderEditComponent(props: EditRenderProps<boolean>) {
+  public renderEditComponent(props: EditRenderProps<BoolFieldValue>) {
     return (
       <BoolFieldEditComponent
         label={this.label}
@@ -88,8 +100,8 @@ export class BoolField implements Field<boolean> {
     return value
   }
 
-  public transformValueToExpression(value: boolean) {
-    return e.bool(value)
+  public transformValueToExpression(fieldValue: BoolFieldValue) {
+    return e.bool(fieldValue.value)
   }
 
   public isValidValue() {

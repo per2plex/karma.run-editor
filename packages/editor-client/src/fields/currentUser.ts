@@ -9,10 +9,12 @@ import {
 } from '@karma.run/editor-common'
 
 import {ErrorField} from './error'
-import {Field} from '../api/field'
+import {Field, FieldValue} from '../api/field'
 
-export class CurrentUserField implements Field<null> {
-  public readonly defaultValue: null = null
+export type CurrentUserFieldValue = FieldValue<undefined, never>
+
+export class CurrentUserField implements Field<CurrentUserFieldValue> {
+  public readonly defaultValue: CurrentUserFieldValue = {value: undefined, isValid: true}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -29,7 +31,7 @@ export class CurrentUserField implements Field<null> {
   }
 
   public transformRawValue() {
-    return null
+    return this.defaultValue
   }
 
   public transformValueToExpression() {

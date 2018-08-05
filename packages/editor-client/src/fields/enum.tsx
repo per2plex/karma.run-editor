@@ -12,7 +12,13 @@ import {
 
 import {ErrorField} from './error'
 
-import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
+import {
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps,
+  FieldValue
+} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {CardSection} from '../ui/card'
@@ -43,7 +49,7 @@ export class EnumFieldEditComponent extends React.PureComponent<
           />
         )}
         <Select
-          value={this.props.value}
+          value={this.props.value.value}
           type={SelectType.Transparent}
           options={this.getFieldOptions(this.props.field.options)}
           onChange={this.handleChange}
@@ -55,7 +61,7 @@ export class EnumFieldEditComponent extends React.PureComponent<
   }
 }
 
-export type EnumFieldValue = string | undefined
+export type EnumFieldValue = FieldValue<string | undefined, string>
 export type EnumFieldOption = [string, string]
 
 export interface EnumFieldOptions {
@@ -75,7 +81,7 @@ export class EnumField implements Field<EnumFieldValue> {
   public readonly description?: string
   public readonly options: EnumFieldOption[]
 
-  public readonly defaultValue: EnumFieldValue = undefined
+  public readonly defaultValue: EnumFieldValue = {value: undefined, isValid: false}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -108,8 +114,9 @@ export class EnumField implements Field<EnumFieldValue> {
     return value
   }
 
-  public transformValueToExpression(value: string) {
-    return e.symbol(value)
+  public transformValueToExpression(value: EnumFieldValue) {
+    if (!value.value) throw new Error('Value is invalid.')
+    return e.symbol(value.value)
   }
 
   public isValidValue(_value: string) {
