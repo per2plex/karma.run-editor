@@ -167,13 +167,7 @@
     "@types/slate" "*"
     immutable "^3.8.2"
 
-"@types/slate@*":
-  version "0.33.1"
-  resolved "https://registry.yarnpkg.com/@types/slate/-/slate-0.33.1.tgz#985de7705f4e6f17b416410812b35236c92d47b5"
-  dependencies:
-    immutable "^3.8.2"
-
-"@types/slate@^0.33.1":
+"@types/slate@*", "@types/slate@^0.33.1":
   version "0.33.2"
   resolved "https://registry.yarnpkg.com/@types/slate/-/slate-0.33.2.tgz#717e2f0e9bdf6bee099518a2d2b24c5e90c7323f"
   dependencies:
@@ -4023,9 +4017,9 @@ typedarray@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
-typescript@^3.0.0-rc:
-  version "3.0.0-rc"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.0.0-rc.tgz#13553808426d393d3f92c054f4fa6f24589549c1"
+typescript@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.0.1.tgz#43738f29585d3a87575520a4b93ab6026ef11fdb"
 
 typestyle@^2.0.1:
   version "2.0.1"

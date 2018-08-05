@@ -1,4 +1,4 @@
-import {cssRule} from 'typestyle'
+import {cssRule, forceRenderStyles} from 'typestyle'
 import {Color, FontFamily, FontWeight} from './style'
 
 cssRule('html', {
@@ -77,3 +77,6 @@ cssRule('h6', {
   fontWeight: 500,
   fontSize: '1em'
 })
+
+// To prevent FOUC on initial render
+forceRenderStyles()

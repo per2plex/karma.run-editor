@@ -2,12 +2,15 @@
 
 A collection of tools for karma.run services.
 
-## karma.data
-
-### [Editor](packages/editor)
+## [@karma.run/editor](packages/editor)
 
 Administrative editor for karma.data.
 
-## [SDK](packages/sdk)
+**Official Plugins**
+
+- [@karma.run/editor-plugin-slate](packages/editor-plugin-slate)
+- [@karma.run/editor-plugin-media](packages/editor-plugin-media)
+
+## [@karma.run/sdk](packages/sdk)
 
 JS SDK for karma.data.

@@ -1,7 +1,7 @@
 import React from 'react'
 import {createContextHOC} from './helper'
 
-export type LocaleMessageMap = typeof import('../locale/en-US.json')
+export type LocaleMessageMap = typeof import('../locale/en-US').default
 export type LocaleMessageKey = keyof LocaleMessageMap
 
 export type Locale = 'en-US'
@@ -10,7 +10,7 @@ export const defaultLocale: Locale = 'en-US'
 export async function loadLocaleMessageMap(locale: Locale): Promise<LocaleMessageMap> {
   switch (locale) {
     case 'en-US':
-      return (await import('../locale/en-US.json')).default
+      return (await import('../locale/en-US')).default
   }
 }
 

@@ -1,4 +1,4 @@
-# karma.data / SDK
+# @karma.run/sdk
 
 [![License][license_shield]][license_link]
 [![NPM Package][npm_shield]][npm_link]

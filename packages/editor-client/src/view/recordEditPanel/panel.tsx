@@ -159,7 +159,7 @@ export class RecordEditPanel extends React.PureComponent<
     }
   }
 
-  private handleOpenJSONEditor = () => {}
+  // private handleOpenJSONEditor = () => {}
 
   public componentDidMount() {
     if (this.props.recordID) this.loadRecord(this.props.recordID)
@@ -204,19 +204,24 @@ export class RecordEditPanel extends React.PureComponent<
     }
   )
 
-  private getDeveloperButtons = memoizeOne((isDeveloper: boolean, localeContext: LocaleContext) => {
-    if (!isDeveloper) return undefined
-    const _ = localeContext.get
+  private getDeveloperButtons = memoizeOne(
+    (_isDeveloper: boolean, _localeContext: LocaleContext) => {
+      return null
 
-    return (
-      <Button
-        label={_('expressionEditor')}
-        icon={IconName.CodeView}
-        type={ButtonType.Icon}
-        onTrigger={this.handleOpenJSONEditor}
-      />
-    )
-  })
+      // TODO: Expression Editor
+      // if (!isDeveloper) return undefined
+      // const _ = localeContext.get
+
+      // return (
+      //   <Button
+      //     label={_('expressionEditor')}
+      //     icon={IconName.CodeView}
+      //     type={ButtonType.Icon}
+      //     onTrigger={this.handleOpenJSONEditor}
+      //   />
+      // )
+    }
+  )
 
   public render() {
     const _ = this.props.localeContext.get
