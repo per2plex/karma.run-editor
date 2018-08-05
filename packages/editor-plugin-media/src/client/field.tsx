@@ -32,7 +32,8 @@ import {
   Field,
   EditComponentRenderProps,
   FieldComponent,
-  FieldLabel
+  FieldLabel,
+  FieldValue
 } from '@karma.run/editor-client'
 
 import {data as d, DataExpression} from '@karma.run/sdk'
@@ -40,15 +41,15 @@ import {UploadResponse, MediaType} from '../common/interface'
 import {Media, thumbnailURL, unserializeMedia} from '../common/editor'
 import {name} from '../common/version'
 import {uploadMedia, commitMedia, copyMedia, deleteMedia} from './api'
-import {CloudinaryResponse} from '@karma.run/editor-plugin-media/src/common/backend'
+import {CloudinaryResponse} from '../common/backend'
 
 export function mediaAPIPath(basePath: string) {
   return `${basePath}/api/plugin/${name}`
 }
 
 export function thumbnailURLForValue(basePath: string, value: MediaFieldValue) {
-  const uploadedMedia = value.uploadedMedia
-  const media = value.media
+  const uploadedMedia = value.value.uploadedMedia
+  const media = value.value.media
 
   if (uploadedMedia) {
     if (uploadedMedia.mediaType !== MediaType.Image) return null
@@ -67,8 +68,8 @@ export function thumbnailURLForValue(basePath: string, value: MediaFieldValue) {
 }
 
 export function extensionForValue(value: MediaFieldValue) {
-  const uploadedMedia = value.uploadedMedia
-  const media = value.media
+  const uploadedMedia = value.value.uploadedMedia
+  const media = value.value.media
 
   if (uploadedMedia) return uploadedMedia.extension
   if (media) return media.extension
@@ -107,7 +108,10 @@ export class MediaFieldEditComponent extends React.PureComponent<
         }
       )
 
-      this.props.onValueChange({...this.props.value, uploadedMedia: response}, this.props.changeKey)
+      this.props.onValueChange(
+        {value: {...this.props.value.value, uploadedMedia: response}, isValid: true},
+        this.props.changeKey
+      )
     } catch (err) {
       // TODO: Handle error
       console.error(err)
@@ -123,16 +127,16 @@ export class MediaFieldEditComponent extends React.PureComponent<
 
     if (this.state.isUploading) {
       content = `${this.state.progress * 100}%`
-    } else if (this.props.value.media || this.props.value.uploadedMedia) {
+    } else if (this.props.value.value.media || this.props.value.value.uploadedMedia) {
       let name: string
       let url: string
 
-      if (this.props.value.uploadedMedia) {
-        name = `${this.props.value.uploadedMedia.filename}`
-        url = this.props.value.uploadedMedia.url
+      if (this.props.value.value.uploadedMedia) {
+        name = `${this.props.value.value.uploadedMedia.filename}`
+        url = this.props.value.value.uploadedMedia.url
       } else {
-        name = `${this.props.value.media!.filename}`
-        url = this.props.value.media!.url
+        name = `${this.props.value.value.media!.filename}`
+        url = this.props.value.value.media!.url
       }
 
       const labelElement = (
@@ -213,16 +217,19 @@ export interface MediaFieldOptions {
   readonly description?: string
 }
 
-export interface MediaFieldValue {
-  media?: Media
-  uploadedMedia?: UploadResponse
-}
+export type MediaFieldValue = FieldValue<
+  {
+    media?: Media
+    uploadedMedia?: UploadResponse
+  },
+  string
+>
 
 export class MediaField implements Field<MediaFieldValue> {
   public readonly label?: string
   public readonly description?: string
 
-  public readonly defaultValue: MediaFieldValue = {}
+  public readonly defaultValue: MediaFieldValue = {value: {}, isValid: true}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -252,7 +259,7 @@ export class MediaField implements Field<MediaFieldValue> {
   }
 
   public transformRawValue(value: any): MediaFieldValue {
-    return {media: unserializeMedia(value)}
+    return {value: {media: unserializeMedia(value)}, isValid: true}
   }
 
   private mediaTypeExpressionForMedia(media: Media): DataExpression {
@@ -311,7 +318,7 @@ export class MediaField implements Field<MediaFieldValue> {
   }
 
   public transformValueToExpression(value: MediaFieldValue): DataExpression {
-    const media = value.media
+    const media = value.value.media
     if (!media) return d.null()
 
     return d.struct({
@@ -351,7 +358,7 @@ export class MediaField implements Field<MediaFieldValue> {
   }
 
   public async onSave(value: MediaFieldValue, context: SaveContext): Promise<MediaFieldValue> {
-    const {media, uploadedMedia} = value
+    const {media, uploadedMedia} = value.value
     const apiPath = mediaAPIPath(context.config.basePath)
     const signature = context.sessionContext.session!.signature
     const isNew = context.id == undefined
@@ -364,23 +371,23 @@ export class MediaField implements Field<MediaFieldValue> {
         signature
       )
 
-      return {media: response}
+      return {value: {media: response}, isValid: true}
     } else if (isNew && media) {
       const response = await copyMedia(apiPath, media.id, signature)
-      return {media: {...media, ...response}}
+      return {value: {media: {...media, ...response}}, isValid: true}
     }
 
-    return {media}
+    return {value: {media}, isValid: true}
   }
 
   public async onDelete(value: MediaFieldValue, context: DeleteContext): Promise<MediaFieldValue> {
-    const {media} = value
+    const {media} = value.value
     const apiPath = mediaAPIPath(context.config.basePath)
     const signature = context.sessionContext.session!.signature
 
     if (media) await deleteMedia(apiPath, media.id, signature)
 
-    return {}
+    return this.defaultValue
   }
 
   public static type = 'media'

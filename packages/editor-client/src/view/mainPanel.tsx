@@ -21,7 +21,7 @@ import {
   EntryDeleteLocation
 } from '../context/location'
 
-import {Field} from '../api/field'
+import {AnyField} from '../api/field'
 import {StackView} from '../ui'
 
 export const enum PanelType {
@@ -116,13 +116,13 @@ export function DeletePanelContext(
 
 export interface FieldPanelContext extends BasePanelContext {
   type: PanelType.Field
-  field: Field
+  field: AnyField
   value?: any
   result: Deferred<any>
 }
 
 export function FieldPanelContext(
-  field: Field,
+  field: AnyField,
   value?: any,
   id: string = shortid.generate()
 ): FieldPanelContext {
@@ -345,7 +345,7 @@ export class MainPanel extends React.Component<MainPanelProps, MainPanelState> {
     }
   }
 
-  private handleFieldEdit = async (field: Field, value?: any) => {
+  private handleFieldEdit = async (field: AnyField, value?: any) => {
     const context = FieldPanelContext(field, value)
     this.pushPanelContext(context)
 

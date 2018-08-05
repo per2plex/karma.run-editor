@@ -9,10 +9,12 @@ import {
 } from '@karma.run/editor-common'
 
 import {ErrorField} from './error'
-import {Field} from '../api/field'
+import {Field, FieldValue} from '../api/field'
 
-export class NullField implements Field<null> {
-  public readonly defaultValue: null = null
+export type NullFieldValue = FieldValue<null, never>
+
+export class NullField implements Field<NullFieldValue> {
+  public readonly defaultValue: NullFieldValue = {value: null, isValid: true}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -28,8 +30,8 @@ export class NullField implements Field<null> {
     return null
   }
 
-  public transformRawValue() {
-    return null
+  public transformRawValue(): NullFieldValue {
+    return {value: null, isValid: true}
   }
 
   public transformValueToExpression() {

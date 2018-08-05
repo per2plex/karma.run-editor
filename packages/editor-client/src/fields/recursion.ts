@@ -1,5 +1,3 @@
-import {expression as e} from '@karma.run/sdk'
-
 import {
   Model,
   KeyPath,
@@ -19,11 +17,13 @@ import {
   CreateFieldFunction,
   ListRenderProps,
   SaveContext,
-  DeleteContext
+  DeleteContext,
+  AnyField,
+  AnyFieldValue
 } from '../api/field'
 
 export interface RecursionContext {
-  readonly recursions?: {[key: string]: Field}
+  readonly recursions?: {[key: string]: AnyField}
 }
 
 export interface RecursiveFieldOptions extends FieldOptions {
@@ -32,13 +32,13 @@ export interface RecursiveFieldOptions extends FieldOptions {
 
 export interface RecursiveFieldConstructorOptions {
   readonly topRecursionLabel: string
-  readonly fields: ReadonlyMap<string, Field>
+  readonly fields: ReadonlyMap<string, AnyField>
 }
 
 export class RecursiveField implements Field<any> {
-  public readonly topField: Field
+  public readonly topField: AnyField
   public readonly topRecursionLabel: string
-  public readonly fields: ReadonlyMap<string, Field>
+  public readonly fields: ReadonlyMap<string, AnyField>
 
   public defaultValue: any
   public readonly sortConfigurations: SortConfiguration[] = []
@@ -53,7 +53,7 @@ export class RecursiveField implements Field<any> {
     this.fields = options.fields
   }
 
-  public initialize(recursions: ReadonlyMap<string, Field>) {
+  public initialize(recursions: ReadonlyMap<string, AnyField>) {
     this.fields.forEach(field => field.initialize(new Map([...recursions, ...this.fields])))
     this.defaultValue = this.topField.defaultValue
 
@@ -74,10 +74,6 @@ export class RecursiveField implements Field<any> {
 
   public transformValueToExpression(value: any) {
     return this.topField.transformValueToExpression(value)
-  }
-
-  public isValidValue(value: any) {
-    return this.topField.isValidValue(value)
   }
 
   public fieldOptions(): RecursiveFieldOptions & TypedFieldOptions {
@@ -138,7 +134,10 @@ export class RecursiveField implements Field<any> {
       fields: new Map(
         Object.entries(model.models).map(
           ([recursionKey, model]) =>
-            [recursionKey, createField(model, opts && opts.fields[recursionKey])] as [string, Field]
+            [recursionKey, createField(model, opts && opts.fields[recursionKey])] as [
+              string,
+              AnyField
+            ]
         )
       )
     })
@@ -151,12 +150,12 @@ export interface RecursionFieldOptions extends FieldOptions {
 
 export interface RecursionFieldConstructorOptions {
   readonly recursionLabel: string
-  readonly field: Field
+  readonly field: AnyField
 }
 
-export class RecursionField implements Field<any> {
+export class RecursionField implements Field<AnyFieldValue> {
   public readonly recursionLabel: string
-  public readonly field: Field
+  public readonly field: AnyField
 
   public defaultValue: any
   public readonly sortConfigurations: SortConfiguration[] = []
@@ -167,18 +166,18 @@ export class RecursionField implements Field<any> {
     this.field = options.field
   }
 
-  public initialize(recursions: ReadonlyMap<string, Field>) {
+  public initialize(recursions: ReadonlyMap<string, AnyField>) {
     this.field.initialize(new Map([...recursions, [this.recursionLabel, this.field]]))
     this.defaultValue = this.field.defaultValue
 
     return this
   }
 
-  public renderListComponent(props: ListRenderProps<any>) {
+  public renderListComponent(props: ListRenderProps<AnyFieldValue>) {
     return this.field.renderListComponent(props)
   }
 
-  public renderEditComponent(props: EditRenderProps<string>) {
+  public renderEditComponent(props: EditRenderProps<AnyFieldValue>) {
     return this.field.renderEditComponent(props)
   }
 
@@ -186,12 +185,8 @@ export class RecursionField implements Field<any> {
     return this.field.transformRawValue(value)
   }
 
-  public transformValueToExpression(value: string) {
+  public transformValueToExpression(value: AnyFieldValue) {
     return this.field.transformValueToExpression(value)
-  }
-
-  public isValidValue(value: string) {
-    return this.field.isValidValue(value)
   }
 
   public fieldOptions(): RecursionFieldOptions & TypedFieldOptions {
@@ -267,7 +262,7 @@ export class RecurseField implements Field<any> {
   public readonly label?: string
   public readonly description?: string
 
-  public defaultValue: any
+  public defaultValue!: AnyFieldValue
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -277,9 +272,9 @@ export class RecurseField implements Field<any> {
     this.recursionLabel = opts.recursionLabel
   }
 
-  private field?: Field
+  private field?: AnyField
 
-  public initialize(recursions: ReadonlyMap<string, Field>) {
+  public initialize(recursions: ReadonlyMap<string, AnyField>) {
     const field = recursions.get(this.recursionLabel)!
 
     if (!field) {
@@ -312,18 +307,13 @@ export class RecurseField implements Field<any> {
   }
 
   public transformRawValue(value: any) {
-    if (!this.field) return null
+    if (!this.field) throw new Error(`Couldn't find recursion for label: ${this.recursionLabel}`)
     return this.field.transformRawValue(value)
   }
 
-  public transformValueToExpression(value: string) {
-    if (!this.field) return e.null()
+  public transformValueToExpression(value: AnyFieldValue) {
+    if (!this.field) throw new Error(`Couldn't find recursion for label: ${this.recursionLabel}`)
     return this.field.transformValueToExpression(value)
-  }
-
-  public isValidValue(value: string) {
-    if (!this.field) return []
-    return this.field.isValidValue(value)
   }
 
   public fieldOptions(): RecurseFieldOptions & TypedFieldOptions {

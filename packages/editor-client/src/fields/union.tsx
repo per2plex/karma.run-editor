@@ -8,7 +8,10 @@ import {
   EditRenderProps,
   CreateFieldFunction,
   SaveContext,
-  DeleteContext
+  DeleteContext,
+  FieldValue,
+  AnyField,
+  AnyFieldValue
 } from '../api/field'
 
 import {
@@ -29,7 +32,7 @@ import {ErrorField} from './error'
 import {FieldWrapper, FieldComponent, FieldLabel, FieldInset} from '../ui/field'
 import {Select, SelectType} from '../ui/select'
 
-export type UnionFieldChildTuple = [string, string, Field]
+export type UnionFieldChildTuple = [string, string, AnyField]
 export type UnionFieldOptionsTuple = [string, string, TypedFieldOptions]
 
 export class UnionFieldEditComponent extends React.PureComponent<
@@ -39,24 +42,36 @@ export class UnionFieldEditComponent extends React.PureComponent<
     const value = this.props.value
 
     if (!selectedKey) {
-      return this.props.onValueChange({selectedKey, values: value.values}, this.props.changeKey)
+      return this.props.onValueChange(
+        {value: {selectedKey, values: value.value.values}, isValid: true},
+        this.props.changeKey
+      )
     }
 
-    let selectedValue = value.values[selectedKey]
+    let selectedValue = value.value.values[selectedKey]
     if (!selectedValue) selectedValue = this.props.field.fieldForKey(selectedKey).defaultValue
 
     this.props.onValueChange(
-      {selectedKey, values: {...value.values, [selectedKey]: selectedValue}},
+      {
+        value: {selectedKey, values: {...value.value.values, [selectedKey]: selectedValue}},
+        isValid: true
+      },
       this.props.changeKey
     )
   }
 
-  private handleValueChange = (value: any, key: string | undefined) => {
+  private handleValueChange = (value: AnyFieldValue, key: string | undefined) => {
     if (key == undefined) {
       throw new Error('Child field did not call onValueChange with changeKey!')
     }
 
-    this.props.onValueChange({...this.props.value, values: {[key]: value}}, this.props.changeKey)
+    this.props.onValueChange(
+      {
+        value: {...this.props.value.value, values: {...value.value.values, [key]: value}},
+        isValid: true
+      },
+      this.props.changeKey
+    )
   }
 
   private selectOptions = memoizeOne((field: UnionField) =>
@@ -64,8 +79,8 @@ export class UnionFieldEditComponent extends React.PureComponent<
   )
 
   public render() {
-    const field = this.props.value.selectedKey
-      ? this.props.field.fieldMap.get(this.props.value.selectedKey)
+    const field = this.props.value.value.selectedKey
+      ? this.props.field.fieldMap.get(this.props.value.value.selectedKey)
       : undefined
 
     return (
@@ -78,7 +93,7 @@ export class UnionFieldEditComponent extends React.PureComponent<
             index={this.props.index || 0}
           />
           <Select
-            value={this.props.value ? this.props.value.selectedKey : undefined}
+            value={this.props.value ? this.props.value.value.selectedKey : undefined}
             type={SelectType.Transparent}
             options={this.selectOptions(this.props.field)}
             onChange={this.handleSelectChange}
@@ -92,12 +107,12 @@ export class UnionFieldEditComponent extends React.PureComponent<
               depth: this.props.depth + 1,
               isWrapped: true,
               disabled: this.props.disabled,
-              value: this.props.value.values[this.props.value.selectedKey!],
+              value: this.props.value.value.values[this.props.value.value.selectedKey!],
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
               onSelectRecord: this.props.onSelectRecord,
               onEditField: this.props.onEditField,
-              changeKey: this.props.value!.selectedKey
+              changeKey: this.props.value!.value.selectedKey
             })}
         </FieldInset>
       </FieldWrapper>
@@ -117,15 +132,18 @@ export interface UnionFieldConstructorOptions {
   readonly fields: UnionFieldChildTuple[]
 }
 
-export type UnionFieldValue = {selectedKey?: string; values: ObjectMap<any>}
+export type UnionFieldValue = FieldValue<
+  {selectedKey?: string; values: ObjectMap<AnyFieldValue>},
+  string
+>
 
 export class UnionField implements Field<UnionFieldValue> {
   public label?: string
   public description?: string
   public fields: UnionFieldChildTuple[]
-  public fieldMap!: ReadonlyMap<string, Field>
+  public fieldMap!: ReadonlyMap<string, AnyField>
 
-  public defaultValue: UnionFieldValue = {values: {}}
+  public defaultValue: UnionFieldValue = {value: {values: {}}, isValid: true}
   public sortConfigurations: SortConfiguration[] = []
   public filterConfigurations: FilterConfiguration[] = []
 
@@ -135,9 +153,11 @@ export class UnionField implements Field<UnionFieldValue> {
     this.fields = opts.fields
   }
 
-  public initialize(recursions: ReadonlyMap<string, Field>) {
+  public initialize(recursions: ReadonlyMap<string, AnyField>) {
     this.fields.forEach(([_, __, field]) => field.initialize(recursions))
-    this.fieldMap = new Map(this.fields.map(([key, _, field]) => [key, field] as [string, Field]))
+    this.fieldMap = new Map(
+      this.fields.map(([key, _, field]) => [key, field] as [string, AnyField])
+    )
 
     return this
   }
@@ -146,7 +166,7 @@ export class UnionField implements Field<UnionFieldValue> {
     return ''
   }
 
-  public renderEditComponent(props: EditRenderProps) {
+  public renderEditComponent(props: EditRenderProps<UnionFieldValue>) {
     return (
       <UnionFieldEditComponent
         label={this.label}
@@ -157,7 +177,7 @@ export class UnionField implements Field<UnionFieldValue> {
     )
   }
 
-  public fieldForKey(key: string): Field {
+  public fieldForKey(key: string): AnyField {
     const field = this.fieldMap.get(key)
     if (!field) throw new Error(`Coulnd't find field for key: ${key}`)
     return field
@@ -167,16 +187,22 @@ export class UnionField implements Field<UnionFieldValue> {
     const key = firstKey(value)
     const unionValue = value[key]
 
-    return {selectedKey: key, values: {[key]: this.fieldForKey(key).transformRawValue(unionValue)}}
+    return {
+      value: {
+        selectedKey: key,
+        values: {[key]: this.fieldForKey(key).transformRawValue(unionValue)}
+      },
+      isValid: true
+    }
   }
 
   public transformValueToExpression(value: UnionFieldValue): DataExpression {
-    if (!value.selectedKey) return d.null()
+    if (!value.value.selectedKey) return d.null()
 
     return d.union(
-      value.selectedKey,
-      this.fieldForKey(value.selectedKey).transformValueToExpression(
-        value.values[value.selectedKey]
+      value.value.selectedKey,
+      this.fieldForKey(value.value.selectedKey).transformValueToExpression(
+        value.value.values[value.value.selectedKey]
       )
     )
   }
@@ -196,7 +222,7 @@ export class UnionField implements Field<UnionFieldValue> {
     }
   }
 
-  public traverse(keyPath: KeyPath): Field | undefined {
+  public traverse(keyPath: KeyPath): AnyField | undefined {
     if (keyPath.length === 0) return this
 
     const key = keyPath[0]
@@ -220,25 +246,41 @@ export class UnionField implements Field<UnionFieldValue> {
   }
 
   public async onSave(value: UnionFieldValue, context: SaveContext): Promise<UnionFieldValue> {
-    if (!value.selectedKey) return value
-    const field = this.fieldForKey(value.selectedKey)
+    if (!value.value.selectedKey) return value
+    const field = this.fieldForKey(value.value.selectedKey)
 
     if (!field.onSave) return value
 
     return {
-      selectedKey: value.selectedKey,
-      values: {[value.selectedKey]: await field.onSave(value.values[value.selectedKey], context)}
+      value: {
+        selectedKey: value.value.selectedKey,
+        values: {
+          [value.value.selectedKey]: await field.onSave(
+            value.value.values[value.value.selectedKey],
+            context
+          )
+        }
+      },
+      isValid: true
     }
   }
 
   public async onDelete(value: UnionFieldValue, context: DeleteContext): Promise<UnionFieldValue> {
-    if (!value.selectedKey) return value
-    const field = this.fieldForKey(value.selectedKey)
+    if (!value.value.selectedKey) return value
+    const field = this.fieldForKey(value.value.selectedKey)
 
     if (!field.onDelete) return value
     return {
-      selectedKey: value.selectedKey,
-      values: {[value.selectedKey]: await field.onDelete(value.values[value.selectedKey], context)}
+      value: {
+        selectedKey: value.value.selectedKey,
+        values: {
+          [value.value.selectedKey]: await field.onDelete(
+            value.value.values[value.value.selectedKey],
+            context
+          )
+        }
+      },
+      isValid: true
     }
   }
 

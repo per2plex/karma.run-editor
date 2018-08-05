@@ -1,3 +1,5 @@
+import {Unpromisify} from './types'
+
 export type ObjectMap<V> = {[key: string]: V}
 export type MapObjectCallbackFn<T, R> = (item: T, key: string) => R
 
@@ -26,7 +28,10 @@ export type MapObjectAsyncCallbackFn<T, R> = (item: T, key: string) => Promise<R
  * @param obj Object to iterate
  * @param callback Callback function
  */
-export async function mapObjectAsync<V, R>(obj: ObjectMap<V>, callback: MapObjectCallbackFn<V, R>) {
+export async function mapObjectAsync<V, R>(
+  obj: ObjectMap<V>,
+  callback: MapObjectCallbackFn<V, R>
+): Promise<ObjectMap<Unpromisify<R>>> {
   const entries = Object.entries(obj)
   const result = {} as {[K in keyof typeof obj]: R}
 
@@ -35,7 +40,7 @@ export async function mapObjectAsync<V, R>(obj: ObjectMap<V>, callback: MapObjec
     result[key] = value
   }
 
-  return result
+  return result as any
 }
 
 /**

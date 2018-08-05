@@ -2,7 +2,7 @@ import React from 'react'
 
 import {ClientPlugin} from '../plugin'
 import {Config, defaultConfig, ConfigContext} from '../context/config'
-import {FieldConstructor, mergeFieldRegistries, createFieldRegistry} from '../api/field'
+import {mergeFieldRegistries, createFieldRegistry, AnyFieldConstructor} from '../api/field'
 import {defaultFieldRegistry} from '../fields/defaultRegistry'
 
 export interface ConfigProviderProps {
@@ -28,7 +28,7 @@ export class ConfigProvider extends React.Component<ConfigProviderProps, Config>
 
   public componentDidMount() {
     const plugins = this.props.config.plugins || []
-    const fields: FieldConstructor[] = []
+    const fields: AnyFieldConstructor[] = []
 
     for (const plugin of plugins) {
       if (plugin.registerFields) {

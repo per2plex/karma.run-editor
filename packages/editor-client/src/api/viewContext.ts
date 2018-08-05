@@ -14,7 +14,7 @@ import {
   TypedFieldOptions
 } from '@karma.run/editor-common'
 
-import {Field, FieldRegistry} from './field'
+import {FieldRegistry, AnyField} from './field'
 import {ErrorField} from '../fields/error'
 
 export interface ViewContextConstructorOptions {
@@ -23,7 +23,7 @@ export interface ViewContextConstructorOptions {
   readonly description?: string
   readonly slug: string
   readonly color: string
-  readonly field: Field
+  readonly field: AnyField
   readonly displayKeyPaths: KeyPath[]
 }
 
@@ -33,7 +33,7 @@ export class ViewContext {
   public readonly description?: string
   public readonly slug: string
   public readonly color: string
-  public readonly field: Field
+  public readonly field: AnyField
   public readonly displayKeyPaths: KeyPath[]
 
   public readonly sortConfigurations: SortConfiguration[]
@@ -103,8 +103,8 @@ export function inferFieldFromModel(
   registry: FieldRegistry,
   ignoreTypes: string[],
   options?: TypedFieldOptions
-): Field {
-  function inferField(model: Model, opts?: TypedFieldOptions): Field {
+): AnyField {
+  function inferField(model: Model, opts?: TypedFieldOptions): AnyField {
     // Unwrap unique
     if (model.type === 'unique') {
       model = model.model

@@ -9,7 +9,13 @@ import {
   TypedFieldOptions
 } from '@karma.run/editor-common'
 
-import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
+import {
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps,
+  FieldValue
+} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {CardSection, Card, CardFooter} from '../ui/card'
@@ -40,11 +46,11 @@ export class RefFieldEditComponent extends React.PureComponent<
   public state: RefFieldEditComponentState = {}
 
   private handleEditRecord = async () => {
-    const record = await this.props.onEditRecord(this.props.field.model, this.props.value)
+    const record = await this.props.onEditRecord(this.props.field.model, this.props.value.value)
 
     if (record) {
       this.setState({record})
-      this.props.onValueChange(record.id, this.props.changeKey)
+      this.props.onValueChange({value: record.id, isValid: true}, this.props.changeKey)
     }
   }
 
@@ -53,7 +59,7 @@ export class RefFieldEditComponent extends React.PureComponent<
 
     if (record) {
       this.setState({record})
-      this.props.onValueChange(record.id, this.props.changeKey)
+      this.props.onValueChange({value: record.id, isValid: true}, this.props.changeKey)
     }
   }
 
@@ -62,7 +68,7 @@ export class RefFieldEditComponent extends React.PureComponent<
 
     if (record) {
       this.setState({record})
-      this.props.onValueChange(record.id, this.props.changeKey)
+      this.props.onValueChange({value: record.id, isValid: true}, this.props.changeKey)
     }
   }
 
@@ -78,7 +84,7 @@ export class RefFieldEditComponent extends React.PureComponent<
   }
 
   public componentDidMount() {
-    if (this.props.value) this.loadRecord(this.props.value)
+    if (this.props.value.value) this.loadRecord(this.props.value.value)
   }
 
   public render() {
@@ -247,14 +253,14 @@ export interface RefFieldConstructorOptions extends RefFieldOptions {
   readonly model: Ref
 }
 
-export type RefFieldValue = Ref | undefined
+export type RefFieldValue = FieldValue<Ref | undefined, string>
 
 export class RefField implements Field<RefFieldValue> {
   public readonly label?: string
   public readonly description?: string
   public readonly model: Ref
 
-  public readonly defaultValue: RefFieldValue = undefined
+  public readonly defaultValue: RefFieldValue = {value: undefined, isValid: true}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -291,8 +297,8 @@ export class RefField implements Field<RefFieldValue> {
   }
 
   public transformValueToExpression(value: RefFieldValue) {
-    if (!value) return d.null()
-    return d.ref(value)
+    if (!value.value) throw new Error('Invalid ref.')
+    return d.ref(value.value)
   }
 
   public isValidValue(value: RefFieldValue) {

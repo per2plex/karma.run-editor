@@ -1,8 +1,8 @@
-import {FieldConstructor} from './api/field'
+import {AnyFieldConstructor} from './api/field'
 
 export interface ClientPlugin {
   readonly name: string
   readonly version: string
 
-  registerFields?(): FieldConstructor[]
+  registerFields?(): AnyFieldConstructor[]
 }

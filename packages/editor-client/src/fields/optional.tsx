@@ -17,7 +17,10 @@ import {
   CreateFieldFunction,
   EditComponentRenderProps,
   SaveContext,
-  DeleteContext
+  DeleteContext,
+  FieldValue,
+  AnyField,
+  ListRenderProps
 } from '../api/field'
 
 import {FieldComponent, FieldLabel, FieldWrapper, FieldInset} from '../ui/field'
@@ -30,8 +33,11 @@ export class OptionalFieldEditComponent extends React.PureComponent<
   private handleIsPresentChange = (value: boolean) => {
     this.props.onValueChange(
       {
-        isPresent: value,
-        value: this.props.value.value || this.props.field.field.defaultValue
+        value: {
+          isPresent: value,
+          value: this.props.value.value || this.props.field.field.defaultValue
+        },
+        isValid: true
       },
       this.props.changeKey
     )
@@ -40,8 +46,11 @@ export class OptionalFieldEditComponent extends React.PureComponent<
   private handleValueChange = (value: any) => {
     this.props.onValueChange(
       {
-        isPresent: this.props.value.isPresent,
-        value: value
+        value: {
+          isPresent: this.props.value.value.isPresent,
+          value: value
+        },
+        isValid: true
       },
       this.props.changeKey
     )
@@ -58,21 +67,21 @@ export class OptionalFieldEditComponent extends React.PureComponent<
             index={this.props.index || 0}
             leftContent={
               <CheckboxInput
-                value={this.props.value.isPresent}
+                value={this.props.value.value.isPresent}
                 onChange={this.handleIsPresentChange}
                 disabled={this.props.disabled}
               />
             }
           />
         </FieldComponent>
-        {this.props.value.isPresent && (
+        {this.props.value.value.isPresent && (
           <FieldInset>
             {this.props.field.field.renderEditComponent({
               index: 0,
               depth: this.props.depth + 1,
               isWrapped: true,
               disabled: this.props.disabled,
-              value: this.props.value.value,
+              value: this.props.value.value.value,
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
               onSelectRecord: this.props.onSelectRecord,
@@ -85,10 +94,13 @@ export class OptionalFieldEditComponent extends React.PureComponent<
   }
 }
 
-export interface OptionalFieldValue {
-  isPresent: boolean
-  value: any
-}
+export type OptionalFieldValue = FieldValue<
+  {
+    isPresent: boolean
+    value: any
+  },
+  string
+>
 
 export interface OptionalFieldOptions {
   readonly label?: string
@@ -99,7 +111,7 @@ export interface OptionalFieldOptions {
 export interface OptionalFieldConstructorOptions {
   readonly label?: string
   readonly description?: string
-  readonly field: Field
+  readonly field: AnyField
 }
 
 export class OptionalField implements Field<OptionalFieldValue> {
@@ -107,14 +119,17 @@ export class OptionalField implements Field<OptionalFieldValue> {
   public description?: string
 
   public defaultValue: OptionalFieldValue = {
-    isPresent: false,
-    value: undefined
+    value: {
+      isPresent: false,
+      value: undefined
+    },
+    isValid: true
   }
 
   public sortConfigurations: SortConfiguration[] = []
   public filterConfigurations: FilterConfiguration[] = []
 
-  public field: Field
+  public field: AnyField
 
   public constructor(options: OptionalFieldConstructorOptions) {
     this.label = options.label
@@ -122,13 +137,13 @@ export class OptionalField implements Field<OptionalFieldValue> {
     this.field = options.field
   }
 
-  public initialize(recursions: ReadonlyMap<string, Field>) {
+  public initialize(recursions: ReadonlyMap<string, AnyField>) {
     this.field.initialize(recursions)
     return this
   }
 
-  public renderListComponent(value: OptionalFieldValue) {
-    return <CardSection>{value}</CardSection>
+  public renderListComponent(props: ListRenderProps<OptionalFieldValue>) {
+    return <CardSection>{props.value.value}</CardSection>
   }
 
   public renderEditComponent(props: EditRenderProps<OptionalFieldValue>) {
@@ -142,26 +157,30 @@ export class OptionalField implements Field<OptionalFieldValue> {
     )
   }
 
-  public transformRawValue(value: any) {
+  public transformRawValue(value: any): OptionalFieldValue {
     if (value == undefined) {
       return {
-        isPresent: false,
-        value: undefined
+        value: {
+          isPresent: false,
+          value: this.field.defaultValue
+        },
+        isValid: true
       }
     } else {
       return {
-        isPresent: true,
-        value: this.field.transformRawValue(value)
+        value: {
+          isPresent: true,
+          value: this.field.transformRawValue(value)
+        },
+        isValid: true
       }
     }
   }
 
   public transformValueToExpression(value: OptionalFieldValue) {
-    return value.isPresent ? this.field.transformValueToExpression(value.value) : e.null()
-  }
-
-  public isValidValue(value: OptionalFieldValue) {
-    return value.isPresent ? this.field.isValidValue(value) : null
+    return value.value.isPresent
+      ? this.field.transformValueToExpression(value.value.value)
+      : e.null()
   }
 
   public fieldOptions(): OptionalFieldOptions & TypedFieldOptions {
@@ -185,8 +204,14 @@ export class OptionalField implements Field<OptionalFieldValue> {
     value: OptionalFieldValue,
     context: SaveContext
   ): Promise<OptionalFieldValue> {
-    if (this.field.onSave && value.isPresent) {
-      return {isPresent: value.isPresent, value: await this.field.onSave(value.value, context)}
+    if (this.field.onSave && value.value.isPresent) {
+      return {
+        value: {
+          isPresent: value.value.isPresent,
+          value: await this.field.onSave(value.value.value, context)
+        },
+        isValid: true
+      }
     }
 
     return value
@@ -196,8 +221,14 @@ export class OptionalField implements Field<OptionalFieldValue> {
     value: OptionalFieldValue,
     context: DeleteContext
   ): Promise<OptionalFieldValue> {
-    if (this.field.onDelete && value.isPresent) {
-      return {isPresent: value.isPresent, value: await this.field.onDelete(value.value, context)}
+    if (this.field.onDelete && value.value.isPresent) {
+      return {
+        value: {
+          isPresent: value.value.isPresent,
+          value: await this.field.onDelete(value.value.value, context)
+        },
+        isValid: true
+      }
     }
 
     return value

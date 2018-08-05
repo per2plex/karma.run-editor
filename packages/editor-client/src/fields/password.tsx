@@ -14,7 +14,8 @@ import {
   EditRenderProps,
   Field,
   ListRenderProps,
-  SaveContext
+  SaveContext,
+  FieldValue
 } from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
@@ -28,8 +29,11 @@ export class PasswordFieldEditComponent extends React.PureComponent<
   private handlePasswordChange = (value: string) => {
     this.props.onValueChange(
       {
-        ...this.props.value,
-        password: value
+        value: {
+          ...this.props.value.value,
+          password: value
+        },
+        isValid: true
       },
       this.props.changeKey
     )
@@ -38,8 +42,11 @@ export class PasswordFieldEditComponent extends React.PureComponent<
   private handlePasswordConfirmChange = (value: string) => {
     this.props.onValueChange(
       {
-        ...this.props.value,
-        passwordConfirm: value
+        value: {
+          ...this.props.value.value,
+          passwordConfirm: value
+        },
+        isValid: true
       },
       this.props.changeKey
     )
@@ -61,14 +68,14 @@ export class PasswordFieldEditComponent extends React.PureComponent<
             isPassword={true}
             placeholder="New Password (Leave empty for no change)"
             onChange={this.handlePasswordChange}
-            value={this.props.value.password}
+            value={this.props.value.value.password}
             disabled={this.props.disabled}
           />
           <TextInput
             isPassword={true}
             placeholder="Confirm"
             onChange={this.handlePasswordConfirmChange}
-            value={this.props.value.passwordConfirm}
+            value={this.props.value.value.passwordConfirm}
             disabled={this.props.disabled}
           />
         </FlexList>
@@ -83,11 +90,14 @@ export interface PasswordFieldOptions {
   readonly costFactor?: number
 }
 
-export interface PasswordFieldValue {
-  hash?: string
-  password: string
-  passwordConfirm: string
-}
+export type PasswordFieldValue = FieldValue<
+  {
+    hash?: string
+    password: string
+    passwordConfirm: string
+  },
+  string
+>
 
 export class PasswordField implements Field<PasswordFieldValue> {
   public readonly label?: string
@@ -95,8 +105,11 @@ export class PasswordField implements Field<PasswordFieldValue> {
   public readonly costFactor?: number
 
   public readonly defaultValue: PasswordFieldValue = {
-    password: '',
-    passwordConfirm: ''
+    value: {
+      password: '',
+      passwordConfirm: ''
+    },
+    isValid: true
   }
 
   public readonly sortConfigurations: SortConfiguration[] = []
@@ -129,26 +142,36 @@ export class PasswordField implements Field<PasswordFieldValue> {
 
   public transformRawValue(value: any): PasswordFieldValue {
     return {
-      hash: value,
-      password: '',
-      passwordConfirm: ''
+      value: {
+        hash: value,
+        password: '',
+        passwordConfirm: ''
+      },
+      isValid: true
     }
   }
 
   public transformValueToExpression(value: PasswordFieldValue): DataExpression {
-    if (!value.hash) return e.null()
-    return e.string(value.hash)
+    if (!value.value.hash) return e.null()
+    return e.string(value.value.hash)
   }
 
   public async onSave(
     value: PasswordFieldValue,
     context: SaveContext
   ): Promise<PasswordFieldValue> {
-    if (value.password && value.passwordConfirm && value.password === value.passwordConfirm) {
+    if (
+      value.value.password &&
+      value.value.passwordConfirm &&
+      value.value.password === value.value.passwordConfirm
+    ) {
       return {
-        hash: await context.workerContext.generateHash(value.password, this.costFactor),
-        password: '',
-        passwordConfirm: ''
+        value: {
+          hash: await context.workerContext.generateHash(value.value.password, this.costFactor),
+          password: '',
+          passwordConfirm: ''
+        },
+        isValid: true
       }
     }
 
@@ -156,7 +179,7 @@ export class PasswordField implements Field<PasswordFieldValue> {
   }
 
   public isValidValue(value: PasswordFieldValue) {
-    if (!value.hash) return ['noPasswordSet']
+    if (!value.value.hash) return ['noPasswordSet']
     return null
   }
 

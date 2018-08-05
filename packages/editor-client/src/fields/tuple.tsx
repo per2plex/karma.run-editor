@@ -18,13 +18,16 @@ import {
   EditRenderProps,
   CreateFieldFunction,
   SaveContext,
-  DeleteContext
+  DeleteContext,
+  AnyFieldValue,
+  FieldValue,
+  AnyField
 } from '../api/field'
 
 import {FieldWrapper, FieldComponent, FieldLabel, FieldInset} from '../ui/field'
 import {ErrorField} from './error'
 
-export type TupleFieldChildTuple = [number, Field]
+export type TupleFieldChildTuple = [number, AnyField]
 export type TupleFieldOptionsTuple = [number, TypedFieldOptions]
 
 export class TupleFieldEditComponent extends React.PureComponent<
@@ -46,7 +49,7 @@ export class TupleFieldEditComponent extends React.PureComponent<
           depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
           isWrapped: false,
           disabled: this.props.disabled,
-          value: this.props.value[tupleIndex],
+          value: this.props.value.value[tupleIndex],
           onValueChange: this.handleValueChange,
           onEditRecord: this.props.onEditRecord,
           onSelectRecord: this.props.onSelectRecord,
@@ -89,14 +92,14 @@ export interface TupleFieldConstructorOptions {
   readonly fields: TupleFieldChildTuple[]
 }
 
-export type TupleFieldValue = any[]
+export type TupleFieldValue = FieldValue<AnyFieldValue[], string>
 
 export class TupleField implements Field<TupleFieldValue> {
   public label?: string
   public description?: string
 
   public fields: TupleFieldChildTuple[]
-  public fieldMap!: ReadonlyMap<number, Field>
+  public fieldMap!: ReadonlyMap<number, AnyField>
 
   public defaultValue!: TupleFieldValue
   public sortConfigurations!: SortConfiguration[]
@@ -108,17 +111,20 @@ export class TupleField implements Field<TupleFieldValue> {
     this.fields = opts.fields
   }
 
-  public initialize(recursions: ReadonlyMap<string, Field>) {
+  public initialize(recursions: ReadonlyMap<string, AnyField>) {
     this.fields.forEach(([_, field]) => field.initialize(recursions))
     this.fieldMap = new Map(this.fields)
 
-    this.defaultValue = this.fields.reduce(
-      (acc, [index, field]) => {
-        acc[index] = field.defaultValue
-        return acc
-      },
-      [] as any[]
-    )
+    this.defaultValue = {
+      value: this.fields.reduce(
+        (acc, [index, field]) => {
+          acc[index] = field.defaultValue
+          return acc
+        },
+        [] as any[]
+      ),
+      isValid: true
+    }
 
     this.sortConfigurations = [
       ...this.fields.reduce(
@@ -142,7 +148,7 @@ export class TupleField implements Field<TupleFieldValue> {
     return ''
   }
 
-  public renderEditComponent(props: EditRenderProps) {
+  public renderEditComponent(props: EditRenderProps<TupleFieldValue>) {
     return (
       <TupleFieldEditComponent
         label={this.label}
@@ -154,13 +160,16 @@ export class TupleField implements Field<TupleFieldValue> {
   }
 
   public transformRawValue(value: any[]): TupleFieldValue {
-    return value.map((value, index) => this.fieldMap.get(index)!.transformRawValue(value))
+    return {
+      value: value.map((value, index) => this.fieldMap.get(index)!.transformRawValue(value)),
+      isValid: true
+    }
   }
 
   public transformValueToExpression(value: TupleFieldValue) {
     const tupleValues = this.fields.reduce(
       (acc, [key, field]) => {
-        acc[key] = field.transformValueToExpression(value[key])
+        acc[key] = field.transformValueToExpression(value.value[key])
         return acc
       },
       [] as any[]
@@ -184,7 +193,7 @@ export class TupleField implements Field<TupleFieldValue> {
     }
   }
 
-  public traverse(keyPath: KeyPath): Field | undefined {
+  public traverse(keyPath: KeyPath): AnyField | undefined {
     if (keyPath.length === 0) return this
 
     const key = keyPath[0]
@@ -207,7 +216,7 @@ export class TupleField implements Field<TupleFieldValue> {
   public async onSave(value: TupleFieldValue, context: SaveContext) {
     const newValues: any[] = []
 
-    for (const [index, tupleValue] of value.entries()) {
+    for (const [index, tupleValue] of value.value.entries()) {
       const field = this.fieldMap.get(index)
 
       if (!field) throw new Error(`Couln't find field for index: ${index}`)
@@ -216,13 +225,13 @@ export class TupleField implements Field<TupleFieldValue> {
       newValues.push(await field.onSave(tupleValue, context))
     }
 
-    return newValues
+    return {value: newValues, isValid: true}
   }
 
   public async onDelete(value: TupleFieldValue, context: DeleteContext) {
     const newValues: any[] = []
 
-    for (const [index, tupleValue] of value.entries()) {
+    for (const [index, tupleValue] of value.value.entries()) {
       const field = this.fieldMap.get(index)
 
       if (!field) throw new Error(`Couln't find field for index: ${index}`)
@@ -231,7 +240,7 @@ export class TupleField implements Field<TupleFieldValue> {
       newValues.push(await field.onDelete(tupleValue, context))
     }
 
-    return newValues
+    return {value: newValues, isValid: true}
   }
 
   public static type = 'tuple'

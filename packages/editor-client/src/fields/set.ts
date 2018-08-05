@@ -7,7 +7,7 @@ import {CreateFieldFunction} from '../api/field'
 
 export class SetField extends ListField {
   public transformValueToExpression(value: ListFieldValue): DataExpression {
-    return d.set(...value.map(({value}) => this.field.transformValueToExpression(value)))
+    return d.set(...value.value.map(({value}) => this.field.transformValueToExpression(value)))
   }
 
   public fieldOptions(): ListFieldOptions & TypedFieldOptions {

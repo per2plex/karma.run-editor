@@ -1,7 +1,7 @@
 import {authenticate} from '@karma.run/sdk'
 import {ClientConfiguration} from '../interface'
 import {loadServerConfig, findConfigsIfNeededAndSetCWD} from './helper'
-import {FieldConstructor} from '@karma.run/editor-client'
+import {AnyFieldConstructor} from '@karma.run/editor-client'
 
 export interface ViewContextCommandOptions {
   serverConfigPath?: string
@@ -38,7 +38,7 @@ export default async function viewContextCommand(opts: ViewContextCommandOptions
 
   const clientConfig: ClientConfiguration = clientConfigPath ? await import(clientConfigPath) : {}
 
-  let fields: FieldConstructor[] = []
+  let fields: AnyFieldConstructor[] = []
 
   for (const plugin of clientConfig.plugins || []) {
     if (plugin.registerFields) fields.push(...plugin.registerFields())

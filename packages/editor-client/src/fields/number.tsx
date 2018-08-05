@@ -10,17 +10,23 @@ import {
 } from '@karma.run/editor-common'
 import {ErrorField} from './error'
 
-import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
+import {
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps,
+  FieldValue
+} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {NumberInput} from '../ui/input'
 import {CardSection} from '../ui/card'
 
 export class NumberFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<NumberField, string>
+  EditComponentRenderProps<NumberField, NumberFieldValue>
 > {
-  private handleChange = (value: any) => {
-    this.props.onValueChange(value, this.props.changeKey)
+  private handleChange = (value: string) => {
+    this.props.onValueChange({value: value, isValid: true}, this.props.changeKey)
   }
 
   public render() {
@@ -36,7 +42,7 @@ export class NumberFieldEditComponent extends React.PureComponent<
         )}
         <NumberInput
           onChange={this.handleChange}
-          value={this.props.value}
+          value={this.props.value.value}
           disabled={this.props.disabled}
           step={this.props.field.step}
         />
@@ -81,7 +87,9 @@ const validModelTypes: ModelType[] = [
   'uint64'
 ]
 
-export class NumberField implements Field<string> {
+export type NumberFieldValue = FieldValue<string, string[]>
+
+export class NumberField implements Field<NumberFieldValue> {
   public readonly label?: string
   public readonly description?: string
   public readonly minValue?: number
@@ -89,7 +97,7 @@ export class NumberField implements Field<string> {
   public readonly step?: number
   public readonly storageType: StorageType
 
-  public readonly defaultValue: string = ''
+  public readonly defaultValue: NumberFieldValue = {value: '', isValid: true}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -106,11 +114,11 @@ export class NumberField implements Field<string> {
     return this
   }
 
-  public renderListComponent(props: ListRenderProps<string>) {
+  public renderListComponent(props: ListRenderProps<NumberFieldValue>) {
     return <CardSection>{props.value}</CardSection>
   }
 
-  public renderEditComponent(props: EditRenderProps<string>) {
+  public renderEditComponent(props: EditRenderProps<NumberFieldValue>) {
     return (
       <NumberFieldEditComponent
         label={this.label}
@@ -125,10 +133,10 @@ export class NumberField implements Field<string> {
     return value.toString()
   }
 
-  public transformValueToExpression(value: string) {
-    const numberValue = Number(value)
+  public transformValueToExpression(value: NumberFieldValue) {
+    const numberValue = Number(value.value)
 
-    if (Number.isNaN(numberValue)) return e.null()
+    if (Number.isNaN(numberValue)) throw new Error('Value is NaN.')
 
     switch (this.storageType) {
       case StorageType.Float:

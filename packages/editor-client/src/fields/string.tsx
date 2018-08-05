@@ -11,14 +11,20 @@ import {
 } from '@karma.run/editor-common'
 import {ErrorField} from './error'
 
-import {EditComponentRenderProps, EditRenderProps, Field, ListRenderProps} from '../api/field'
+import {
+  EditComponentRenderProps,
+  EditRenderProps,
+  Field,
+  ListRenderProps,
+  FieldValue
+} from '../api/field'
 
 import {FieldComponent, FieldLabel} from '../ui/field'
 import {TextAreaInput, TextInput, TextInputType} from '../ui/input'
 import {CardSection} from '../ui/card'
 
 export class StringFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<StringField, string>
+  EditComponentRenderProps<StringField, StringFieldValue>
 > {
   private handleChange = (value: any) => {
     this.props.onValueChange(value, this.props.changeKey)
@@ -38,7 +44,7 @@ export class StringFieldEditComponent extends React.PureComponent<
         {this.props.field.multiline ? (
           <TextAreaInput
             onChange={this.handleChange}
-            value={this.props.value}
+            value={this.props.value.value}
             disabled={this.props.disabled}
             autoresize
           />
@@ -46,7 +52,7 @@ export class StringFieldEditComponent extends React.PureComponent<
           <TextInput
             type={TextInputType.Lighter}
             onChange={this.handleChange}
-            value={this.props.value}
+            value={this.props.value.value}
             disabled={this.props.disabled}
             minLength={this.props.field.minLength}
             maxLength={this.props.field.maxLength}
@@ -65,14 +71,16 @@ export interface StringFieldOptions {
   readonly multiline?: boolean
 }
 
-export class StringField implements Field<string> {
+export type StringFieldValue = FieldValue<string, string[]>
+
+export class StringField implements Field<StringFieldValue> {
   public readonly label?: string
   public readonly description?: string
   public readonly minLength?: number
   public readonly maxLength?: number
   public readonly multiline?: boolean
 
-  public readonly defaultValue: string = ''
+  public readonly defaultValue: StringFieldValue = {value: '', isValid: true}
   public readonly sortConfigurations: SortConfiguration[]
   public readonly filterConfigurations: FilterConfiguration[] = []
 
@@ -92,11 +100,11 @@ export class StringField implements Field<string> {
     return this
   }
 
-  public renderListComponent(props: ListRenderProps<string>) {
-    return <CardSection>{props.value}</CardSection>
+  public renderListComponent(props: ListRenderProps<StringFieldValue>) {
+    return <CardSection>{props.value.value}</CardSection>
   }
 
-  public renderEditComponent(props: EditRenderProps<string>) {
+  public renderEditComponent(props: EditRenderProps<StringFieldValue>) {
     return (
       <StringFieldEditComponent
         label={this.label}
@@ -107,13 +115,13 @@ export class StringField implements Field<string> {
     )
   }
 
-  public transformRawValue(value: unknown): string {
+  public transformRawValue(value: unknown): StringFieldValue {
     if (typeof value !== 'string') throw new Error('StringField received invalid value!')
-    return value
+    return {value, isValid: true}
   }
 
-  public transformValueToExpression(value: string) {
-    return d.string(value)
+  public transformValueToExpression(value: StringFieldValue) {
+    return d.string(value.value)
   }
 
   public isValidValue(value: string) {

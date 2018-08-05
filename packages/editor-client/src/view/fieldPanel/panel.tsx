@@ -13,13 +13,13 @@ import {
   PanelHeader
 } from '../../ui'
 
-import {Field} from '../../api/field'
+import {AnyField} from '../../api/field'
 import {SessionContext, ModelRecord, withSession} from '../../context/session'
 import {LocaleContext, withLocale} from '../../context/locale'
 
 export interface FieldPanelProps {
   value?: any
-  field: Field
+  field: AnyField
   sessionContext: SessionContext
   localeContext: LocaleContext
   disabled: boolean
@@ -28,7 +28,7 @@ export interface FieldPanelProps {
   onRemove: () => void
   onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
   onSelectRecord: (model: Ref) => Promise<ModelRecord | undefined>
-  onEditField: (field: Field, value?: any) => Promise<any>
+  onEditField: (field: AnyField, value?: any) => Promise<any>
 }
 
 export interface FieldPanelState {

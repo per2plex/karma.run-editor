@@ -20,7 +20,10 @@ import {
   EditRenderProps,
   CreateFieldFunction,
   SaveContext,
-  DeleteContext
+  DeleteContext,
+  FieldValue,
+  AnyFieldValue,
+  AnyField
 } from '../api/field'
 
 import {ErrorField} from './error'
@@ -46,24 +49,34 @@ export class MapFieldEditComponent extends React.PureComponent<
     }
 
     this.props.onValueChange(
-      Object.assign([...this.props.value], {[index]: {...this.props.value[index], value}}),
+      {
+        value: Object.assign([...this.props.value.value], {
+          [index]: {...this.props.value.value[index], value}
+        }),
+        isValid: true
+      },
       this.props.changeKey
     )
   }
 
   public changeKeyAt(index: number, key: string) {
-    if (index < 0 || index > this.props.value.length) throw new Error('Invalid Index!')
+    if (index < 0 || index > this.props.value.value.length) throw new Error('Invalid Index!')
 
     this.props.onValueChange(
-      Object.assign([...this.props.value], {[index]: {...this.props.value[index], key}}),
+      {
+        value: Object.assign([...this.props.value.value], {
+          [index]: {...this.props.value.value[index], key}
+        }),
+        isValid: true
+      },
       this.props.changeKey
     )
   }
 
   public insertValueAt(index: number, key: string) {
-    if (index < 0 || index > this.props.value.length) throw new Error('Invalid Index!')
+    if (index < 0 || index > this.props.value.value.length) throw new Error('Invalid Index!')
 
-    const newValue = [...this.props.value]
+    const newValue = [...this.props.value.value]
 
     newValue.splice(index, 0, {
       id: shortid.generate(),
@@ -73,15 +86,15 @@ export class MapFieldEditComponent extends React.PureComponent<
 
     this.focusTabAtIndex = index
     this.setState({activeTabIndex: index})
-    this.props.onValueChange(newValue, this.props.changeKey)
+    this.props.onValueChange({value: newValue, isValid: true}, this.props.changeKey)
   }
 
   public removeValueAt(index: number) {
-    if (index < 0 || index >= this.props.value.length) throw new Error('Invalid Index!')
-    const newValue = [...this.props.value]
+    if (index < 0 || index >= this.props.value.value.length) throw new Error('Invalid Index!')
+    const newValue = [...this.props.value.value]
     newValue.splice(index, 1)
 
-    this.props.onValueChange(newValue, this.props.changeKey)
+    this.props.onValueChange({value: newValue, isValid: true}, this.props.changeKey)
   }
 
   public componentDidUpdate() {
@@ -126,7 +139,7 @@ export class MapFieldEditComponent extends React.PureComponent<
           )}
           <EditableTabList
             ref={this.tabListRef}
-            values={value}
+            values={value.value}
             activeTab={this.state.activeTabIndex}
             onChangeActiveTab={this.handleChangeActiveTab}
             onChangeAt={this.handleKeyChangeAt}
@@ -135,14 +148,14 @@ export class MapFieldEditComponent extends React.PureComponent<
             options={this.props.field.restrictedToKeys}
           />
         </FieldComponent>
-        {this.state.activeTabIndex < value.length && (
+        {this.state.activeTabIndex < value.value.length && (
           <FieldInset>
             {this.props.field.field.renderEditComponent({
               index: 0,
               depth: this.props.depth + 1,
               isWrapped: true,
               disabled: this.props.disabled,
-              value: value[this.state.activeTabIndex].value,
+              value: value.value[this.state.activeTabIndex].value,
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
               onSelectRecord: this.props.onSelectRecord,
@@ -170,21 +183,21 @@ export interface MapFieldConstructorOptions {
   readonly label?: string
   readonly description?: string
   readonly restrictedToKeys?: string[]
-  readonly field: Field
+  readonly field: AnyField
 }
 
-export type MapFieldValue = {id: string; key: string; value: any}[]
+export type MapFieldValue = FieldValue<{id: string; key: string; value: AnyFieldValue}[], string[]>
 
 export class MapField implements Field<MapFieldValue> {
   public readonly label?: string
   public readonly description?: string
   public readonly restrictedToKeys?: string[]
 
-  public readonly defaultValue: MapFieldValue = []
+  public readonly defaultValue: MapFieldValue = {value: [], isValid: true}
   public readonly sortConfigurations: SortConfiguration[] = []
   public readonly filterConfigurations: FilterConfiguration[] = []
 
-  public readonly field: Field
+  public readonly field: AnyField
 
   public constructor(opts: MapFieldConstructorOptions) {
     this.label = opts.label
@@ -193,7 +206,7 @@ export class MapField implements Field<MapFieldValue> {
     this.field = opts.field
   }
 
-  public initialize(recursions: ReadonlyMap<string, Field>) {
+  public initialize(recursions: ReadonlyMap<string, AnyField>) {
     this.field.initialize(recursions)
     return this
   }
@@ -202,7 +215,7 @@ export class MapField implements Field<MapFieldValue> {
     return ''
   }
 
-  public renderEditComponent(props: EditRenderProps) {
+  public renderEditComponent(props: EditRenderProps<MapFieldValue>) {
     return (
       <MapFieldEditComponent
         label={this.label}
@@ -214,16 +227,22 @@ export class MapField implements Field<MapFieldValue> {
   }
 
   public transformRawValue(value: any): MapFieldValue {
-    return Object.entries(value).map(([key, value]) => ({
-      id: shortid.generate(),
-      key,
-      value: this.field.transformRawValue(value)
-    }))
+    return {
+      value: Object.entries(value).map(([key, value]) => ({
+        id: shortid.generate(),
+        key,
+        value: this.field.transformRawValue(value)
+      })),
+      isValid: true
+    }
   }
 
   public transformValueToExpression(value: MapFieldValue) {
     return d.map(
-      reduceToMap(value, ({key, value}) => [key, this.field.transformValueToExpression(value)])
+      reduceToMap(value.value, ({key, value}) => [
+        key,
+        this.field.transformValueToExpression(value)
+      ])
     )
   }
 
@@ -253,22 +272,22 @@ export class MapField implements Field<MapFieldValue> {
     if (!this.field.onSave) return value
     let newValue = []
 
-    for (const {id, key, value: mapValue} of value) {
+    for (const {id, key, value: mapValue} of value.value) {
       newValue.push({id, key, value: await this.field.onSave(mapValue, context)})
     }
 
-    return newValue
+    return {value: newValue, isValid: true}
   }
 
   public async onDelete(value: MapFieldValue, context: DeleteContext): Promise<MapFieldValue> {
     if (!this.field.onDelete) return value
     let newValue = []
 
-    for (const {id, key, value: mapValue} of value) {
+    for (const {id, key, value: mapValue} of value.value) {
       newValue.push({id, key: key, value: await this.field.onDelete(mapValue, context)})
     }
 
-    return newValue
+    return {value: newValue, isValid: true}
   }
 
   public static type = 'map'

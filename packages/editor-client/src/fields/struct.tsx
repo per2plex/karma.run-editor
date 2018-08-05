@@ -22,18 +22,21 @@ import {
   EditRenderProps,
   CreateFieldFunction,
   SaveContext,
-  DeleteContext
+  DeleteContext,
+  AnyField,
+  FieldValue,
+  AnyFieldValue
 } from '../api/field'
 
 import {ErrorField} from './error'
 import {FieldWrapper, FieldComponent, FieldLabel, FieldInset} from '../ui/field'
 import {TabList} from '../ui/tabList'
 
-export type StructFieldChildTuple = [string, Field]
+export type StructFieldChildTuple = [string, AnyField]
 export type StructFieldOptionsTuple = [string, TypedFieldOptions]
 
 export class LinearStructFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<StructField>
+  EditComponentRenderProps<StructField, StructFieldValue>
 > {
   private handleValueChange = (value: any, key: string | undefined) => {
     if (key == undefined) {
@@ -53,7 +56,7 @@ export class LinearStructFieldEditComponent extends React.PureComponent<
           depth: this.props.isWrapped ? this.props.depth : this.props.depth + 1,
           isWrapped: false,
           disabled: this.props.disabled,
-          value: this.props.value[key],
+          value: this.props.value.value[key],
           onValueChange: this.handleValueChange,
           onEditRecord: this.props.onEditRecord,
           onSelectRecord: this.props.onSelectRecord,
@@ -88,10 +91,10 @@ export interface TabbedStructFieldEditComponentState {
 }
 
 export class TabbedStructFieldEditComponent extends React.PureComponent<
-  EditComponentRenderProps<StructField>,
+  EditComponentRenderProps<StructField, StructFieldValue>,
   TabbedStructFieldEditComponentState
 > {
-  public constructor(props: EditComponentRenderProps<StructField>) {
+  public constructor(props: EditComponentRenderProps<StructField, StructFieldValue>) {
     super(props)
     this.state = {selectedTabIndex: 0}
   }
@@ -142,7 +145,7 @@ export class TabbedStructFieldEditComponent extends React.PureComponent<
             depth: this.props.depth + 1,
             isWrapped: false,
             disabled: this.props.disabled,
-            value: this.props.value[fieldKey],
+            value: this.props.value.value[fieldKey],
             onValueChange: this.handleValueChange,
             onEditRecord: this.props.onEditRecord,
             onSelectRecord: this.props.onSelectRecord,
@@ -177,7 +180,7 @@ export interface StructFieldConstructorOptions {
   readonly fields: StructFieldChildTuple[]
 }
 
-export type StructFieldValue = {[key: string]: any}
+export type StructFieldValue = FieldValue<{[key: string]: AnyFieldValue}, string>
 
 export class StructField implements Field<StructFieldValue> {
   public readonly label?: string
@@ -185,7 +188,7 @@ export class StructField implements Field<StructFieldValue> {
   public readonly layout?: StructLayout
 
   public readonly fields: StructFieldChildTuple[]
-  public fieldMap!: ReadonlyMap<string, Field>
+  public fieldMap!: ReadonlyMap<string, AnyField>
 
   public defaultValue!: StructFieldValue
   public sortConfigurations!: SortConfiguration[]
@@ -198,11 +201,14 @@ export class StructField implements Field<StructFieldValue> {
     this.fields = opts.fields
   }
 
-  public initialize(recursions: ReadonlyMap<string, Field>) {
+  public initialize(recursions: ReadonlyMap<string, AnyField>) {
     this.fields.forEach(([_, field]) => field.initialize(recursions))
 
     this.fieldMap = new Map(this.fields)
-    this.defaultValue = reduceToMap(this.fields, ([key, field]) => [key, field.defaultValue])
+    this.defaultValue = {
+      value: reduceToMap(this.fields, ([key, field]) => [key, field.defaultValue]),
+      isValid: true
+    }
 
     this.sortConfigurations = [
       ...this.fields.reduce(
@@ -226,7 +232,7 @@ export class StructField implements Field<StructFieldValue> {
     return ''
   }
 
-  public renderEditComponent(props: EditRenderProps) {
+  public renderEditComponent(props: EditRenderProps<StructFieldValue>) {
     switch (this.layout) {
       case StructLayout.Tabbed:
         return (
@@ -251,15 +257,18 @@ export class StructField implements Field<StructFieldValue> {
     }
   }
 
-  public transformRawValue(value: any) {
-    return reduceToMap(this.fields, ([key, field]) => [key, field.transformRawValue(value[key])])
+  public transformRawValue(value: any): StructFieldValue {
+    return {
+      value: reduceToMap(this.fields, ([key, field]) => [key, field.transformRawValue(value[key])]),
+      isValid: true
+    }
   }
 
   public transformValueToExpression(value: StructFieldValue) {
     return d.struct(
       reduceToMap(this.fields, ([key, field]) => [
         key,
-        field.transformValueToExpression(value[key])
+        field.transformValueToExpression(value.value[key])
       ])
     )
   }
@@ -279,7 +288,7 @@ export class StructField implements Field<StructFieldValue> {
     }
   }
 
-  public traverse(keyPath: KeyPath): Field | undefined {
+  public traverse(keyPath: KeyPath): AnyField | undefined {
     if (keyPath.length === 0) return this
 
     const key = keyPath[0]
@@ -299,23 +308,33 @@ export class StructField implements Field<StructFieldValue> {
     return [StructPathSegment(key.toString()), ...field.valuePathForKeyPath(keyPath.slice(1))]
   }
 
-  public async onSave(value: StructFieldValue, context: SaveContext) {
-    return mapObjectAsync(value, async (value, key) => {
-      const field = this.fieldMap.get(key)
+  public async onSave(value: StructFieldValue, context: SaveContext): Promise<StructFieldValue> {
+    return {
+      value: await mapObjectAsync(value.value, async (value, key) => {
+        const field = this.fieldMap.get(key)
 
-      if (!field) throw new Error(`Couln't find field for key: ${key}`)
-      if (!field.onSave) return value
-      return await field.onSave(value, context)
-    })
+        if (!field) throw new Error(`Couln't find field for key: ${key}`)
+        if (!field.onSave) return value
+
+        return await field.onSave(value, context)
+      }),
+      isValid: true
+    }
   }
 
-  public async onDelete(value: StructFieldValue, context: DeleteContext) {
-    return mapObjectAsync(value, async (value, key) => {
-      const field = this.fieldMap.get(key)
-      if (!field) throw new Error(`Couln't find field for key: ${key}`)
-      if (!field.onDelete) return value
-      return await field.onDelete(value, context)
-    })
+  public async onDelete(
+    value: StructFieldValue,
+    context: DeleteContext
+  ): Promise<StructFieldValue> {
+    return {
+      value: await mapObjectAsync(value.value, async (value, key) => {
+        const field = this.fieldMap.get(key)
+        if (!field) throw new Error(`Couln't find field for key: ${key}`)
+        if (!field.onDelete) return value
+        return await field.onDelete(value, context)
+      }),
+      isValid: true
+    }
   }
 
   public static type = 'struct'

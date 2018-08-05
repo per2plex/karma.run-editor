@@ -14,7 +14,7 @@ import {
   CenteredLoadingIndicator
 } from '../../ui'
 
-import {Field} from '../../api/field'
+import {AnyField} from '../../api/field'
 import {SessionContext, ModelRecord, withSession} from '../../context/session'
 import {LocaleContext, withLocale} from '../../context/locale'
 import {NotificationContext, withNotification, NotificationType} from '../../context/notification'
@@ -29,7 +29,7 @@ export interface RecordEditPanelProps {
   onBack: (model: Ref, record?: ModelRecord) => void
   onEditRecord: (model: Ref, id?: Ref) => Promise<ModelRecord | undefined>
   onSelectRecord: (model: Ref) => Promise<ModelRecord | undefined>
-  onEditField: (field: Field, value?: any) => Promise<any>
+  onEditField: (field: AnyField, value?: any) => Promise<any>
   onPostSave: (model: Ref, id: Ref) => void
 }
 

@@ -32,8 +32,10 @@ import {
   Spacing,
   boolAttr,
   FlexList,
-  FieldConstructor,
-  CreateFieldFunction
+  CreateFieldFunction,
+  FieldValue,
+  AnyField,
+  AnyFieldConstructor
 } from '@karma.run/editor-client'
 
 import {SlateControl, SlateData} from './controls'
@@ -54,7 +56,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
 
   private handleChange = (change: Slate.Change) => {
     // TODO: Will be called on mount, check if this can be disabled so hasUnsavedChanges works.
-    this.props.onValueChange(change.value, this.props.changeKey)
+    this.props.onValueChange({value: change.value, isValid: true}, this.props.changeKey)
   }
 
   private handleWrapperPointerDown = () => {
@@ -74,7 +76,10 @@ export class SlateFieldEditComponent extends React.PureComponent<
   }
 
   private handleControlValueChange = (changeFn: (change: Slate.Change) => Slate.Change) => {
-    this.props.onValueChange(changeFn(this.props.value.change()).value, this.props.changeKey)
+    this.props.onValueChange(
+      {value: changeFn(this.props.value.value.change()).value, isValid: true},
+      this.props.changeKey
+    )
   }
 
   private handleControlEditData = async (dataKey: string, data?: SlateData) => {
@@ -154,7 +159,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
                   <React.Fragment key={key}>
                     {control.renderControl({
                       disabled: !this.state.hasFocus,
-                      value: this.props.value,
+                      value: this.props.value.value,
                       onEditData: this.handleControlEditData,
                       onValueChange: this.handleControlValueChange
                     })}
@@ -190,7 +195,7 @@ export class SlateFieldEditComponent extends React.PureComponent<
           <SlateEditor
             ref={this.editorRef}
             className="editor"
-            value={this.props.value}
+            value={this.props.value.value}
             renderMark={this.handleRenderMark}
             renderNode={this.handleRenderNode}
             onChange={this.handleChange}
@@ -255,10 +260,10 @@ export interface SlateFieldConstructorOptions {
   readonly controlKeys: string[][]
 
   readonly controlMap: ReadonlyMap<string, SlateControl>
-  readonly dataFields: ObjectMap<Field>
+  readonly dataFields: ObjectMap<AnyField>
 }
 
-export type SlateFieldValue = Slate.Value
+export type SlateFieldValue = FieldValue<Slate.Value, string>
 
 // Slate typings don't include leave and mark JSON.
 export type SlateMarkJSON = {object: 'mark'; type: string}
@@ -279,7 +284,7 @@ export class SlateField implements Field<SlateFieldValue> {
   public readonly schema?: Slate.SchemaProperties
   public readonly controlKeys: string[][]
   public readonly controlsMap: ReadonlyMap<string, SlateControl>
-  public readonly dataFields: ObjectMap<Field>
+  public readonly dataFields: ObjectMap<AnyField>
 
   public readonly defaultValue: SlateFieldValue
 
@@ -297,7 +302,10 @@ export class SlateField implements Field<SlateFieldValue> {
     this.dataFields = opts.dataFields
 
     this.schema = opts.schema
-    this.defaultValue = opts.defaultValue || blankDefaultValue
+    this.defaultValue = {
+      value: opts.defaultValue || blankDefaultValue,
+      isValid: true
+    }
   }
 
   public initialize() {
@@ -305,7 +313,7 @@ export class SlateField implements Field<SlateFieldValue> {
   }
 
   public renderListComponent(props: ListRenderProps<SlateFieldValue>) {
-    const plainText = plainTextSerializer.serialize(props.value)
+    const plainText = plainTextSerializer.serialize(props.value.value)
     return <CardSection>{plainText}</CardSection>
   }
 
@@ -320,14 +328,17 @@ export class SlateField implements Field<SlateFieldValue> {
     )
   }
 
-  public transformRawValue(value: any) {
-    return Slate.Value.create({
-      document: Slate.Document.fromJSON(value)
-    })
+  public transformRawValue(value: any): SlateFieldValue {
+    return {
+      value: Slate.Value.create({
+        document: Slate.Document.fromJSON(value)
+      }),
+      isValid: true
+    }
   }
 
   public transformValueToExpression(value: SlateFieldValue) {
-    const documentJSON: Slate.DocumentJSON = value.document.toJSON()
+    const documentJSON: Slate.DocumentJSON = value.value.document.toJSON()
 
     const recurse = (node: SlateJSON): DataExpression => {
       switch (node.object) {
@@ -385,7 +396,7 @@ export class SlateField implements Field<SlateFieldValue> {
 
   public isValidValue(value: SlateFieldValue) {
     const errors: string[] = []
-    const plainText = plainTextSerializer.serialize(value)
+    const plainText = plainTextSerializer.serialize(value.value)
 
     if (this.maxLength && plainText.length > this.maxLength) errors.push('stringToLongError')
     if (this.minLength && plainText.length < this.minLength) errors.push('stringToShortError')
@@ -516,7 +527,7 @@ export const SlateFieldConstructor = (
         defaultValue: schemaTuple && Slate.Value.fromJSON(schemaTuple[1])
       })
     }
-  } as FieldConstructor
+  } as AnyFieldConstructor
 }
 
 export function unserializeValue(_value: any) {}
