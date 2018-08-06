@@ -20,7 +20,8 @@ import {
   DeleteContext,
   FieldValue,
   AnyField,
-  ListRenderProps
+  ListRenderProps,
+  AnyFieldValue
 } from '../api/field'
 
 import {FieldComponent, FieldLabel, FieldWrapper, FieldInset} from '../ui/field'
@@ -35,7 +36,7 @@ export class OptionalFieldEditComponent extends React.PureComponent<
       {
         value: {
           isPresent: value,
-          value: this.props.value.value || this.props.field.field.defaultValue
+          value: this.props.value.value.value || this.props.field.field.defaultValue
         },
         isValid: true
       },
@@ -81,7 +82,7 @@ export class OptionalFieldEditComponent extends React.PureComponent<
               depth: this.props.depth + 1,
               isWrapped: true,
               disabled: this.props.disabled,
-              value: this.props.value.value.value,
+              value: this.props.value.value.value!,
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
               onSelectRecord: this.props.onSelectRecord,
@@ -97,7 +98,7 @@ export class OptionalFieldEditComponent extends React.PureComponent<
 export type OptionalFieldValue = FieldValue<
   {
     isPresent: boolean
-    value: any
+    value?: AnyFieldValue
   },
   string
 >
@@ -179,7 +180,7 @@ export class OptionalField implements Field<OptionalFieldValue> {
 
   public transformValueToExpression(value: OptionalFieldValue) {
     return value.value.isPresent
-      ? this.field.transformValueToExpression(value.value.value)
+      ? this.field.transformValueToExpression(value.value.value!)
       : e.null()
   }
 
@@ -200,6 +201,10 @@ export class OptionalField implements Field<OptionalFieldValue> {
     return this.field.valuePathForKeyPath(keyPath)
   }
 
+  public valuesForKeyPath(value: OptionalFieldValue, keyPath: KeyPath) {
+    return value.value.isPresent ? this.field.valuesForKeyPath(value.value.value!, keyPath) : []
+  }
+
   public async onSave(
     value: OptionalFieldValue,
     context: SaveContext
@@ -208,7 +213,7 @@ export class OptionalField implements Field<OptionalFieldValue> {
       return {
         value: {
           isPresent: value.value.isPresent,
-          value: await this.field.onSave(value.value.value, context)
+          value: await this.field.onSave(value.value.value!, context)
         },
         isValid: true
       }
@@ -225,7 +230,7 @@ export class OptionalField implements Field<OptionalFieldValue> {
       return {
         value: {
           isPresent: value.value.isPresent,
-          value: await this.field.onDelete(value.value.value, context)
+          value: await this.field.onDelete(value.value.value!, context)
         },
         isValid: true
       }

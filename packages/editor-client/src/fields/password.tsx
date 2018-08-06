@@ -200,6 +200,10 @@ export class PasswordField implements Field<PasswordFieldValue> {
     return []
   }
 
+  public valuesForKeyPath(value: PasswordFieldValue) {
+    return [value]
+  }
+
   public static type = 'password'
 
   static create(model: Model, opts?: PasswordFieldOptions) {

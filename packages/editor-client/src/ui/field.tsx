@@ -92,11 +92,7 @@ export class FieldLabel extends React.Component<FieldLabel.Props> {
     }
 
     return (
-      <div
-        className={classNames(
-          FieldLabel.Style,
-          this.props.depth === 0 ? FieldLabel.RootStyle : undefined
-        )}>
+      <div className={FieldLabel.Style}>
         {this.props.leftContent && <div className="leftContent">{this.props.leftContent}</div>}
         <div className="content">
           {this.props.label && <div className="label">{this.props.label}</div>}
@@ -146,20 +142,6 @@ export namespace FieldLabel {
       },
 
       '&:only-child': {marginBottom: 0}
-    }
-  })
-
-  export const RootStyle = style({
-    $debugName: 'RootFieldLabel',
-
-    $nest: {
-      '> .content': {
-        $nest: {
-          '> .label': {
-            // textTransform: 'uppercase'
-          }
-        }
-      }
     }
   })
 }
@@ -235,12 +217,14 @@ export namespace FieldWrapper {
 
 export namespace FieldErrors {
   export interface Props {
-    errors: string[]
+    errors?: string[]
   }
 }
 
 export class FieldErrors extends React.Component<FieldErrors.Props> {
   public render() {
+    if (!this.props.errors || this.props.errors.length === 0) return null
+
     return (
       <div className={FieldErrors.Style}>
         {this.props.errors.map(error => {

@@ -198,6 +198,10 @@ export class NumberField implements Field<NumberFieldValue> {
     return []
   }
 
+  public valuesForKeyPath(value: NumberFieldValue) {
+    return [value]
+  }
+
   public static type = 'number'
 
   static canInferFromModel(model: Model) {

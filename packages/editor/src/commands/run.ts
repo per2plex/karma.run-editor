@@ -53,7 +53,7 @@ export default async function runCommand(opts: RunCommandOptions): Promise<void>
     })
   } else {
     // TODO: Add ignore cache option
-    clientBundlePath = await getCachedBuild(cachePath, clientConfigPath)
+    clientBundlePath = await getCachedBuild(cachePath)
 
     if (!clientBundlePath) {
       try {

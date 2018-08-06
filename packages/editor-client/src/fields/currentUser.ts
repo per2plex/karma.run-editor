@@ -54,6 +54,10 @@ export class CurrentUserField implements Field<CurrentUserFieldValue> {
     return []
   }
 
+  public valuesForKeyPath() {
+    return []
+  }
+
   public static type = 'currentUser'
 
   static create(model: Model, opts: FieldOptions) {

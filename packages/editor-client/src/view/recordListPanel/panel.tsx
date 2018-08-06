@@ -226,8 +226,6 @@ export class RecordListPanel extends React.PureComponent<
     this.setState({offset, records: undefined})
 
     const filters: Condition[] = []
-    // const fields = this.viewContext.fields
-    // const descriptionKeyPaths = this.viewContext.descriptionKeyPaths
 
     if (this.state.quickSearchValue.trim() !== '') {
       for (const keyPath of this.viewContext.displayKeyPaths) {
@@ -267,7 +265,6 @@ export class RecordListPanel extends React.PureComponent<
   public render() {
     const sessionContext = this.props.sessionContext
     const viewContext = this.viewContext
-    // const _ = this.props.localeContext.get
 
     // TODO: Error panel
     if (!viewContext) return <div>Not Found</div>

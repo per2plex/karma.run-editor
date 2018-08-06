@@ -38,12 +38,15 @@ export type StructFieldOptionsTuple = [string, TypedFieldOptions]
 export class LinearStructFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StructField, StructFieldValue>
 > {
-  private handleValueChange = (value: any, key: string | undefined) => {
+  private handleValueChange = (value: AnyFieldValue, key: string | undefined) => {
     if (key == undefined) {
       throw new Error('Child field did not call onValueChange with changeKey!')
     }
 
-    this.props.onValueChange({...this.props.value, [key]: value}, this.props.changeKey)
+    this.props.onValueChange(
+      {value: {...this.props.value.value, [key]: value}, isValid: true},
+      this.props.changeKey
+    )
   }
 
   public render() {
@@ -306,6 +309,15 @@ export class StructField implements Field<StructFieldValue> {
     if (!field) throw new Error('Invalid KeyPath!')
 
     return [StructPathSegment(key.toString()), ...field.valuePathForKeyPath(keyPath.slice(1))]
+  }
+
+  public valuesForKeyPath(value: StructFieldValue, keyPath: KeyPath) {
+    const key = keyPath[0]
+    const field = this.fieldMap.get(key.toString())
+
+    if (!field) return []
+
+    return field.valuesForKeyPath(value.value[key], keyPath.slice(1))
   }
 
   public async onSave(value: StructFieldValue, context: SaveContext): Promise<StructFieldValue> {

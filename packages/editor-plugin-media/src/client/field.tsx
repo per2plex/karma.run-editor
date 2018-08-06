@@ -357,6 +357,10 @@ export class MediaField implements Field<MediaFieldValue> {
     return []
   }
 
+  public valuesForKeyPath(value: MediaFieldValue) {
+    return [value]
+  }
+
   public async onSave(value: MediaFieldValue, context: SaveContext): Promise<MediaFieldValue> {
     const {media, uploadedMedia} = value.value
     const apiPath = mediaAPIPath(context.config.basePath)

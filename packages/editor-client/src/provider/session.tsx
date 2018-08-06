@@ -44,11 +44,13 @@ import {
   initialEditorData,
   EditorData,
   ModelRecord,
-  EditorSession
+  EditorSession,
+  SaveRecordResult,
+  SaveRecordResultType
 } from '../context/session'
 
 import {ViewContext} from '../api/viewContext'
-import {FieldRegistry} from '../api/field'
+import {FieldRegistry, AnyFieldValue} from '../api/field'
 
 export const defaultModelGroupID: string = 'default'
 export const defaultEditorContextID: string = 'default'
@@ -146,6 +148,18 @@ export async function getContexts(
       overrideViewContextMap.get(model.id)
     )
   )
+
+  if (editorContexts) {
+    editorContexts = editorContexts.map(editorContext => ({
+      ...editorContext,
+      modelGroups: editorContext.modelGroups.map(modelGroup => ({
+        ...modelGroup,
+        models: modelGroup.models.map(
+          model => (typeof model === 'string' ? tagMap.get(model)! : model)
+        )
+      }))
+    }))
+  }
 
   return {
     editorContexts:
@@ -366,7 +380,11 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
     )
   }
 
-  public saveRecord = async (model: Ref, id: Ref | undefined, value: any): Promise<ModelRecord> => {
+  public saveRecord = async (
+    model: Ref,
+    id: Ref | undefined,
+    value: AnyFieldValue
+  ): Promise<SaveRecordResult> => {
     if (!this.state.session) throw new Error('No session!')
 
     const viewContext = this.state.viewContextMap.get(model)
@@ -382,22 +400,32 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
       })
     }
 
-    const expressionValue = viewContext.field.transformValueToExpression(value)
-    const record = await query(
-      this.props.config.karmaDataURL,
-      this.state.session.signature,
-      buildFunction(e => () => [
-        e.define(
-          'recordID',
-          id
-            ? e.update(e.data(d => d.ref(id)), e.data(() => expressionValue))
-            : e.create(e.data(d => d.ref(model)), () => e.data(() => expressionValue))
-        ),
-        e.metarialize(e.get(e.scope('recordID')))
-      ])
-    )
+    if (!value.isValid) return {type: SaveRecordResultType.ValidationError, value}
 
-    return this.transformMetarializedRecord(record, viewContext)
+    const expressionValue = viewContext.field.transformValueToExpression(value)
+
+    try {
+      const record = await query(
+        this.props.config.karmaDataURL,
+        this.state.session.signature,
+        buildFunction(e => () => [
+          e.define(
+            'recordID',
+            id
+              ? e.update(e.data(d => d.ref(id)), e.data(() => expressionValue))
+              : e.create(e.data(d => d.ref(model)), () => e.data(() => expressionValue))
+          ),
+          e.metarialize(e.get(e.scope('recordID')))
+        ])
+      )
+
+      return {
+        type: SaveRecordResultType.Success,
+        record: this.transformMetarializedRecord(record, viewContext)
+      }
+    } catch (error) {
+      return {type: SaveRecordResultType.Error, error, value}
+    }
   }
 
   public deleteRecord = async (model: Ref, id: Ref, value: any): Promise<void> => {
@@ -458,8 +486,7 @@ export class SessionProvider extends React.Component<SessionProviderProps, Sessi
 
     const editorContextMap = new Map(
       editorContexts.map(
-        editorContext =>
-          [editorContext.id || editorContext.name, editorContext] as [string, EditorContext]
+        editorContext => [editorContext.name, editorContext] as [string, EditorContext]
       )
     )
 

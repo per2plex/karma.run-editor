@@ -92,6 +92,7 @@ export interface Field<V extends AnyFieldValue> {
 
   traverse(keyPath: KeyPath): AnyField | undefined
   valuePathForKeyPath(keyPath: KeyPath): ValuePath
+  valuesForKeyPath(value: V, keyPath: KeyPath): AnyFieldValue[]
 
   onSave?(value: V, context: SaveContext): Promise<V>
   onDelete?(value: V, context: DeleteContext): Promise<V>

@@ -1,6 +1,6 @@
 import React from 'react'
 import {style} from 'typestyle'
-import {data as d, Ref} from '@karma.run/sdk'
+import {data as d, Ref, isRef} from '@karma.run/sdk'
 import {
   Model,
   SortConfiguration,
@@ -143,6 +143,7 @@ export class RefFieldEditComponent extends React.PureComponent<
 
     let errorContent: React.ReactNode
 
+    // TODO: Error
     // if (this.props.field.errors.length > 0) {
     //   errorContent = (
     //     <CardError>
@@ -292,8 +293,9 @@ export class RefField implements Field<RefFieldValue> {
     )
   }
 
-  public transformRawValue(value: any) {
-    return value
+  public transformRawValue(value: unknown): RefFieldValue {
+    if (!isRef(value)) throw new Error('Invalid value')
+    return {value: value, isValid: true}
   }
 
   public transformValueToExpression(value: RefFieldValue) {
@@ -320,6 +322,10 @@ export class RefField implements Field<RefFieldValue> {
 
   public valuePathForKeyPath() {
     return []
+  }
+
+  public valuesForKeyPath(value: RefFieldValue) {
+    return [value]
   }
 
   public static type = 'ref'

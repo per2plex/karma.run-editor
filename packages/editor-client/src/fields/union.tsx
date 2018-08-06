@@ -245,6 +245,15 @@ export class UnionField implements Field<UnionFieldValue> {
     ]
   }
 
+  public valuesForKeyPath(value: UnionFieldValue, keyPath: KeyPath) {
+    const key = keyPath[0].toString()
+    const field = this.fieldMap.get(key)
+
+    if (!field) return []
+
+    return field.valuesForKeyPath(value.value.values[key], keyPath.slice(1))
+  }
+
   public async onSave(value: UnionFieldValue, context: SaveContext): Promise<UnionFieldValue> {
     if (!value.value.selectedKey) return value
     const field = this.fieldForKey(value.value.selectedKey)

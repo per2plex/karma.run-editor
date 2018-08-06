@@ -14,8 +14,8 @@ import {
   CenteredLoadingIndicator
 } from '../../ui'
 
-import {AnyField} from '../../api/field'
-import {SessionContext, ModelRecord, withSession} from '../../context/session'
+import {AnyField, AnyFieldValue} from '../../api/field'
+import {SessionContext, ModelRecord, withSession, SaveRecordResultType} from '../../context/session'
 import {LocaleContext, withLocale} from '../../context/locale'
 import {NotificationContext, withNotification, NotificationType} from '../../context/notification'
 
@@ -38,7 +38,7 @@ export interface RecordEditPanelState {
   isSaving: boolean
   isLoadingRecord: boolean
   hasUnsavedChanges: boolean
-  value: any
+  value?: AnyFieldValue
 }
 
 export class RecordEditPanel extends React.PureComponent<
@@ -50,6 +50,15 @@ export class RecordEditPanel extends React.PureComponent<
     isLoadingRecord: false,
     hasUnsavedChanges: false,
     value: undefined
+  }
+
+  private get value() {
+    const viewContext = this.props.sessionContext.viewContextMap.get(this.props.model)
+
+    return (
+      this.state.value ||
+      (this.state.record ? this.state.record.value : viewContext!.field.defaultValue)
+    )
   }
 
   private async loadRecord(id: Ref) {
@@ -97,65 +106,105 @@ export class RecordEditPanel extends React.PureComponent<
   private handleSave = async () => {
     this.setState({isSaving: true})
 
-    try {
-      const record = await this.props.sessionContext.saveRecord(
-        this.props.model,
-        this.state.record && this.state.record.id,
-        this.state.value
-      )
+    const result = await this.props.sessionContext.saveRecord(
+      this.props.model,
+      this.state.record && this.state.record.id,
+      this.value
+    )
 
-      this.props.notificationContext.notify({
-        type: NotificationType.Success,
-        message: 'Successfully saved!'
-      })
+    switch (result.type) {
+      case SaveRecordResultType.Success: {
+        this.props.notificationContext.notify({
+          type: NotificationType.Success,
+          message: 'Successfully saved!'
+        })
 
-      this.props.onPostSave(this.props.model, record.id)
-      this.props.sessionContext.decreaseUnsavedChangesCount()
+        this.props.onPostSave(this.props.model, result.record.id)
+        if (this.state.value) this.props.sessionContext.decreaseUnsavedChangesCount()
 
-      this.setState({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        record: record,
-        value: record.value
-      })
-    } catch (err) {
-      console.error(err)
-      this.props.notificationContext.notify({type: NotificationType.Error, message: err.message})
-      this.setState({isSaving: false})
+        return this.setState({
+          isSaving: false,
+          hasUnsavedChanges: false,
+          record: result.record,
+          value: result.record.value
+        })
+      }
+
+      case SaveRecordResultType.ValidationError: {
+        this.props.notificationContext.notify({
+          type: NotificationType.Error,
+          message: 'Validation error!'
+        })
+
+        return this.setState({
+          isSaving: false,
+          value: result.value
+        })
+      }
+
+      case SaveRecordResultType.Error: {
+        console.error(result.error)
+        this.props.notificationContext.notify({
+          type: NotificationType.Error,
+          message: result.error.message
+        })
+
+        return this.setState({isSaving: false})
+      }
     }
   }
 
   private handleSaveAsCopy = async () => {
     this.setState({isSaving: true})
 
-    try {
-      const record = await this.props.sessionContext.saveRecord(
-        this.props.model,
-        undefined,
-        this.state.value
-      )
+    const result = await this.props.sessionContext.saveRecord(
+      this.props.model,
+      undefined,
+      this.value
+    )
 
-      this.props.notificationContext.notify({
-        type: NotificationType.Success,
-        message: 'Successfully saved as copy!'
-      })
+    switch (result.type) {
+      case SaveRecordResultType.Success: {
+        this.props.notificationContext.notify({
+          type: NotificationType.Success,
+          message: 'Successfully saved as copy!'
+        })
 
-      this.props.onPostSave(this.props.model, record.id)
+        this.props.onPostSave(this.props.model, result.record.id)
 
-      if (this.state.hasUnsavedChanges) {
-        this.props.sessionContext.decreaseUnsavedChangesCount()
+        if (this.state.hasUnsavedChanges) {
+          this.props.sessionContext.decreaseUnsavedChangesCount()
+        }
+
+        return this.setState({
+          isSaving: false,
+          hasUnsavedChanges: false,
+          record: result.record,
+          value: result.record.value
+        })
       }
 
-      this.setState({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        record: record,
-        value: record.value
-      })
-    } catch (err) {
-      console.error(err)
-      this.props.notificationContext.notify({type: NotificationType.Error, message: err.message})
-      this.setState({isSaving: false})
+      case SaveRecordResultType.ValidationError: {
+        this.props.notificationContext.notify({
+          type: NotificationType.Error,
+          message: 'Validation error!'
+        })
+
+        return this.setState({
+          isSaving: false,
+          value: result.value
+        })
+      }
+
+      case SaveRecordResultType.Error: {
+        console.error(result.error)
+        this.props.notificationContext.notify({
+          type: NotificationType.Error,
+          message: result.error.message
+        })
+
+        return this.setState({isSaving: false})
+      }
     }
   }
 
@@ -262,9 +311,7 @@ export class RecordEditPanel extends React.PureComponent<
               index: 0,
               isWrapped: true,
               disabled: disabled,
-              value:
-                this.state.value ||
-                (this.state.record ? this.state.record.value : viewContext.field.defaultValue),
+              value: this.value,
               onValueChange: this.handleValueChange,
               onEditRecord: this.props.onEditRecord,
               onSelectRecord: this.props.onSelectRecord,

@@ -117,6 +117,10 @@ export class DateTimeField implements Field<DateTimeValue> {
     return []
   }
 
+  public valuesForKeyPath(value: DateTimeValue) {
+    return [value]
+  }
+
   public static type = 'dateTime'
 
   static canInferFromModel(model: Model) {

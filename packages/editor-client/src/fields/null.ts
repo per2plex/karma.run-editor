@@ -54,6 +54,10 @@ export class NullField implements Field<NullFieldValue> {
     return []
   }
 
+  public valuesForKeyPath() {
+    return []
+  }
+
   public static type = 'null'
 
   static canInferFromModel(model: Model) {

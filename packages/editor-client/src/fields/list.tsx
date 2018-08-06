@@ -10,7 +10,8 @@ import {
   SortConfiguration,
   FilterConfiguration,
   ValuePath,
-  ValuePathSegmentType
+  ValuePathSegmentType,
+  flatMap
 } from '@karma.run/editor-common'
 
 import {
@@ -348,6 +349,10 @@ export class ListField implements Field<ListFieldValue> {
 
   public valuePathForKeyPath(keyPath: KeyPath): ValuePath {
     return [{type: ValuePathSegmentType.Map}, ...this.field.valuePathForKeyPath(keyPath.slice(1))]
+  }
+
+  public valuesForKeyPath(value: ListFieldValue, keyPath: KeyPath) {
+    return flatMap(value.value, value => this.field.valuesForKeyPath(value.value, keyPath))
   }
 
   public async onSave(value: ListFieldValue, context: SaveContext): Promise<ListFieldValue> {

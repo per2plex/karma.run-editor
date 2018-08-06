@@ -95,6 +95,10 @@ export class RecursiveField implements Field<any> {
     return this.topField.valuePathForKeyPath(keyPath)
   }
 
+  public valuesForKeyPath(value: AnyFieldValue, keyPath: KeyPath) {
+    return this.topField.valuesForKeyPath(value, keyPath)
+  }
+
   public async onSave(value: any, context: SaveContext) {
     if (this.topField.onSave) {
       return this.topField.onSave(value, context)
@@ -203,6 +207,10 @@ export class RecursionField implements Field<AnyFieldValue> {
 
   public valuePathForKeyPath(keyPath: KeyPath) {
     return this.field.valuePathForKeyPath(keyPath)
+  }
+
+  public valuesForKeyPath(value: AnyFieldValue, keyPath: KeyPath) {
+    return this.field.valuesForKeyPath(value, keyPath)
   }
 
   public async onSave(value: any, context: SaveContext) {
@@ -333,6 +341,11 @@ export class RecurseField implements Field<any> {
   public valuePathForKeyPath(keyPath: KeyPath) {
     if (!this.field) return []
     return this.field.valuePathForKeyPath(keyPath)
+  }
+
+  public valuesForKeyPath(value: AnyFieldValue, keyPath: KeyPath) {
+    if (!this.field) throw new Error(`Couldn't find recursion for label: ${this.recursionLabel}`)
+    return this.field.valuesForKeyPath(value, keyPath)
   }
 
   public async onSave(value: any, context: SaveContext) {

@@ -47,3 +47,7 @@ export function reduceToMap<T, V>(arr: T[], callback: ReduceCallbackFn<T, V>): O
 export function uniqueFilter(value: any, index: number, array: any[]) {
   return array.indexOf(value) === index
 }
+
+export function flatMap<T, R>(arr: T[], callback: (value: T) => R[]): R[] {
+  return arr.reduce((acc, value) => acc.concat(callback(value)), [] as R[])
+}

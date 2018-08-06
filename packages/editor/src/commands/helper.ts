@@ -99,9 +99,8 @@ export function getEntryFilename(name: string, hash: string) {
   return `entry.${name}.${hash}`
 }
 
-export async function getCachedBuild(cachePath: string, clientConfigPath?: string) {
-  const entryData = getClientEntryData(cachePath, clientConfigPath)
-  const bundlePath = path.resolve(cachePath, './', getBundleFilename(md5Hash(entryData)))
+export async function getCachedBuild(cachePath: string) {
+  const bundlePath = path.resolve(cachePath, './bundle')
 
   try {
     await fs.promises.stat(bundlePath)

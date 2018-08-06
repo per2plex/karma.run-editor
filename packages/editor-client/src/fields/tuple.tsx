@@ -213,6 +213,15 @@ export class TupleField implements Field<TupleFieldValue> {
     return [TuplePathSegment(Number(key)), ...field.valuePathForKeyPath(keyPath.slice(1))]
   }
 
+  public valuesForKeyPath(value: TupleFieldValue, keyPath: KeyPath) {
+    const key = Number(keyPath[0])
+    const field = this.fieldMap.get(key)
+
+    if (!field) return []
+
+    return field.valuesForKeyPath(value.value[key], keyPath.slice(1))
+  }
+
   public async onSave(value: TupleFieldValue, context: SaveContext) {
     const newValues: any[] = []
 

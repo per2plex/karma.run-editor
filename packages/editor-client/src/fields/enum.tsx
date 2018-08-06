@@ -140,6 +140,10 @@ export class EnumField implements Field<EnumFieldValue> {
     return []
   }
 
+  public valuesForKeyPath(value: EnumFieldValue) {
+    return [value]
+  }
+
   public static type = 'enum'
 
   static canInferFromModel(model: Model) {

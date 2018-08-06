@@ -1,11 +1,6 @@
 import * as React from 'react'
 
-import {
-  ReadonlyRefMap,
-  keyPathToString,
-  getValuesForValuePath,
-  refToPrettyString
-} from '@karma.run/editor-common'
+import {ReadonlyRefMap, keyPathToString, refToPrettyString} from '@karma.run/editor-common'
 
 import {CardSection} from './card'
 import {ViewContext} from '../api/viewContext'
@@ -28,10 +23,9 @@ export function contentForViewContext(
     const key = keyPathToString(keyPath)
 
     if (field) {
-      const objectPath = viewContext.field.valuePathForKeyPath(keyPath)
-      const value = getValuesForValuePath(record.value, objectPath)
+      const values = viewContext.field.valuesForKeyPath(record.value, keyPath)
 
-      return value.map((value, index) => (
+      return values.map((value, index) => (
         <React.Fragment key={`${key}.${index}`}>
           {field.renderListComponent({value})}
         </React.Fragment>

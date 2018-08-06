@@ -6,8 +6,9 @@ import {EditorContext, ReadonlyRefMap, RefMap, Sort, Condition} from '@karma.run
 
 import {createContextHOC} from './helper'
 import {ViewContext} from '../api/viewContext'
+import {AnyFieldValue} from '../api/field'
 
-export interface ModelRecord<T = any> {
+export interface ModelRecord<T extends AnyFieldValue = AnyFieldValue> {
   id: Ref
   model: Ref
   created: Date
@@ -41,6 +42,33 @@ export interface ReferrersResponse {
   referrers: ModelRecord[]
 }
 
+export enum SaveRecordResultType {
+  Success = 'success',
+  Error = 'error',
+  ValidationError = 'validationError'
+}
+
+export interface SaveRecordSuccessResult {
+  type: SaveRecordResultType.Success
+  record: ModelRecord
+}
+
+export interface SaveRecordValidationErrorResult {
+  type: SaveRecordResultType.ValidationError
+  value: AnyFieldValue
+}
+
+export interface SaveRecordErrorResult {
+  type: SaveRecordResultType.Error
+  error: Error
+  value: AnyFieldValue
+}
+
+export type SaveRecordResult =
+  | SaveRecordSuccessResult
+  | SaveRecordErrorResult
+  | SaveRecordValidationErrorResult
+
 export interface SessionContext extends EditorData {
   session?: EditorSession
   canRestoreSessionFromStorage: boolean
@@ -62,8 +90,8 @@ export interface SessionContext extends EditorData {
   ): Promise<ModelRecord[]>
 
   getReferrers(id: Ref, limit: number, offset: number): Promise<ModelRecord[]>
-  saveRecord(model: Ref, id: Ref | undefined, value: any): Promise<ModelRecord>
-  deleteRecord(model: Ref, id: Ref, value: any): Promise<void>
+  saveRecord(model: Ref, id: Ref | undefined, value: AnyFieldValue): Promise<SaveRecordResult>
+  deleteRecord(model: Ref, id: Ref, value: AnyFieldValue): Promise<void>
 
   increaseUnsavedChangesCount(): void
   decreaseUnsavedChangesCount(): void

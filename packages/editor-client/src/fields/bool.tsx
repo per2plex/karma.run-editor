@@ -124,6 +124,10 @@ export class BoolField implements Field<BoolFieldValue> {
     return []
   }
 
+  public valuesForKeyPath(value: BoolFieldValue) {
+    return [value]
+  }
+
   public static type = 'bool'
 
   static canInferFromModel(model: Model) {

@@ -19,15 +19,15 @@ import {
   FieldValue
 } from '../api/field'
 
-import {FieldComponent, FieldLabel} from '../ui/field'
+import {FieldComponent, FieldLabel, FieldErrors} from '../ui/field'
 import {TextAreaInput, TextInput, TextInputType} from '../ui/input'
 import {CardSection} from '../ui/card'
 
 export class StringFieldEditComponent extends React.PureComponent<
   EditComponentRenderProps<StringField, StringFieldValue>
 > {
-  private handleChange = (value: any) => {
-    this.props.onValueChange(value, this.props.changeKey)
+  private handleChange = (value: string) => {
+    this.props.onValueChange(this.props.field.validate(value), this.props.changeKey)
   }
 
   public render() {
@@ -58,6 +58,7 @@ export class StringFieldEditComponent extends React.PureComponent<
             maxLength={this.props.field.maxLength}
           />
         )}
+        <FieldErrors errors={this.props.value.error || []} />
       </FieldComponent>
     )
   }
@@ -117,20 +118,11 @@ export class StringField implements Field<StringFieldValue> {
 
   public transformRawValue(value: unknown): StringFieldValue {
     if (typeof value !== 'string') throw new Error('StringField received invalid value!')
-    return {value, isValid: true}
+    return this.validate(value)
   }
 
   public transformValueToExpression(value: StringFieldValue) {
     return d.string(value.value)
-  }
-
-  public isValidValue(value: string) {
-    const errors: string[] = []
-
-    if (this.maxLength && value.length > this.maxLength) errors.push('stringToLongError')
-    if (this.minLength && value.length < this.minLength) errors.push('stringToShortError')
-
-    return errors
   }
 
   public fieldOptions(): StringFieldOptions & TypedFieldOptions {
@@ -150,6 +142,23 @@ export class StringField implements Field<StringFieldValue> {
 
   public valuePathForKeyPath() {
     return []
+  }
+
+  public valuesForKeyPath(value: StringFieldValue) {
+    return [value]
+  }
+
+  public validate(value: string): StringFieldValue {
+    const errors: string[] = []
+
+    if (this.maxLength && value.length > this.maxLength) errors.push('stringToLongError')
+    if (this.minLength && value.length < this.minLength) errors.push('stringToShortError')
+
+    return {value, isValid: errors.length === 0, error: errors}
+  }
+
+  public async onSave(value: StringFieldValue): Promise<StringFieldValue> {
+    return this.validate(value.value)
   }
 
   public static type = 'string'

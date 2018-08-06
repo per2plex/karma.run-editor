@@ -90,6 +90,7 @@ export class ViewContext {
       model: id,
       color: options.color || stringToColor(refToString(id)),
       name: options.name || (tag ? convertKeyToLabel(tag) : `Model: ${id[1]}`),
+      description: options.description,
       slug: options.slug || slugify(tag || id[1]),
       field: inferFieldFromModel(model, registry, ignoreTypes, options.field),
       displayKeyPaths: options.displayKeyPaths || inferDisplayKeyPaths(model)

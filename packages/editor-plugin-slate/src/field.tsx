@@ -423,6 +423,10 @@ export class SlateField implements Field<SlateFieldValue> {
   public valuePathForKeyPath() {
     return []
   }
+
+  public valuesForKeyPath(value: SlateFieldValue) {
+    return [value]
+  }
 }
 
 export const SlateFieldType = 'richText'

@@ -33,19 +33,11 @@ export interface ToolbarProps {
   filterConfigurations: FilterFieldGroup[]
   quickSearchValue: string
   onQuickSearchChange: (value: string) => void
-
-  // filter?: Filter
-  // sorting?: Sort
-  // onFilterChange: (filter: Filter) => void
 }
 
 export interface ToolbarFilterState {}
 
 export class ToolbarFilter extends React.Component<ToolbarProps> {
-  // private handleFilterClick = () => {
-  //   // this.props.entryFilterStore.toggleFilterActive()
-  // }
-
   public render() {
     return (
       <div className={ToolbarFilterStyle}>
@@ -61,14 +53,6 @@ export class ToolbarFilter extends React.Component<ToolbarProps> {
           descending={this.props.sortDescending}
           onChange={this.props.onSortChange}
         />
-        {/* {this.props.entryFilterStore.filterStores.length > 0 && (
-          <Button
-            icon={IconName.FilterList}
-            type={ButtonType.Icon}
-            onTrigger={this.handleFilterClick}
-            selected={this.props.entryFilterStore.isFilterActive}
-          />
-        )} */}
       </div>
     )
   }

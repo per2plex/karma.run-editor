@@ -102,6 +102,10 @@ export class ErrorField implements Field<ErrorFieldValue> {
     return []
   }
 
+  public valuesForKeyPath() {
+    return []
+  }
+
   static inferFromModel() {
     return null
   }

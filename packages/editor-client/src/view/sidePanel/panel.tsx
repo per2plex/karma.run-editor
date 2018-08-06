@@ -110,7 +110,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
     (editorContext: EditorContext, viewContextMap: ReadonlyRefMap<ViewContext>) => {
       const groups = editorContext.modelGroups
       const modelIDs = groups
-        .map(group => group.models.map(model => refToString(model)))
+        .map(group => group.models.map(model => refToString(model as Ref))) // TODO: Fix internal ModelGroup type
         .reduce((acc, models) => acc.concat(models))
         .filter(uniqueFilter)
 
@@ -150,7 +150,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
 
         if (!viewContext) {
           const viewContext = sessionContext.viewContextMap.get(model)
-          const label = viewContext ? viewContext.name : refToString(model)
+          const label = viewContext ? viewContext.name : refToString(model as Ref) // TODO: Fix internal ModelGroup type
           return {id: `noPermission_${model}`, label}
         }
 
@@ -165,9 +165,9 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
 
       return (
         <SidePanelSection
-          key={group.id || group.name}
-          id={group.id || group.name}
-          isOpen={this.state.groupState[group.id || group.name]}
+          key={group.name}
+          id={group.name}
+          isOpen={this.state.groupState[group.name]}
           onClick={this.handleGroupClick}
           onItemClick={this.handleViewContextClick}
           items={items}
@@ -181,7 +181,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
 
     if (sessionContext.editorContexts.length > 1) {
       const editorContextOptions = sessionContext.editorContexts.map(context => ({
-        key: context.id || context.name,
+        key: context.name,
         label: context.name
       }))
 
@@ -189,7 +189,7 @@ export class SidePanel extends React.PureComponent<SidePanelProps, SidePanelStat
         <Select
           options={editorContextOptions}
           type={SelectType.Light}
-          value={this.state.editorContext.id || this.state.editorContext.name}
+          value={this.state.editorContext.name}
           disableUnselectedOption
           onChange={this.handleEditorContextChange}
         />
