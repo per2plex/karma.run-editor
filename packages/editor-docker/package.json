@@ -4,7 +4,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "karma-editor"
+    "start": "karma-editor server"
   },
   "dependencies": {
     "@karma.run/editor": "^0.13.0"
